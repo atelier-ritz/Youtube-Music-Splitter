@@ -278,11 +278,10 @@ const WaveformVisualization: React.FC<WaveformVisualizationProps> = ({
     }, trackName, false); // Cache miss - new render
   }, [bars, trackName, isPlaying, actualWidth, actualHeight, showSilentSections, silentSections, totalDuration, devicePixelRatio, cacheKey, enableCaching]);
 
-  // Render progress overlay efficiently
+  // Render progress cursor only (no overlay fill)
   const renderProgress = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas || progress <= 0) {
-      // If no progress, just render the base waveform
+    if (!canvas) {
       renderWaveform();
       return;
     }
@@ -290,22 +289,12 @@ const WaveformVisualization: React.FC<WaveformVisualizationProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear and redraw the entire waveform with progress
+    // Clear and redraw the entire waveform
     renderWaveform();
     
-    // Add progress overlay
-    const progressWidth = progress * actualWidth;
-    
-    // Create subtle progress overlay
-    const gradient = ctx.createLinearGradient(0, 0, progressWidth, 0);
-    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
-    gradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, progressWidth, actualHeight);
-
-    // Add progress cursor line
-    if (progressWidth > 0) {
+    // Add progress cursor line only (no overlay fill)
+    if (progress > 0) {
+      const progressWidth = progress * actualWidth;
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
       ctx.lineWidth = 2;
       ctx.beginPath();

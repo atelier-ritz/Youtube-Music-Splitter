@@ -31,7 +31,10 @@ const TrackView: React.FC<TrackViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [trackStates, setTrackStates] = useState<Track[]>(tracks);
+  const [isEditingTimestamp, setIsEditingTimestamp] = useState(false);
+  const [timestampInputValue, setTimestampInputValue] = useState('');
   const timelineRef = useRef<HTMLDivElement>(null);
+  const timestampInputRef = useRef<HTMLInputElement>(null);
 
   // Use waveform data hook for real audio visualization with performance optimizations
   // Only pass audioPlayer when tracks are loaded (not loading and no error)
@@ -164,11 +167,33 @@ const TrackView: React.FC<TrackViewProps> = ({
     }
   };
 
-  // Format time for display
+  // Format time for display with milliseconds
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Format time with milliseconds for timestamp inspector
+  const formatTimeWithMs = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const wholeSecs = Math.floor(seconds % 60);
+    const ms = Math.floor((seconds % 1) * 1000);
+    return `${mins.toString().padStart(2, '0')}:${wholeSecs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+  };
+
+  // Parse time string (MM:SS.mmm) to seconds
+  const parseTimeString = (timeStr: string): number => {
+    const match = timeStr.match(/^(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?$/);
+    if (!match) return -1;
+    
+    const mins = parseInt(match[1], 10);
+    const secs = parseInt(match[2], 10);
+    const ms = match[3] ? parseInt(match[3].padEnd(3, '0'), 10) : 0;
+    
+    if (mins < 0 || secs >= 60 || ms >= 1000) return -1;
+    
+    return mins * 60 + secs + ms / 1000;
   };
 
   // Calculate progress percentage for timeline
@@ -252,6 +277,53 @@ const TrackView: React.FC<TrackViewProps> = ({
     return '';
   };
 
+  // Handle timestamp inspector click to enter edit mode
+  const handleTimestampClick = () => {
+    setIsEditingTimestamp(true);
+    setTimestampInputValue(formatTimeWithMs(currentPosition));
+    // Focus the input after state update
+    setTimeout(() => {
+      timestampInputRef.current?.focus();
+      timestampInputRef.current?.select();
+    }, 0);
+  };
+
+  // Handle timestamp input change
+  const handleTimestampInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTimestampInputValue(event.target.value);
+  };
+
+  // Handle timestamp input submission
+  const handleTimestampSubmit = () => {
+    const newTime = parseTimeString(timestampInputValue);
+    if (newTime >= 0 && newTime <= duration) {
+      try {
+        audioPlayer.seek(newTime);
+        setCurrentPosition(newTime);
+      } catch (error) {
+        console.error('Seek error:', error);
+        onShowToast?.showError('Seek Failed', 'Could not jump to the specified time');
+      }
+    } else {
+      onShowToast?.showError('Invalid Time', 'Please enter a valid time in MM:SS.mmm format');
+    }
+    setIsEditingTimestamp(false);
+  };
+
+  // Handle timestamp input key events
+  const handleTimestampKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleTimestampSubmit();
+    } else if (event.key === 'Escape') {
+      setIsEditingTimestamp(false);
+    }
+  };
+
+  // Handle timestamp input blur
+  const handleTimestampBlur = () => {
+    handleTimestampSubmit();
+  };
+
   if (isLoading) {
     return (
       <div className="track-view">
@@ -309,7 +381,6 @@ const TrackView: React.FC<TrackViewProps> = ({
       {/* Top toolbar */}
       <div className="daw-toolbar">
         <div className="daw-toolbar__left">
-          <div className="daw-time-display">{formatTime(currentPosition)}</div>
           {onBack && (
             <button className="daw-back-button" onClick={onBack}>
               ← Back
@@ -318,6 +389,29 @@ const TrackView: React.FC<TrackViewProps> = ({
         </div>
         
         <div className="daw-toolbar__center">
+          <div className="daw-timestamp-inspector">
+            {isEditingTimestamp ? (
+              <input
+                ref={timestampInputRef}
+                type="text"
+                value={timestampInputValue}
+                onChange={handleTimestampInputChange}
+                onKeyDown={handleTimestampKeyDown}
+                onBlur={handleTimestampBlur}
+                className="daw-timestamp-input"
+                placeholder="MM:SS.mmm"
+                maxLength={10}
+              />
+            ) : (
+              <div 
+                className="daw-time-display daw-time-display--clickable" 
+                onClick={handleTimestampClick}
+                title="Click to jump to specific time"
+              >
+                {formatTimeWithMs(currentPosition)}
+              </div>
+            )}
+          </div>
           <div className="daw-transport-controls">
             <button 
               className="daw-transport-btn daw-transport-btn--prev"

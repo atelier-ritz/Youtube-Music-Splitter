@@ -31,6 +31,24 @@
     <div class="test-container">
         <h1>Track Header Style Test</h1>
         
+        <!-- Timestamp Inspector Demo -->
+        <div style="margin-bottom: 30px; padding: 20px; background: #2a2d3a; border-radius: 8px;">
+            <h2 style="color: white; margin-bottom: 15px;">Timestamp Inspector Demo</h2>
+            <p style="color: #ccc; margin-bottom: 15px;">Click on the timestamp to edit it. Format: MM:SS.mmm</p>
+            
+            <div class="daw-toolbar" style="width: 400px; margin: 0 auto;">
+                <div class="daw-toolbar__left">
+                    <div class="daw-timestamp-inspector">
+                        <div class="daw-time-display daw-time-display--clickable" 
+                             onclick="enterEditMode(this)" 
+                             title="Click to jump to specific time">
+                            02:12.123
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="daw-interface">
             <div class="daw-track-area">
                 <!-- Track 1 - Normal -->
@@ -143,5 +161,83 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function enterEditMode(element) {
+            const currentValue = element.textContent;
+            const container = element.parentElement;
+            
+            // Create input element
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentValue;
+            input.className = 'daw-timestamp-input';
+            input.placeholder = 'MM:SS.mmm';
+            input.maxLength = 10;
+            
+            // Replace display with input
+            container.innerHTML = '';
+            container.appendChild(input);
+            
+            // Focus and select
+            input.focus();
+            input.select();
+            
+            // Handle submission
+            function submitEdit() {
+                const newValue = input.value;
+                if (isValidTimestamp(newValue)) {
+                    // Replace input with display
+                    container.innerHTML = `
+                        <div class="daw-time-display daw-time-display--clickable" 
+                             onclick="enterEditMode(this)" 
+                             title="Click to jump to specific time">
+                            ${newValue}
+                        </div>
+                    `;
+                    console.log('Would seek to:', parseTimeString(newValue), 'seconds');
+                } else {
+                    alert('Invalid time format. Please use MM:SS.mmm');
+                    input.focus();
+                    input.select();
+                }
+            }
+            
+            // Handle events
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    submitEdit();
+                } else if (e.key === 'Escape') {
+                    // Cancel edit
+                    container.innerHTML = `
+                        <div class="daw-time-display daw-time-display--clickable" 
+                             onclick="enterEditMode(this)" 
+                             title="Click to jump to specific time">
+                            ${currentValue}
+                        </div>
+                    `;
+                }
+            });
+            
+            input.addEventListener('blur', submitEdit);
+        }
+        
+        function isValidTimestamp(timeStr) {
+            return /^\d{1,2}:\d{2}(?:\.\d{1,3})?$/.test(timeStr);
+        }
+        
+        function parseTimeString(timeStr) {
+            const match = timeStr.match(/^(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?$/);
+            if (!match) return -1;
+            
+            const mins = parseInt(match[1], 10);
+            const secs = parseInt(match[2], 10);
+            const ms = match[3] ? parseInt(match[3].padEnd(3, '0'), 10) : 0;
+            
+            if (mins < 0 || secs >= 60 || ms >= 1000) return -1;
+            
+            return mins * 60 + secs + ms / 1000;
+        }
+    </script>
 </body>
 </html>
