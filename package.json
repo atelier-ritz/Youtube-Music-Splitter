@@ -1,0 +1,25 @@
+{
+  "name": "band-practice-webapp",
+  "version": "1.0.0",
+  "description": "A web application for band practice with YouTube audio separation",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "start": "cd backend && npm start",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "clear-audio-files": "curl -X POST http://localhost:3001/api/cache/clear",
+    "clear-temp-files": "curl -X POST http://localhost:3001/api/cache/clear-temp",
+    "cache-status": "curl -X GET http://localhost:3001/api/cache/status",
+    "cache": "./scripts/cache-management.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "keywords": ["music", "band", "practice", "audio", "separation"],
+  "author": "",
+  "license": "ISC"
+}

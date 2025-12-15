@@ -1,0 +1,159 @@
+/**
+ * YouTube audio downloader service
+ * Handles downloading audio from YouTube URLs using youtube-dl-exec
+ */
+
+import youtubeDl from 'youtube-dl-exec';
+
+// Configure youtube-dl-exec to use system yt-dlp
+const ytDlp = youtubeDl.create('/opt/homebrew/bin/yt-dlp');
+import { randomUUID } from 'crypto';
+import path from 'path';
+import fs from 'fs/promises';
+import { DownloadJob } from '../types/downloadTypes';
+
+export class YouTubeDownloaderService {
+  private jobs: Map<string, DownloadJob> = new Map();
+  private downloadDir: string;
+
+  constructor() {
+    // Use temp directory for downloads
+    this.downloadDir = path.join(process.cwd(), 'temp');
+    this.ensureDownloadDirectory();
+  }
+
+  private async ensureDownloadDirectory(): Promise<void> {
+    try {
+      await fs.access(this.downloadDir);
+    } catch {
+      await fs.mkdir(this.downloadDir, { recursive: true });
+    }
+  }
+
+  /**
+   * Start a new download job
+   */
+  async startDownload(youtubeUrl: string): Promise<string> {
+    const jobId = randomUUID();
+    const job: DownloadJob = {
+      id: jobId,
+      youtubeUrl,
+      status: 'pending',
+      progress: 0,
+      createdAt: new Date()
+    };
+
+    this.jobs.set(jobId, job);
+
+    // Start download asynchronously
+    this.performDownload(jobId).catch(error => {
+      console.error(`Download failed for job ${jobId}:`, error);
+      const failedJob = this.jobs.get(jobId);
+      if (failedJob) {
+        failedJob.status = 'failed';
+        failedJob.error = error.message || 'Unknown download error';
+        failedJob.completedAt = new Date();
+      }
+    });
+
+    return jobId;
+  }
+
+  /**
+   * Get the status of a download job
+   */
+  getJobStatus(jobId: string): DownloadJob | null {
+    return this.jobs.get(jobId) || null;
+  }
+
+  /**
+   * Get all jobs (for debugging/admin purposes)
+   */
+  getAllJobs(): DownloadJob[] {
+    return Array.from(this.jobs.values());
+  }
+
+  /**
+   * Clean up old completed jobs
+   */
+  async cleanupOldJobs(maxAgeHours: number = 24): Promise<void> {
+    const cutoffTime = new Date(Date.now() - maxAgeHours * 60 * 60 * 1000);
+    
+    for (const [jobId, job] of this.jobs.entries()) {
+      if (job.completedAt && job.completedAt < cutoffTime) {
+        // Clean up audio file if it exists
+        if (job.audioFilePath) {
+          try {
+            await fs.unlink(job.audioFilePath);
+          } catch (error) {
+            console.warn(`Failed to delete audio file ${job.audioFilePath}:`, error);
+          }
+        }
+        
+        // Remove job from memory
+        this.jobs.delete(jobId);
+      }
+    }
+  }
+
+  /**
+   * Perform the actual download
+   */
+  private async performDownload(jobId: string): Promise<void> {
+    const job = this.jobs.get(jobId);
+    if (!job) {
+      throw new Error(`Job ${jobId} not found`);
+    }
+
+    try {
+      job.status = 'downloading';
+      job.progress = 10;
+
+      // Generate output filename
+      const outputTemplate = path.join(this.downloadDir, `${jobId}.%(ext)s`);
+
+      // Download audio using youtube-dl-exec
+      const output = await ytDlp(job.youtubeUrl, {
+        extractAudio: true,
+        audioFormat: 'mp3',
+        audioQuality: 192,
+        output: outputTemplate,
+        noPlaylist: true,
+        // Progress callback would be nice but youtube-dl-exec doesn't support it directly
+      });
+
+      job.progress = 90;
+
+      // Find the downloaded file
+      const expectedPath = path.join(this.downloadDir, `${jobId}.mp3`);
+      
+      try {
+        await fs.access(expectedPath);
+        job.audioFilePath = expectedPath;
+      } catch {
+        // If mp3 doesn't exist, try to find any file with the job ID
+        const files = await fs.readdir(this.downloadDir);
+        const downloadedFile = files.find(file => file.startsWith(jobId));
+        
+        if (downloadedFile) {
+          job.audioFilePath = path.join(this.downloadDir, downloadedFile);
+        } else {
+          throw new Error('Downloaded audio file not found');
+        }
+      }
+
+      job.status = 'completed';
+      job.progress = 100;
+      job.completedAt = new Date();
+
+    } catch (error) {
+      job.status = 'failed';
+      job.error = error instanceof Error ? error.message : 'Unknown error occurred';
+      job.completedAt = new Date();
+      throw error;
+    }
+  }
+}
+
+// Singleton instance
+export const youtubeDownloaderService = new YouTubeDownloaderService();
