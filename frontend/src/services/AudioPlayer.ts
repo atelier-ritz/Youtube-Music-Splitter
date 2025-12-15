@@ -41,6 +41,7 @@ export class AudioPlayer {
   private animationFrameId: number | null = null;
   private positionUpdateCallback?: (position: number) => void;
   private analysisService: AudioAnalysisService;
+  private playbackRate: number = 1.0;
 
   constructor() {
     // Don't initialize AudioContext in constructor - wait for user interaction
@@ -251,12 +252,15 @@ export class AudioPlayer {
 
     this.resumeAudioContext().then(() => {
       this.isPlaying = true;
-      this.startTime = this.audioContext!.currentTime - this.currentPosition;
+      this.startTime = this.audioContext!.currentTime - this.currentPosition / this.playbackRate;
 
       // Create and start source nodes for all tracks
       this.audioTracks.forEach((audioTrack) => {
         const source = this.audioContext!.createBufferSource();
         source.buffer = audioTrack.buffer;
+        source.playbackRate.value = this.playbackRate;
+        // Compensate pitch by detuning inversely to maintain original pitch
+        source.detune.value = 1200 * Math.log2(1 / this.playbackRate);
         source.connect(audioTrack.gainNode);
         
         // Start from current position
@@ -405,9 +409,39 @@ export class AudioPlayer {
    */
   getCurrentPosition(): number {
     if (this.isPlaying && this.audioContext) {
-      return this.audioContext.currentTime - this.startTime;
+      return (this.audioContext.currentTime - this.startTime) * this.playbackRate;
     }
     return this.currentPosition;
+  }
+
+  /**
+   * Set playback rate (speed multiplier) while maintaining pitch
+   * Uses detune to compensate for pitch changes caused by playback rate
+   * Valid range: 0.5 to 2.0
+   */
+  setPlaybackRate(rate: number): void {
+    const clampedRate = Math.max(0.5, Math.min(2.0, rate));
+    this.playbackRate = clampedRate;
+
+    // If currently playing, update all active source nodes
+    if (this.isPlaying) {
+      this.audioTracks.forEach((audioTrack) => {
+        if (audioTrack.source) {
+          audioTrack.source.playbackRate.value = clampedRate;
+          // Compensate pitch by detuning inversely
+          // Formula: detune (cents) = 1200 * log2(playbackRate)
+          // This keeps pitch constant while changing speed
+          audioTrack.source.detune.value = 1200 * Math.log2(1 / clampedRate);
+        }
+      });
+    }
+  }
+
+  /**
+   * Get current playback rate
+   */
+  getPlaybackRate(): number {
+    return this.playbackRate;
   }
 
   /**

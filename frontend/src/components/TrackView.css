@@ -11,7 +11,7 @@
   padding: 0;
   
   /* CSS Custom Properties for flexible sizing */
-  --daw-toolbar-height: 40px;
+  --daw-toolbar-height: 60px;
   --daw-ruler-height: 40px;
   --daw-track-height: 66px;
   --daw-track-header-width: 180px;
@@ -31,6 +31,14 @@
   --daw-success-color: #4CAF50;
   --daw-error-color: #f44336;
   --daw-warning-color: #ffeb3b;
+  
+  /* Track Colors - Unified with waveform colors */
+  --track-vocals-color: #d77c57;
+  --track-drums-color: #964fa5;
+  --track-bass-color: #133962;
+  --track-guitar-color: #d0ab25;
+  --track-piano-color: #3dc77d;
+  --track-other-color: #b640a7;
   
   /* Layout */
   width: 100%;
@@ -70,41 +78,51 @@
 .daw-time-display {
   background: #000;
   color: #00ff00;
-  padding: 4px 12px;
-  border-radius: 4px;
+  border: 2px solid #3a3d4a;
+  padding: 8px 12px;
+  border-radius: 6px;
   font-family: 'Courier New', monospace;
   font-size: 14px;
   font-weight: bold;
-  min-width: 100px;
+  width: 124px;
+  height: 44px;
   text-align: center;
   transition: all 0.2s ease;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 0 4px rgba(0, 255, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .daw-time-display--clickable {
   cursor: pointer;
-  border: 2px solid transparent;
 }
 
 .daw-time-display--clickable:hover {
   background: #001100;
   border-color: #00ff00;
-  box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 255, 0, 0.3);
   transform: translateY(-1px);
 }
 
 .daw-timestamp-input {
   background: #000;
   color: #00ff00;
-  padding: 4px 12px;
   border: 2px solid #00ff00;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
   font-family: 'Courier New', monospace;
   font-size: 14px;
   font-weight: bold;
-  min-width: 100px;
+  width: 124px;
+  height: 44px;
   text-align: center;
   outline: none;
-  box-shadow: 0 0 12px rgba(0, 255, 0, 0.5);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 255, 0, 0.5);
+  text-shadow: 0 0 4px rgba(0, 255, 0, 0.3);
+  box-sizing: border-box;
 }
 
 .daw-timestamp-input:focus {
@@ -117,14 +135,129 @@
   opacity: 0.7;
 }
 
+.daw-speed-window {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border: 2px solid #3a3d4a;
+  padding: 8px 12px;
+  border-radius: 6px;
+  min-width: 60px;
+  height: 28px;
+}
+
+.daw-speed-value {
+  font-size: 14px;
+  font-weight: bold;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 4px rgba(0, 255, 0, 0.3);
+  line-height: 1;
+}
+
+.daw-speed-value--clickable {
+  cursor: pointer;
+}
+
+.daw-speed-value--clickable:hover {
+  color: #00ff88;
+  text-shadow: 0 0 6px rgba(0, 255, 0, 0.5);
+}
+
+.daw-speed-label {
+  font-size: 8px;
+  color: #00ff00;
+  font-weight: bold;
+  margin-top: 1px;
+  opacity: 0.8;
+  line-height: 1;
+}
+
+.daw-speed-input {
+  background: #000;
+  color: #00ff00;
+  border: 2px solid #00ff00;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: bold;
+  width: 60px;
+  height: 28px;
+  text-align: center;
+  outline: none;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 255, 0, 0.5);
+  text-shadow: 0 0 4px rgba(0, 255, 0, 0.3);
+  box-sizing: border-box;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.daw-speed-input:focus {
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 255, 0, 0.7);
+  border-color: #00ff88;
+}
+
+.daw-speed-input::placeholder {
+  color: #006600;
+  opacity: 0.7;
+}
+
+.daw-speed-select {
+  background: #000;
+  color: #00ff00;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: bold;
+  width: 60px;
+  height: 28px;
+  text-align: center;
+  outline: none;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 0 4px rgba(0, 255, 0, 0.3);
+  box-sizing: border-box;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300ff00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+  background-size: 16px;
+  padding-right: 24px;
+}
+
+.daw-speed-select:hover {
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 255, 0, 0.3);
+}
+
+.daw-speed-select:focus {
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 255, 0, 0.5);
+}
+
+.daw-speed-select option {
+  background: #000;
+  color: #00ff00;
+  padding: 4px 8px;
+}
+
 .daw-back-button {
   background: #4a4d5a;
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 0 12px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .daw-back-button:hover {
@@ -204,32 +337,68 @@
   background: #f44336;
 }
 
-.daw-bpm-display {
+.daw-bpm-window {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #3a3d4a;
-  padding: 4px 12px;
-  border-radius: 4px;
+  justify-content: center;
+  background: #000;
+  border: 2px solid #3a3d4a;
+  padding: 8px 12px;
+  border-radius: 6px;
+  min-width: 60px;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+  height: 28px;
 }
 
 .daw-bpm-value {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
   color: #00ff00;
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 4px rgba(0, 255, 0, 0.3);
+  line-height: 1;
 }
 
 .daw-bpm-label {
-  font-size: 10px;
-  color: #888;
+  font-size: 8px;
+  color: #00ff00;
+  font-weight: bold;
+  margin-top: 1px;
+  opacity: 0.8;
+  line-height: 1;
 }
 
-.daw-time-signature {
-  background: #3a3d4a;
+.daw-signature-window {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border: 2px solid #3a3d4a;
   padding: 8px 12px;
-  border-radius: 4px;
+  border-radius: 6px;
+  min-width: 40px;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+  height: 28px;
+}
+
+.daw-signature-value {
   font-size: 14px;
   font-weight: bold;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 4px rgba(0, 255, 0, 0.3);
+  line-height: 1;
+}
+
+.daw-signature-label {
+  font-size: 8px;
+  color: #00ff00;
+  font-weight: bold;
+  margin-top: 1px;
+  opacity: 0.8;
+  line-height: 1;
 }
 
 /* DAW Main Area */
@@ -375,29 +544,29 @@
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
-/* Track number color variations - Matching Waveform Colors */
+/* Track number color variations - Unified with Waveform Colors */
 .daw-track:nth-child(1) .daw-track-number {
-  background: linear-gradient(135deg, #ff6b6b 0%, #e55555 100%); /* Vocals - Red */
+  background: linear-gradient(135deg, var(--track-vocals-color) 0%, color-mix(in srgb, var(--track-vocals-color) 85%, black) 100%); /* Vocals */
 }
 
 .daw-track:nth-child(2) .daw-track-number {
-  background: linear-gradient(135deg, #4ecdc4 0%, #3bb5ad 100%); /* Drums - Teal */
+  background: linear-gradient(135deg, var(--track-drums-color) 0%, color-mix(in srgb, var(--track-drums-color) 85%, black) 100%); /* Drums */
 }
 
 .daw-track:nth-child(3) .daw-track-number {
-  background: linear-gradient(135deg, #45b7d1 0%, #3a9bc1 100%); /* Bass - Blue */
+  background: linear-gradient(135deg, var(--track-bass-color) 0%, color-mix(in srgb, var(--track-bass-color) 85%, black) 100%); /* Bass */
 }
 
 .daw-track:nth-child(4) .daw-track-number {
-  background: linear-gradient(135deg, #f9ca24 0%, #e6b800 100%); /* Guitar - Yellow */
+  background: linear-gradient(135deg, var(--track-guitar-color) 0%, color-mix(in srgb, var(--track-guitar-color) 85%, black) 100%); /* Guitar */
 }
 
 .daw-track:nth-child(5) .daw-track-number {
-  background: linear-gradient(135deg, #6c5ce7 0%, #5a4bd4 100%); /* Piano - Purple */
+  background: linear-gradient(135deg, var(--track-piano-color) 0%, color-mix(in srgb, var(--track-piano-color) 85%, black) 100%); /* Piano */
 }
 
 .daw-track:nth-child(6) .daw-track-number {
-  background: linear-gradient(135deg, #a0a0a0 0%, #888888 100%); /* Other - Gray */
+  background: linear-gradient(135deg, var(--track-other-color) 0%, color-mix(in srgb, var(--track-other-color) 85%, black) 100%); /* Other */
 }
 
 .daw-track-number::after {
@@ -764,8 +933,8 @@
   }
   
   .daw-transport-btn {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
   }
   
 
@@ -803,8 +972,8 @@
   }
   
   .daw-transport-btn {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     font-size: 12px;
   }
   
@@ -860,13 +1029,29 @@
   .daw-time-display {
     font-size: 12px;
     padding: 3px 8px;
-    min-width: 85px;
+    width: 100px;
   }
   
   .daw-timestamp-input {
     font-size: 12px;
     padding: 3px 8px;
-    min-width: 85px;
+    width: 100px;
+  }
+  
+  .daw-speed-window {
+    padding: 4px 8px;
+  }
+  
+  .daw-speed-value {
+    font-size: 12px;
+  }
+  
+  .daw-signature-window {
+    padding: 4px 8px;
+  }
+  
+  .daw-signature-value {
+    font-size: 12px;
   }
   
   .daw-transport-controls {
@@ -875,13 +1060,13 @@
   }
   
   .daw-transport-btn {
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     font-size: 11px;
   }
   
-  .daw-bpm-display {
-    padding: 3px 8px;
+  .daw-bpm-window {
+    padding: 4px 8px;
   }
   
   .daw-bpm-value {
@@ -962,18 +1147,31 @@
   .daw-time-display {
     font-size: 11px;
     padding: 2px 6px;
-    min-width: 75px;
+    width: 85px;
   }
   
   .daw-timestamp-input {
     font-size: 11px;
     padding: 2px 6px;
-    min-width: 75px;
+    width: 85px;
+  }
+  
+  .daw-speed-display {
+    font-size: 11px;
+    padding: 2px 6px;
+    width: 60px;
+  }
+  
+  .daw-speed-input {
+    font-size: 11px;
+    padding: 2px 6px;
+    width: 60px;
   }
   
   .daw-back-button {
-    padding: 4px 8px;
+    padding: 0 8px;
     font-size: 10px;
+    height: 28px;
   }
   
   .daw-transport-controls {
@@ -982,13 +1180,13 @@
   }
   
   .daw-transport-btn {
-    width: 28px;
-    height: 28px;
+    width: 36px;
+    height: 36px;
     font-size: 10px;
   }
   
-  .daw-bpm-display {
-    padding: 2px 6px;
+  .daw-bpm-window {
+    padding: 3px 6px;
   }
   
   .daw-bpm-value {
@@ -1079,8 +1277,8 @@
   }
   
   .daw-transport-btn {
-    width: 26px;
-    height: 26px;
+    width: 36px;
+    height: 36px;
   }
   
   .daw-timeline-ruler {

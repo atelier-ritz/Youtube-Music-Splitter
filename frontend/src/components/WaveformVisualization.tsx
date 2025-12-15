@@ -51,12 +51,12 @@ const waveformCache = new Map<string, WaveformCache>();
 
 // Track-specific colors for consistent styling
 const TRACK_COLORS: Record<string, string> = {
-  vocals: '#ff6b6b',
-  drums: '#4ecdc4',
-  bass: '#45b7d1',
-  guitar: '#f9ca24',
-  piano: '#6c5ce7',
-  other: '#a0a0a0'
+  vocals: '#d77c57',
+  drums: '#964fa5',
+  bass: '#396594ff',
+  guitar: '#d0ab25',
+  piano: '#3dc77d',
+  other: '#b640a7'
 };
 
 const WaveformVisualization: React.FC<WaveformVisualizationProps> = ({

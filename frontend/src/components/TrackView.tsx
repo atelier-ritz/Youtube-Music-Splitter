@@ -33,6 +33,7 @@ const TrackView: React.FC<TrackViewProps> = ({
   const [trackStates, setTrackStates] = useState<Track[]>(tracks);
   const [isEditingTimestamp, setIsEditingTimestamp] = useState(false);
   const [timestampInputValue, setTimestampInputValue] = useState('');
+  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
   const timelineRef = useRef<HTMLDivElement>(null);
   const timestampInputRef = useRef<HTMLInputElement>(null);
 
@@ -324,6 +325,18 @@ const TrackView: React.FC<TrackViewProps> = ({
     handleTimestampSubmit();
   };
 
+  // Handle playback speed change from dropdown
+  const handleSpeedChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSpeed = parseFloat(event.target.value);
+    try {
+      setPlaybackSpeed(newSpeed);
+      audioPlayer.setPlaybackRate(newSpeed);
+    } catch (error) {
+      console.error('Speed change error:', error);
+      onShowToast?.showError('Speed Change Failed', 'Could not change playback speed');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="track-view">
@@ -433,13 +446,30 @@ const TrackView: React.FC<TrackViewProps> = ({
         </div>
         
         <div className="daw-toolbar__right">
-          {bpm && (
-            <div className="daw-bpm-display">
-              <span className="daw-bpm-value">{bpm}</span>
-              <span className="daw-bpm-label">BPM</span>
-            </div>
-          )}
-          <div className="daw-time-signature">4/4</div>
+          <div className="daw-speed-window">
+            <select 
+              value={playbackSpeed}
+              onChange={handleSpeedChange}
+              className="daw-speed-select"
+              title="Select playback speed"
+            >
+              <option value={0.5}>0.5x</option>
+              <option value={0.6}>0.6x</option>
+              <option value={0.7}>0.7x</option>
+              <option value={0.8}>0.8x</option>
+              <option value={0.9}>0.9x</option>
+              <option value={1.0}>1.0x</option>
+            </select>
+            <span className="daw-speed-label">SPEED</span>
+          </div>
+          <div className="daw-bpm-window">
+            <span className="daw-bpm-value">{bpm || '---'}</span>
+            <span className="daw-bpm-label">BPM</span>
+          </div>
+          <div className="daw-signature-window">
+            <span className="daw-signature-value">4/4</span>
+            <span className="daw-signature-label">TIME SIG.</span>
+          </div>
         </div>
       </div>
 
