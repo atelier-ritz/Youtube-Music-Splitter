@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { categorizeError, createRetryableAxios } from '../utils/retryUtils';
+import { useErrorHandler } from './ErrorBoundary';
+import LoadingSpinner from './LoadingSpinner';
+import InteractiveButton from './InteractiveButton';
 import './MainPage.css';
 
 interface DownloadStatus {
@@ -17,9 +21,14 @@ interface YouTubeValidationResult {
 
 interface MainPageProps {
   onProcessingComplete: (tracks: any[], bpm?: number, title?: string) => void;
+  onShowToast?: {
+    showSuccess: (title: string, message?: string) => void;
+    showError: (title: string, message?: string) => void;
+    showInfo: (title: string, message?: string) => void;
+  };
 }
 
-const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete }) => {
+const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }) => {
   const [url, setUrl] = useState('');
   const [downloadStatus, setDownloadStatus] = useState<DownloadStatus>({
     status: 'idle',
@@ -27,6 +36,20 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete }) => {
     message: ''
   });
   const [validationError, setValidationError] = useState('');
+  const handleError = useErrorHandler();
+  
+  // Create retry-enabled axios client
+  const retryableAxios = createRetryableAxios(axios, {
+    maxAttempts: 3,
+    baseDelay: 2000,
+    onRetry: (attempt, error) => {
+      console.log(`Retrying API call (attempt ${attempt}):`, error.message);
+      setDownloadStatus(prev => ({
+        ...prev,
+        message: `Connection issue, retrying... (attempt ${attempt}/3)`
+      }));
+    }
+  });
 
   // Client-side YouTube URL validation (mirrors backend logic)
   const validateYouTubeUrl = (url: string): YouTubeValidationResult => {
@@ -96,7 +119,9 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete }) => {
     // Validate URL
     const validation = validateYouTubeUrl(url);
     if (!validation.isValid) {
-      setValidationError(validation.error || 'Invalid YouTube URL');
+      const errorMsg = validation.error || 'Invalid YouTube URL';
+      setValidationError(errorMsg);
+      onShowToast?.showError('Invalid URL', errorMsg);
       return;
     }
 
@@ -108,9 +133,12 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete }) => {
         message: 'Starting download...'
       });
 
-      // Call backend API to start download
-      const response = await axios.post('/api/download', { youtubeUrl: url });
-      const { jobId } = response.data;
+      // Show info toast
+      onShowToast?.showInfo('Download Started', 'Extracting audio from YouTube video...');
+
+      // Call backend API to start download with retry
+      const response = await retryableAxios.post('/api/download', { youtubeUrl: url });
+      const { jobId } = (response as any).data;
 
       setDownloadStatus({
         status: 'downloading',
@@ -124,21 +152,31 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete }) => {
 
     } catch (error) {
       console.error('Download failed:', error);
+      
+      // Categorize error for better user messaging
+      const errorInfo = categorizeError(error);
+      
       setDownloadStatus({
         status: 'error',
         progress: 0,
-        message: axios.isAxiosError(error) && error.response?.data?.error 
-          ? error.response.data.error 
-          : 'Failed to start download. Please try again.'
+        message: errorInfo.message
       });
+
+      // Show error toast
+      onShowToast?.showError('Download Failed', errorInfo.message);
+
+      // If it's an unexpected error, trigger error boundary
+      if (errorInfo.type === 'unknown' && !errorInfo.isRetryable) {
+        handleError(error as Error);
+      }
     }
   };
 
   const startAudioProcessing = async (audioFilePath: string) => {
     try {
-      // Start audio processing
-      const response = await axios.post('/api/process', { audioFilePath });
-      const { jobId } = response.data;
+      // Start audio processing with retry
+      const response = await retryableAxios.post('/api/process', { audioFilePath });
+      const { jobId } = (response as any).data;
 
       setDownloadStatus(prev => ({
         ...prev,
@@ -151,13 +189,20 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete }) => {
 
     } catch (error) {
       console.error('Processing failed:', error);
+      
+      // Categorize error for better user messaging
+      const errorInfo = categorizeError(error);
+      
       setDownloadStatus({
         status: 'error',
         progress: 0,
-        message: axios.isAxiosError(error) && error.response?.data?.error 
-          ? error.response.data.error 
-          : 'Failed to start audio processing. Please try again.'
+        message: errorInfo.message
       });
+
+      // If it's an unexpected error, trigger error boundary
+      if (errorInfo.type === 'unknown' && !errorInfo.isRetryable) {
+        handleError(error as Error);
+      }
     }
   };
 
@@ -167,8 +212,8 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete }) => {
 
     const poll = async () => {
       try {
-        const response = await axios.get(`/api/process/${jobId}`);
-        const { status, progress, message, error, tracks, bpm } = response.data;
+        const response = await retryableAxios.get(`/api/process/${jobId}`);
+        const { status, progress, message, error, tracks, bpm } = (response as any).data;
 
         // Map processing progress to 50-100% range
         const mappedProgress = 50 + (progress * 0.5); // 50% + (0-100% * 0.5) = 50-100%
@@ -241,8 +286,8 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete }) => {
 
     const poll = async () => {
       try {
-        const response = await axios.get(`/api/download/${jobId}`);
-        const { status, progress, message, error } = response.data;
+        const response = await retryableAxios.get(`/api/download/${jobId}`);
+        const { status, progress, message, error } = (response as any).data;
 
         // Map download progress to 0-50% range
         const mappedProgress = Math.round((progress || 0) * 0.5); // 0-100% * 0.5 = 0-50%
@@ -262,8 +307,11 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete }) => {
             message: 'Download complete! Starting audio processing...'
           });
           
+          // Show success toast for download completion
+          onShowToast?.showSuccess('Download Complete', 'Starting audio separation...');
+          
           // Start processing with the downloaded audio file
-          const { audioFilePath } = response.data;
+          const { audioFilePath } = (response as any).data;
           if (audioFilePath) {
             await startAudioProcessing(audioFilePath);
           } else {
@@ -343,13 +391,17 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete }) => {
               disabled={isLoading}
               required
             />
-            <button
+            <InteractiveButton
               type="submit"
+              variant="primary"
+              size="medium"
+              loading={isLoading}
+              loadingText="Processing..."
+              disabled={!url.trim()}
               className="main-page__submit"
-              disabled={isLoading || !url.trim()}
             >
-              {isLoading ? 'Processing...' : 'Start Practice'}
-            </button>
+              Start Practice
+            </InteractiveButton>
           </div>
 
           {validationError && (
@@ -363,27 +415,26 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete }) => {
           <div className="main-page__status">
             {downloadStatus.status === 'downloading' || downloadStatus.status === 'processing' ? (
               <div className="main-page__progress">
-                <div className="main-page__progress-bar">
-                  <div 
-                    className="main-page__progress-fill"
-                    style={{ width: `${downloadStatus.progress}%` }}
-                  />
-                </div>
-                <p className="main-page__progress-text">
-                  {downloadStatus.message} ({downloadStatus.progress}%)
-                </p>
+                <LoadingSpinner
+                  size="large"
+                  variant="primary"
+                  progress={downloadStatus.progress}
+                  message={downloadStatus.message}
+                />
               </div>
             ) : downloadStatus.status === 'error' ? (
               <div className="main-page__error-status">
                 <p className="main-page__error-message">
                   {downloadStatus.message}
                 </p>
-                <button 
-                  className="main-page__retry"
+                <InteractiveButton 
+                  variant="danger"
+                  size="medium"
                   onClick={handleRetry}
+                  className="main-page__retry"
                 >
                   Try Again
-                </button>
+                </InteractiveButton>
               </div>
             ) : downloadStatus.status === 'completed' ? (
               <div className="main-page__success">

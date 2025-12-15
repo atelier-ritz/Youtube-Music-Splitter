@@ -60,59 +60,109 @@ def detect_bpm(file_path):
         print(f"Error detecting BPM: {e}")
         return None
 
+def update_progress(job_id, progress, message=None):
+    """Helper function to update job progress"""
+    with jobs_lock:
+        jobs[job_id]['progress'] = progress
+        if message:
+            jobs[job_id]['message'] = message
+
 def separate_audio(job_id, input_file):
     """Separate audio using Demucs in a background thread"""
     try:
+        update_progress(job_id, 5, "Initializing...")
+        
         with jobs_lock:
             jobs[job_id]['status'] = 'processing'
-            jobs[job_id]['progress'] = 10
         
         # Create output directory for this job
         job_output_dir = OUTPUT_FOLDER / job_id
         job_output_dir.mkdir(exist_ok=True)
         
-        # Update progress
-        with jobs_lock:
-            jobs[job_id]['progress'] = 20
+        update_progress(job_id, 10, "Analyzing audio file...")
         
-        # Run Demucs separation
+        # Get audio duration to estimate processing time
+        duration = get_audio_duration(input_file)
+        # Rough estimate: 6-stem model takes about 0.3-0.5x the audio duration
+        estimated_processing_time = max(duration * 0.4, 30)  # At least 30 seconds
+        
+        update_progress(job_id, 15, "Preparing separation...")
+        
+        # Run Demucs separation with 6-stem model for guitar separation
         cmd = [
             'python', '-m', 'demucs.separate',
             '--mp3',  # Output as MP3
             '--mp3-bitrate', '192',  # Good quality, reasonable file size
+            '-n', 'htdemucs_6s',  # Use 6-stem model (vocals, drums, bass, guitar, piano, other)
             '-o', str(job_output_dir),
             str(input_file)
         ]
         
         print(f"Running Demucs command: {' '.join(cmd)}")
+        update_progress(job_id, 20, "Starting audio separation...")
         
-        # Update progress
-        with jobs_lock:
-            jobs[job_id]['progress'] = 30
+        # Start the process and monitor it
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         
-        # Run the separation (this takes the most time)
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)  # 10 minute timeout
+        # Monitor progress with time-based estimation
+        start_time = time.time()
         
-        if result.returncode != 0:
-            raise Exception(f"Demucs failed: {result.stderr}")
+        # Progress simulation based on estimated time
+        def simulate_progress():
+            while process.poll() is None:  # While process is running
+                elapsed = time.time() - start_time
+                # Progress from 20% to 85% based on estimated time
+                progress_range = 85 - 20
+                time_progress = min(elapsed / estimated_processing_time, 1.0)
+                current_progress = 20 + (progress_range * time_progress)
+                
+                # Add some realistic stages
+                if current_progress < 30:
+                    message = "Loading model..."
+                elif current_progress < 45:
+                    message = "Separating vocals..."
+                elif current_progress < 55:
+                    message = "Separating drums..."
+                elif current_progress < 65:
+                    message = "Separating bass..."
+                elif current_progress < 75:
+                    message = "Separating guitar..."
+                elif current_progress < 80:
+                    message = "Separating piano..."
+                else:
+                    message = "Finalizing separation..."
+                
+                update_progress(job_id, int(current_progress), message)
+                time.sleep(2)  # Update every 2 seconds
         
-        # Update progress
-        with jobs_lock:
-            jobs[job_id]['progress'] = 80
+        # Start progress monitoring in a separate thread
+        progress_thread = threading.Thread(target=simulate_progress)
+        progress_thread.daemon = True
+        progress_thread.start()
+        
+        # Wait for the process to complete
+        stdout, stderr = process.communicate(timeout=600)  # 10 minute timeout
+        
+        if process.returncode != 0:
+            raise Exception(f"Demucs failed: {stderr}")
+        
+        update_progress(job_id, 85, "Processing completed, organizing files...")
         
         # Find the separated files
-        # Demucs creates: job_output_dir/htdemucs/{filename_without_ext}/{track}.mp3
+        # Demucs creates: job_output_dir/htdemucs_6s/{filename_without_ext}/{track}.mp3
         input_name = Path(input_file).stem
-        separated_dir = job_output_dir / 'htdemucs' / input_name
+        separated_dir = job_output_dir / 'htdemucs_6s' / input_name
         
         if not separated_dir.exists():
             raise Exception(f"Separated files not found at {separated_dir}")
         
-        # Map Demucs output to our expected format
+        # Map Demucs output to our expected format (6-stem model)
         track_mapping = {
             'vocals.mp3': 'vocals',
             'drums.mp3': 'drums', 
             'bass.mp3': 'bass',
+            'guitar.mp3': 'guitar',
+            'piano.mp3': 'piano',
             'other.mp3': 'other'
         }
         
@@ -123,15 +173,12 @@ def separate_audio(job_id, input_file):
                 # Create a URL that our backend can serve
                 tracks[track_name] = f"http://localhost:8000/api/tracks/{job_id}/{demucs_file}"
         
+        update_progress(job_id, 90, "Detecting BPM...")
+        
         # Detect BPM from original file
         bpm = detect_bpm(input_file)
         
-        # Update progress
-        with jobs_lock:
-            jobs[job_id]['progress'] = 90
-        
-        # Get duration
-        duration = get_audio_duration(input_file)
+        update_progress(job_id, 95, "Finalizing...")
         
         # Complete the job
         with jobs_lock:
@@ -141,7 +188,8 @@ def separate_audio(job_id, input_file):
                 'tracks': tracks,
                 'bpm': bpm,
                 'duration': duration,
-                'completed_at': time.time()
+                'completed_at': time.time(),
+                'message': 'Separation completed successfully!'
             })
         
         print(f"Job {job_id} completed successfully")
@@ -151,6 +199,7 @@ def separate_audio(job_id, input_file):
             jobs[job_id].update({
                 'status': 'failed',
                 'error': 'Processing timeout - file may be too large or complex',
+                'message': 'Processing timed out',
                 'completed_at': time.time()
             })
         print(f"Job {job_id} timed out")
@@ -160,6 +209,7 @@ def separate_audio(job_id, input_file):
             jobs[job_id].update({
                 'status': 'failed',
                 'error': str(e),
+                'message': f'Processing failed: {str(e)}',
                 'completed_at': time.time()
             })
         print(f"Job {job_id} failed: {e}")
@@ -236,6 +286,10 @@ def get_job_status(job_id):
             'progress': job['progress']
         }
         
+        # Include progress message if available
+        if 'message' in job:
+            response['message'] = job['message']
+        
         if job['status'] == 'completed':
             response.update({
                 'tracks': job.get('tracks', {}),
@@ -271,7 +325,7 @@ def serve_track(job_id, filename):
         if not input_name:
             return jsonify({'error': 'Job not found'}), 404
         
-        track_file = OUTPUT_FOLDER / job_id / 'htdemucs' / input_name / filename
+        track_file = OUTPUT_FOLDER / job_id / 'htdemucs_6s' / input_name / filename
         
         if not track_file.exists():
             return jsonify({'error': 'Track file not found'}), 404

@@ -1,14 +1,24 @@
-/* DAW Interface Styles */
+/* DAW Interface - Full Screen Layout */
 .daw-interface {
+  /* Override global body and root styles for full-screen */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  margin: 0;
+  padding: 0;
+  
   /* CSS Custom Properties for flexible sizing */
-  --daw-toolbar-height: 60px;
+  --daw-toolbar-height: 40px;
   --daw-ruler-height: 40px;
-  --daw-track-height: 80px;
-  --daw-track-header-width: 200px;
+  --daw-track-height: 66px;
+  --daw-track-header-width: 180px;
   --daw-transport-btn-size: 36px;
   --daw-track-btn-size: 20px;
-  --daw-volume-slider-width: 60px;
-  --daw-waveform-height: 60px;
+
+  --daw-waveform-height: calc(var(--daw-track-height) - 10px); /* Track height minus small margins */
   
   /* Colors */
   --daw-bg-primary: #2a2d3a;
@@ -22,12 +32,15 @@
   --daw-error-color: #f44336;
   --daw-warning-color: #ffeb3b;
   
-  min-height: 100vh;
+  /* Layout */
+  width: 100%;
+  height: 100%;
   background: var(--daw-bg-primary);
   color: var(--daw-text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* DAW Toolbar */
@@ -97,27 +110,52 @@
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  transition: all 0.2s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .daw-transport-btn:hover {
   background: #5a5d6a;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.daw-transport-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 .daw-transport-btn--play {
-  background: #4CAF50;
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
 }
 
 .daw-transport-btn--play:hover {
-  background: #5CBF60;
+  background: linear-gradient(135deg, #5CBF60 0%, #4CAF50 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
 }
 
 .daw-transport-btn--playing {
-  background: #f44336;
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+  animation: daw-transport-playing 2s ease-in-out infinite;
 }
 
 .daw-transport-btn--playing:hover {
-  background: #f55346;
+  background: linear-gradient(135deg, #f55346 0%, #e53935 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+@keyframes daw-transport-playing {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 12px rgba(244, 67, 54, 0.5);
+  }
 }
 
 .daw-transport-btn--record {
@@ -169,9 +207,9 @@
 }
 
 .daw-ruler-track-header {
-  width: 200px;
-  background: #2a2d3a;
-  border-right: 1px solid #3a3d4a;
+  width: var(--daw-track-header-width);
+  background: transparent;
+  margin: 4px;
 }
 
 .daw-ruler-content {
@@ -179,6 +217,8 @@
   position: relative;
   background: #1e2028;
   overflow: hidden;
+  /* Ensure ruler aligns with track content */
+  padding: 0;
 }
 
 .daw-ruler-marker {
@@ -189,11 +229,14 @@
   padding-left: 4px;
   display: flex;
   align-items: center;
+  /* Ensure markers align with track content */
+  transform: translateX(0);
 }
 
 .daw-ruler-number {
-  font-size: 11px;
-  color: #888;
+  font-size: 12px;
+  color: #ccc;
+  font-weight: 500;
   font-weight: bold;
 }
 
@@ -205,18 +248,26 @@
   background: #ff6b35;
   z-index: 100;
   pointer-events: none;
+  /* Ensure playhead aligns with content */
+  transform: translateX(-1px); /* Center the 2px line */
 }
 
 /* Track Area */
 .daw-track-area {
   flex: 1;
   overflow-y: auto;
+  min-height: 0; /* Allow flex shrinking */
 }
 
 .daw-track {
   display: flex;
   border-bottom: 1px solid #3a3d4a;
-  height: 80px;
+  height: var(--daw-track-height);
+  transition: opacity 0.2s ease;
+  /* Ensure tracks don't interfere with each other */
+  position: relative;
+  overflow: hidden;
+  contain: layout style;
 }
 
 .daw-track:nth-child(odd) {
@@ -227,103 +278,220 @@
   background: #252833;
 }
 
+/* Track silenced due to solo (dim entire waveform container, keep controls visible) */
+.daw-track--silenced .daw-waveform-container {
+  opacity: 0.2 !important;
+  transition: opacity 0.2s ease;
+}
+
+/* Track muted only (dim entire waveform container, keep controls visible) */
+.daw-track--muted-only .daw-waveform-container {
+  opacity: 0.3 !important;
+  transition: opacity 0.2s ease;
+}
+
+/* Enhanced track state styling for new header design */
+.daw-track--muted .daw-track-header {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.daw-track--muted .daw-track-info {
+  background: #2a2d3a;
+}
+
+.daw-track--soloed .daw-track-header {
+  box-shadow: 0 2px 12px rgba(255, 235, 59, 0.4);
+}
+.daw-track--soloed .daw-track-info {
+  background: #4a4d5a;
+}
+
 /* Track Header */
 .daw-track-header {
-  width: 200px;
+  width: var(--daw-track-header-width);
   background: #2a2d3a;
   border-right: 1px solid #3a3d4a;
   display: flex;
-  align-items: center;
-  padding: 8px;
-  gap: 8px;
+  align-items: stretch;
+  padding: 0;
+  gap: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .daw-track-number {
-  width: 24px;
-  height: 24px;
-  background: #4a4d5a;
-  border-radius: 50%;
+  width: 40px;
+  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: bold;
   color: white;
+  position: relative;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Track number color variations - Enhanced Pastel Theme */
+.daw-track:nth-child(1) .daw-track-number {
+  background: linear-gradient(135deg, #82a8c4 0%, #6f95b0 100%); /* Enhanced Blue */
+}
+
+.daw-track:nth-child(2) .daw-track-number {
+  background: linear-gradient(135deg, #8fc4b0 0%, #7db09c 100%); /* Enhanced Sage Green */
+}
+
+.daw-track:nth-child(3) .daw-track-number {
+  background: linear-gradient(135deg, #d4a8b0 0%, #c1959e 100%); /* Enhanced Rose */
+}
+
+.daw-track:nth-child(4) .daw-track-number {
+  background: linear-gradient(135deg, #b8a8c4 0%, #a595b0 100%); /* Enhanced Lavender */
+}
+
+.daw-track:nth-child(5) .daw-track-number {
+  background: linear-gradient(135deg, #d4c0a8 0%, #c1ad95 100%); /* Enhanced Warm Tan */
+}
+
+.daw-track:nth-child(6) .daw-track-number {
+  background: linear-gradient(135deg, #a8c4d4 0%, #95b0c1 100%); /* Enhanced Powder Blue */
+}
+
+.daw-track-number::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .daw-track-info {
+  width: var(--daw-track-header-width);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #3a3d4a;
+  position: relative;
+}
+
+.daw-track-name-section {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  min-width: 0; /* Allow text truncation */
+}
+
+.daw-track-controls-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 12px;
 }
 
 .daw-track-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: white;
-  margin-bottom: 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  flex: 1;
+  margin-right: 8px;
 }
 
 .daw-track-controls {
   display: flex;
-  gap: 4px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .daw-track-btn {
-  width: 20px;
+  width: 28px;
   height: 20px;
   border: none;
-  border-radius: 3px;
+  border-radius: 4px;
   background: #4a4d5a;
   color: white;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: bold;
-  transition: all 0.2s ease;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .daw-track-btn:hover {
   background: #5a5d6a;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.daw-track-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .daw-track-btn--mute.daw-track-btn--active {
-  background: #f44336;
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  color: white;
+  box-shadow: 0 3px 8px rgba(244, 67, 54, 0.5);
+  transform: translateY(-1px);
+}
+
+.daw-track-btn--mute.daw-track-btn--active:hover {
+  background: linear-gradient(135deg, #f55346 0%, #e53935 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.6);
 }
 
 .daw-track-btn--solo.daw-track-btn--active {
-  background: #ffeb3b;
-  color: #000;
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  color: white;
+  box-shadow: 0 3px 8px rgba(255, 152, 0, 0.5);
+  transform: translateY(-1px);
 }
 
-.daw-track-volume {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
+.daw-track-btn--solo.daw-track-btn--active:hover {
+  background: linear-gradient(135deg, #ffb74d 0%, #ff9800 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.6);
 }
 
-.daw-volume-slider {
-  width: 60px;
-  height: 4px;
-  background: #4a4d5a;
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
+@keyframes daw-button-pulse {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(255, 235, 59, 0.4);
+  }
+  50% {
+    box-shadow: 0 2px 12px rgba(255, 235, 59, 0.6);
+  }
 }
 
-.daw-volume-slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 12px;
-  height: 12px;
-  background: #00ff00;
-  border-radius: 50%;
-  cursor: pointer;
+.daw-track-btn--mute.daw-track-btn--active {
+  animation-name: daw-button-pulse-red;
 }
 
-.daw-volume-value {
-  font-size: 9px;
-  color: #888;
-  min-width: 24px;
-  text-align: center;
+@keyframes daw-button-pulse-red {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.4);
+  }
+  50% {
+    box-shadow: 0 2px 12px rgba(244, 67, 54, 0.6);
+  }
 }
+
+
 
 /* Track Content Area */
 .daw-track-content {
@@ -331,6 +499,8 @@
   position: relative;
   cursor: pointer;
   overflow: hidden;
+  /* Ensure content stays within track bounds */
+  contain: layout style;
 }
 
 .daw-waveform-container {
@@ -339,13 +509,16 @@
   height: 100%;
   display: flex;
   align-items: center;
-  padding: 8px;
+  padding: 5px 0px; /* Remove horizontal padding to align with timeline */
+  /* Prevent container from affecting other tracks */
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .daw-waveform {
   display: flex;
   align-items: center;
-  height: 60px;
+  height: 100%; /* Use full available height */
   width: 100%;
   gap: 1px;
 }
@@ -369,6 +542,14 @@
   background: #4CAF50;
 }
 
+.daw-waveform--guitar .daw-waveform-bar {
+  background: #E91E63;
+}
+
+.daw-waveform--piano .daw-waveform-bar {
+  background: #795548;
+}
+
 .daw-waveform--other .daw-waveform-bar {
   background: #9C27B0;
 }
@@ -381,9 +562,45 @@
   background: rgba(255, 107, 53, 0.3);
   pointer-events: none;
   z-index: 10;
+  /* Ensure progress stays within container bounds */
+  contain: layout;
+  overflow: hidden;
+}
+
+/* Waveform States */
+.daw-waveform-loading,
+.daw-waveform-error,
+.daw-waveform-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 60px;
+  font-size: 12px;
+  color: #888;
+  font-style: italic;
+}
+
+.daw-waveform-loading {
+  color: #4CAF50;
+}
+
+.daw-waveform-error {
+  color: #f44336;
+}
+
+.daw-waveform-placeholder {
+  color: #666;
 }
 
 /* Loading and Error States */
+.track-view {
+  background: #2a2d3a;
+  color: white;
+  min-height: 100vh;
+  width: 100%;
+}
+
 .track-view__loading {
   display: flex;
   flex-direction: column;
@@ -391,6 +608,7 @@
   justify-content: center;
   min-height: 60vh;
   color: white;
+  background: #2a2d3a;
 }
 
 .track-view__loading-spinner {
@@ -469,42 +687,28 @@
 
 /* Large screens (1200px+) */
 @media (min-width: 1200px) {
-  .daw-track-header {
-    width: 250px;
-  }
-  
-  .daw-ruler-track-header {
-    width: 250px;
+  .daw-interface {
+    --daw-track-header-width: 180px;
   }
   
   .daw-track-name {
     font-size: 14px;
   }
   
-  .daw-volume-slider {
-    width: 80px;
-  }
+
 }
 
 /* Medium-large screens (1024px - 1199px) */
 @media (max-width: 1199px) and (min-width: 1024px) {
-  .daw-track-header {
-    width: 220px;
-  }
-  
-  .daw-ruler-track-header {
-    width: 220px;
+  .daw-interface {
+    --daw-track-header-width: 180px;
   }
 }
 
 /* Medium screens (768px - 1023px) */
 @media (max-width: 1023px) and (min-width: 768px) {
-  .daw-track-header {
-    width: 180px;
-  }
-  
-  .daw-ruler-track-header {
-    width: 180px;
+  .daw-interface {
+    --daw-track-header-width: 180px;
   }
   
   .daw-toolbar {
@@ -522,13 +726,7 @@
     height: 34px;
   }
   
-  .daw-track-volume {
-    gap: 4px;
-  }
-  
-  .daw-volume-slider {
-    width: 50px;
-  }
+
 }
 
 /* Small-medium screens (640px - 767px) */
@@ -568,13 +766,12 @@
     font-size: 12px;
   }
   
-  .daw-track-header {
-    width: 140px;
-    padding: 6px;
+  .daw-interface {
+    --daw-track-header-width: 140px;
   }
   
-  .daw-ruler-track-header {
-    width: 140px;
+  .daw-track-header {
+    padding: 6px;
   }
   
   .daw-track {
@@ -591,16 +788,10 @@
     font-size: 9px;
   }
   
-  .daw-volume-slider {
-    width: 45px;
-  }
+
   
-  .daw-volume-value {
-    font-size: 8px;
-  }
-  
-  .daw-waveform {
-    height: 50px;
+  .daw-interface {
+    --daw-waveform-height: calc(var(--daw-track-height) - 8px);
   }
 }
 
@@ -649,15 +840,14 @@
     font-size: 14px;
   }
   
+  .daw-interface {
+    --daw-track-header-width: 120px;
+  }
+  
   .daw-track-header {
-    width: 120px;
     padding: 4px;
     flex-direction: column;
     gap: 3px;
-  }
-  
-  .daw-ruler-track-header {
-    width: 120px;
   }
   
   .daw-track {
@@ -685,24 +875,10 @@
     font-size: 8px;
   }
   
-  .daw-track-volume {
-    flex-direction: row;
-    gap: 4px;
-    align-items: center;
-  }
+
   
-  .daw-volume-slider {
-    width: 35px;
-    height: 3px;
-  }
-  
-  .daw-volume-value {
-    font-size: 8px;
-    min-width: 20px;
-  }
-  
-  .daw-waveform {
-    height: 45px;
+  .daw-interface {
+    --daw-waveform-height: calc(var(--daw-track-height) - 8px);
   }
   
   .daw-ruler-marker {
@@ -778,15 +954,14 @@
     height: 35px;
   }
   
+  .daw-interface {
+    --daw-track-header-width: 100px;
+  }
+  
   .daw-track-header {
-    width: 100px;
     padding: 3px;
     flex-direction: column;
     gap: 2px;
-  }
-  
-  .daw-ruler-track-header {
-    width: 100px;
   }
   
   .daw-track {
@@ -814,33 +989,14 @@
     font-size: 7px;
   }
   
-  .daw-track-volume {
-    flex-direction: column;
-    gap: 2px;
-    align-items: center;
-  }
+
   
-  .daw-volume-slider {
-    width: 30px;
-    height: 2px;
-  }
-  
-  .daw-volume-slider::-webkit-slider-thumb {
-    width: 8px;
-    height: 8px;
-  }
-  
-  .daw-volume-value {
-    font-size: 7px;
-    min-width: 18px;
-  }
-  
-  .daw-waveform {
-    height: 35px;
+  .daw-interface {
+    --daw-waveform-height: calc(var(--daw-track-height) - 6px);
   }
   
   .daw-waveform-container {
-    padding: 4px;
+    padding: 3px 8px;
   }
   
   .daw-ruler-marker {
@@ -881,12 +1037,12 @@
     height: 50px;
   }
   
-  .daw-waveform {
-    height: 30px;
+  .daw-interface {
+    --daw-waveform-height: calc(var(--daw-track-height) - 4px);
   }
   
   .daw-track-area {
-    max-height: calc(100vh - 120px);
+    flex: 1;
     overflow-y: auto;
   }
 }
@@ -918,9 +1074,7 @@
     min-height: 24px;
   }
   
-  .daw-volume-slider {
-    min-height: 24px;
-  }
+
   
   .daw-track-content {
     min-height: 44px;

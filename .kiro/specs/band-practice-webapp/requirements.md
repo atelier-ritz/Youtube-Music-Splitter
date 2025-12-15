@@ -9,10 +9,13 @@ The Band Practice Webapp is a web-based application designed to help musicians p
 - **Audio_Processing_Service**: Local Python service that processes audio files using Facebook's Demucs AI model, separates them into individual instrument tracks, and performs audio analysis including BPM detection
 - **Track_Player**: Web-based audio player component that handles playback of separated audio tracks
 - **YouTube_Downloader**: Component responsible for extracting audio from YouTube URLs
-- **Track_Controller**: Interface component that allows users to mute/unmute individual tracks and adjust volume and pan settings
+- **Track_Controller**: Interface component that allows users to mute/unmute individual tracks, solo tracks, and adjust volume and pan settings
 - **Navigation_Cursor**: Visual indicator showing current playback position with seek functionality
 - **Volume_Control**: Interface element that allows adjustment of individual track volume levels
 - **Pan_Control**: Interface element that allows adjustment of stereo positioning for individual tracks
+- **Solo_Control**: Interface element that allows isolation of specific tracks by muting all other tracks
+- **Six_Stem_Separation**: Advanced audio separation that provides vocals, drums, bass, guitar, piano, and other instrument tracks
+- **Waveform_Visualization**: Real-time visual representation of audio amplitude over time that shows actual audio content, silent sections, and signal patterns for each track
 
 ## Requirements
 
@@ -36,7 +39,7 @@ The Band Practice Webapp is a web-based application designed to help musicians p
 
 1. WHEN audio is successfully downloaded, THE Audio_Processing_Service SHALL process the audio file and separate it into distinct instrument tracks
 2. WHEN the processing begins, THE system SHALL display a processing indicator showing the current separation status
-3. WHEN processing completes successfully, THE system SHALL provide access to individual tracks including voice, guitar, bass, and drums
+3. WHEN processing completes successfully, THE system SHALL provide access to individual tracks including vocals, drums, bass, guitar, piano, and other instruments using Six_Stem_Separation
 4. WHEN the Audio_Processing_Service encounters an error during processing, THE system SHALL display an error message and provide options to retry or return to the main page
 5. WHEN processing is complete, THE system SHALL automatically navigate to the track view page
 
@@ -90,17 +93,42 @@ The Band Practice Webapp is a web-based application designed to help musicians p
 
 ### Requirement 7
 
+**User Story:** As a musician, I want to solo individual tracks, so that I can isolate and focus on specific instruments during practice.
+
+#### Acceptance Criteria
+
+1. WHEN a user clicks the solo button for a specific track, THE Solo_Control SHALL mute all other tracks while keeping the selected track audible
+2. WHEN multiple tracks are soloed simultaneously, THE Track_Player SHALL play only the soloed tracks while muting all others
+3. WHEN a user clicks the solo button again on a soloed track, THE Solo_Control SHALL unsolo that track and restore normal mute/unmute behavior
+4. WHEN tracks are soloed, THE system SHALL provide visual feedback by dimming non-playing tracks to clearly indicate which audio is active
+5. WHEN solo mode is active, THE system SHALL prioritize solo state over individual mute states for audio playback decisions
+
+### Requirement 8
+
+**User Story:** As a musician, I want clear visual feedback about track states, so that I can easily understand which tracks are currently playing.
+
+#### Acceptance Criteria
+
+1. WHEN tracks are silenced due to solo operations, THE system SHALL dim the entire track interface including controls and waveform visualization
+2. WHEN tracks are individually muted without solo active, THE system SHALL only dim the waveform while keeping track controls fully visible
+3. WHEN track states change, THE system SHALL apply smooth visual transitions to provide clear feedback about the state changes
+4. WHEN solo buttons are active, THE system SHALL highlight them with distinct visual styling to indicate their active state
+5. WHEN mute buttons are active, THE system SHALL highlight them with distinct visual styling to indicate their active state
+
+### Requirement 9
+
 **User Story:** As a musician, I want a responsive and intuitive user interface, so that I can focus on practicing rather than struggling with the application.
 
 #### Acceptance Criteria
 
 1. WHEN the application loads, THE system SHALL display a clean main page with a prominent YouTube URL input field
-2. WHEN users interact with any control element, THE system SHALL provide immediate visual feedback to confirm the action
-3. WHEN the application is accessed on different screen sizes, THE system SHALL adapt the layout to maintain usability across devices
+2. WHEN users interact with any control element, THE system SHALL provide immediate visual feedback to confirm the action without loading delays
+3. WHEN the application is accessed on different screen sizes, THE system SHALL use full-screen layout and adapt controls to maintain usability across devices
 4. WHEN errors occur, THE system SHALL display clear, actionable error messages that help users understand and resolve issues
+5. WHEN processing audio, THE system SHALL provide granular progress updates with descriptive messages to keep users informed of the current operation
 5. WHEN transitioning between pages, THE system SHALL maintain consistent navigation and visual design elements
 
-### Requirement 8
+### Requirement 10
 
 **User Story:** As a developer, I want a local audio processing service that provides unlimited, cost-free audio separation, so that I can offer the service without ongoing operational costs.
 
@@ -122,3 +150,15 @@ The Band Practice Webapp is a web-based application designed to help musicians p
 - **File Serving**: HTTP endpoints serving separated tracks at localhost:8000
 - **Quality**: High-quality AI-based separation using state-of-the-art Demucs model
 - **Cost**: $0 ongoing operational costs, unlimited usage
+
+### Requirement 11
+
+**User Story:** As a musician, I want to see real waveform visualizations for each track, so that I can identify audio content, silent sections, and instrument patterns for better practice planning.
+
+#### Acceptance Criteria
+
+1. WHEN tracks are loaded in the track view, THE system SHALL generate and display actual waveform visualizations based on the audio content of each separated track
+2. WHEN audio contains sound, THE waveform SHALL show amplitude variations that accurately represent the audio signal strength over time
+3. WHEN audio is silent or nearly silent, THE waveform SHALL show minimal or no amplitude bars to clearly indicate absence of audio content
+4. WHEN users examine the waveform, THE visualization SHALL help identify instrument entry points, breaks, and audio patterns within each track
+5. WHEN the waveform is displayed, THE system SHALL maintain performance by using efficient audio analysis and rendering techniques

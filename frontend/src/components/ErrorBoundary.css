@@ -1,0 +1,135 @@
+.error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: #f8f9fa;
+}
+
+.error-boundary__container {
+  max-width: 500px;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  padding: 40px 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+}
+
+.error-boundary__icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.error-boundary__title {
+  color: #dc3545;
+  margin: 0 0 16px 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.error-boundary__message {
+  color: #6c757d;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+  font-size: 16px;
+}
+
+.error-boundary__details {
+  margin: 20px 0;
+  text-align: left;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+}
+
+.error-boundary__details summary {
+  padding: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #495057;
+  background-color: #e9ecef;
+  border-radius: 6px 6px 0 0;
+}
+
+.error-boundary__details summary:hover {
+  background-color: #dee2e6;
+}
+
+.error-boundary__stack {
+  margin: 0;
+  padding: 16px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #dc3545;
+  background-color: #fff;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.error-boundary__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.error-boundary__retry,
+.error-boundary__reload {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.error-boundary__retry {
+  background-color: #007bff;
+  color: white;
+}
+
+.error-boundary__retry:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.error-boundary__reload {
+  background-color: #6c757d;
+  color: white;
+}
+
+.error-boundary__reload:hover {
+  background-color: #545b62;
+  transform: translateY(-1px);
+}
+
+.error-boundary__retry:active,
+.error-boundary__reload:active {
+  transform: translateY(0);
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .error-boundary {
+    padding: 16px;
+  }
+  
+  .error-boundary__container {
+    padding: 30px 20px;
+  }
+  
+  .error-boundary__actions {
+    flex-direction: column;
+  }
+  
+  .error-boundary__retry,
+  .error-boundary__reload {
+    width: 100%;
+  }
+}

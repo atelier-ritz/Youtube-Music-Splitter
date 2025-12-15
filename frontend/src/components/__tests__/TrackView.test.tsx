@@ -54,7 +54,8 @@ describe('TrackView', () => {
       duration: 180,
       volume: 1,
       pan: 0,
-      muted: false
+      muted: false,
+      soloed: false
     },
     {
       id: 'drums',
@@ -63,7 +64,8 @@ describe('TrackView', () => {
       duration: 180,
       volume: 1,
       pan: 0,
-      muted: false
+      muted: false,
+      soloed: false
     },
     {
       id: 'bass',
@@ -72,7 +74,8 @@ describe('TrackView', () => {
       duration: 180,
       volume: 1,
       pan: 0,
-      muted: false
+      muted: false,
+      soloed: false
     },
     {
       id: 'other',
@@ -81,7 +84,8 @@ describe('TrackView', () => {
       duration: 180,
       volume: 1,
       pan: 0,
-      muted: false
+      muted: false,
+      soloed: false
     }
   ]
 
@@ -223,7 +227,8 @@ describe('TrackView', () => {
         duration: 65, // 1:05
         volume: 1,
         pan: 0,
-        muted: false
+        muted: false,
+        soloed: false
       },
       {
         id: 'test2',
@@ -232,7 +237,8 @@ describe('TrackView', () => {
         duration: 125, // 2:05
         volume: 1,
         pan: 0,
-        muted: false
+        muted: false,
+        soloed: false
       }
     ]
 

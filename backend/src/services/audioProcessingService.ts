@@ -214,10 +214,10 @@ class AudioProcessingService {
     }
 
     const tracks: Track[] = [];
-    const trackNames = ['vocals', 'drums', 'bass', 'other'] as const;
+    const trackNames = ['vocals', 'drums', 'bass', 'guitar', 'piano', 'other'] as const;
 
     for (const trackName of trackNames) {
-      const trackUrl = result.tracks[trackName];
+      const trackUrl = result.tracks?.[trackName as keyof typeof result.tracks];
       if (trackUrl) {
         tracks.push({
           id: uuidv4(),
@@ -226,7 +226,8 @@ class AudioProcessingService {
           duration: 0, // Will be determined by frontend when loading
           volume: 1.0,
           pan: 0.0,
-          muted: false
+          muted: false,
+          soloed: false
         });
       }
     }

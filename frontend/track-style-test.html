@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Style Test</title>
+    <link rel="stylesheet" href="src/components/TrackView.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1d2a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .daw-interface {
+            --daw-track-header-width: var(--daw-track-header-width);
+            --daw-track-height: 66px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Track Header Style Test</h1>
+        
+        <div class="daw-interface">
+            <div class="daw-track-area">
+                <!-- Track 1 - Normal -->
+                <div class="daw-track">
+                    <div class="daw-track-header">
+                        <div class="daw-track-number">1</div>
+                        <div class="daw-track-info">
+                            <div class="daw-track-name-section">
+                                <div class="daw-track-name">Bass</div>
+                            </div>
+                            <div class="daw-track-controls-section">
+                                <div class="daw-track-controls">
+                                    <button class="daw-track-btn daw-track-btn--mute">M</button>
+                                    <button class="daw-track-btn daw-track-btn--solo">S</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Track 2 - Muted -->
+                <div class="daw-track daw-track--muted">
+                    <div class="daw-track-header">
+                        <div class="daw-track-number">2</div>
+                        <div class="daw-track-info">
+                            <div class="daw-track-name-section">
+                                <div class="daw-track-name">Drums</div>
+                            </div>
+                            <div class="daw-track-controls-section">
+                                <div class="daw-track-controls">
+                                    <button class="daw-track-btn daw-track-btn--mute daw-track-btn--active">M</button>
+                                    <button class="daw-track-btn daw-track-btn--solo">S</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Track 3 - Soloed -->
+                <div class="daw-track daw-track--soloed">
+                    <div class="daw-track-header">
+                        <div class="daw-track-number">3</div>
+                        <div class="daw-track-info">
+                            <div class="daw-track-name-section">
+                                <div class="daw-track-name">Vocals</div>
+                            </div>
+                            <div class="daw-track-controls-section">
+                                <div class="daw-track-controls">
+                                    <button class="daw-track-btn daw-track-btn--mute">M</button>
+                                    <button class="daw-track-btn daw-track-btn--solo daw-track-btn--active">S</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Track 4 - Guitar -->
+                <div class="daw-track">
+                    <div class="daw-track-header">
+                        <div class="daw-track-number">4</div>
+                        <div class="daw-track-info">
+                            <div class="daw-track-name-section">
+                                <div class="daw-track-name">Guitar</div>
+                            </div>
+                            <div class="daw-track-controls-section">
+                                <div class="daw-track-controls">
+                                    <button class="daw-track-btn daw-track-btn--mute">M</button>
+                                    <button class="daw-track-btn daw-track-btn--solo">S</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Track 5 - Piano -->
+                <div class="daw-track">
+                    <div class="daw-track-header">
+                        <div class="daw-track-number">5</div>
+                        <div class="daw-track-info">
+                            <div class="daw-track-name-section">
+                                <div class="daw-track-name">Piano</div>
+                            </div>
+                            <div class="daw-track-controls-section">
+                                <div class="daw-track-controls">
+                                    <button class="daw-track-btn daw-track-btn--mute">M</button>
+                                    <button class="daw-track-btn daw-track-btn--solo">S</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Track 6 - Other -->
+                <div class="daw-track">
+                    <div class="daw-track-header">
+                        <div class="daw-track-number">6</div>
+                        <div class="daw-track-info">
+                            <div class="daw-track-name-section">
+                                <div class="daw-track-name">Other</div>
+                            </div>
+                            <div class="daw-track-controls-section">
+                                <div class="daw-track-controls">
+                                    <button class="daw-track-btn daw-track-btn--mute">M</button>
+                                    <button class="daw-track-btn daw-track-btn--solo">S</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

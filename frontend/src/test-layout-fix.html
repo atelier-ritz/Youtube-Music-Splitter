@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layout Fix Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #2a2d3a;
+            color: white;
+        }
+        .test-info {
+            background: #1e2028;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .test-info h2 {
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        .test-info ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .test-info li {
+            margin: 5px 0;
+        }
+        .test-link {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .test-link:hover {
+            background: #5CBF60;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-info">
+        <h2>🎵 Layout Fix Applied</h2>
+        <p>The following layout issues have been addressed:</p>
+        <ul>
+            <li><strong>Container Intrusion:</strong> Added CSS containment and overflow controls to prevent tracks from affecting each other</li>
+            <li><strong>Timeline Alignment:</strong> Removed horizontal padding from waveform containers and aligned ruler content</li>
+            <li><strong>Responsive Sizing:</strong> Made WaveformVisualization use container dimensions instead of fixed sizes</li>
+            <li><strong>Track Isolation:</strong> Added proper positioning and containment to track elements</li>
+            <li><strong>Playhead Alignment:</strong> Centered the playhead cursor for better visual alignment</li>
+        </ul>
+        
+        <h3>Key Changes Made:</h3>
+        <ul>
+            <li>Removed fixed width/height from WaveformVisualization component calls</li>
+            <li>Added ResizeObserver to track container dimensions dynamically</li>
+            <li>Updated CSS with <code>contain: layout style</code> for better isolation</li>
+            <li>Removed horizontal padding from waveform containers</li>
+            <li>Added overflow: hidden to prevent content spillover</li>
+        </ul>
+        
+        <a href="/track-view" class="test-link">Test Track View Layout</a>
+    </div>
+</body>
+</html>

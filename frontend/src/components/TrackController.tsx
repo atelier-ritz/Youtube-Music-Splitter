@@ -5,26 +5,22 @@ import './TrackController.css';
 interface TrackControllerProps {
   track: Track;
   onMuteToggle: (trackId: string, muted: boolean) => void;
-  onVolumeChange: (trackId: string, volume: number) => void;
   onPanChange: (trackId: string, pan: number) => void;
 }
 
 const TrackController: React.FC<TrackControllerProps> = ({
   track,
   onMuteToggle,
-  onVolumeChange,
   onPanChange
 }) => {
-  const [localVolume, setLocalVolume] = useState(track.volume);
   const [localPan, setLocalPan] = useState(track.pan);
   const [localMuted, setLocalMuted] = useState(track.muted);
 
   // Update local state when track prop changes
   useEffect(() => {
-    setLocalVolume(track.volume);
     setLocalPan(track.pan);
     setLocalMuted(track.muted);
-  }, [track.volume, track.pan, track.muted]);
+  }, [track.pan, track.muted]);
 
   // Handle mute/unmute toggle
   const handleMuteToggle = () => {
@@ -33,23 +29,11 @@ const TrackController: React.FC<TrackControllerProps> = ({
     onMuteToggle(track.id, newMuted);
   };
 
-  // Handle volume change with real-time feedback
-  const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(event.target.value);
-    setLocalVolume(newVolume);
-    onVolumeChange(track.id, newVolume);
-  };
-
   // Handle pan change with real-time feedback
   const handlePanChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newPan = parseFloat(event.target.value);
     setLocalPan(newPan);
     onPanChange(track.id, newPan);
-  };
-
-  // Format volume percentage for display
-  const formatVolumePercentage = (volume: number): string => {
-    return Math.round(volume * 100).toString();
   };
 
   // Format pan position for display
@@ -92,28 +76,7 @@ const TrackController: React.FC<TrackControllerProps> = ({
           </span>
         </div>
 
-        {/* Volume control slider */}
-        <div className="track-controller__volume-section">
-          <label className="track-controller__control-label">
-            Volume
-          </label>
-          <div className="track-controller__slider-container">
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              value={localVolume}
-              onChange={handleVolumeChange}
-              className={`track-controller__volume-slider ${localMuted ? 'track-controller__volume-slider--muted' : ''}`}
-              disabled={localMuted}
-              title={`Volume: ${formatVolumePercentage(localVolume)}%`}
-            />
-            <span className="track-controller__volume-value">
-              {formatVolumePercentage(localVolume)}%
-            </span>
-          </div>
-        </div>
+
 
         {/* Pan control slider */}
         <div className="track-controller__pan-section">
@@ -143,7 +106,7 @@ const TrackController: React.FC<TrackControllerProps> = ({
       {/* Visual feedback indicators */}
       <div className="track-controller__indicators">
         <div className={`track-controller__activity-indicator ${!localMuted ? 'track-controller__activity-indicator--active' : ''}`}>
-          <div className="track-controller__activity-bar" style={{ width: `${localVolume * 100}%` }}></div>
+          <div className="track-controller__activity-bar" style={{ width: `${!localMuted ? 100 : 0}%` }}></div>
         </div>
       </div>
     </div>

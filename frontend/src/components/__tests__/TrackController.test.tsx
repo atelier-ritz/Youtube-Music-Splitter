@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import TrackController from '../TrackController'
-import { Track } from '../../services/AudioPlayer'
+import type { Track } from '../../services/AudioPlayer'
 
 describe('TrackController', () => {
   const mockTrack: Track = {
@@ -12,7 +12,8 @@ describe('TrackController', () => {
     duration: 180,
     volume: 1,
     pan: 0,
-    muted: false
+    muted: false,
+    soloed: false
   }
 
   const mockCallbacks = {

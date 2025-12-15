@@ -10,6 +10,7 @@ export interface Track {
   volume: number; // 0-1 range
   pan: number; // -1 to 1 range (-1 = full left, 1 = full right)
   muted: boolean;
+  soloed: boolean;
 }
 
 export interface ProcessingJob {
@@ -75,6 +76,8 @@ export interface ExternalProcessingServiceResponse {
     vocals: string;
     drums: string;
     bass: string;
+    guitar: string;
+    piano: string;
     other: string;
   };
   bpm?: number;

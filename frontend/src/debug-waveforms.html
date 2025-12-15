@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Waveform Debug Test</title>
+    <style>
+        body { background: #2a2d3a; color: white; font-family: Arial, sans-serif; padding: 20px; }
+        .track { margin: 20px 0; }
+        .track-name { font-weight: bold; margin-bottom: 10px; }
+        canvas { border: 1px solid #555; background: rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+    <h1>Waveform Pattern Test</h1>
+    <div id="tracks"></div>
+
+    <script>
+        const tracks = ['vocals', 'drums', 'bass', 'guitar', 'piano', 'other'];
+        const colors = {
+            vocals: '#ff6b6b',
+            drums: '#4ecdc4', 
+            bass: '#45b7d1',
+            guitar: '#f9ca24',
+            piano: '#6c5ce7',
+            other: '#a0a0a0'
+        };
+
+        const trackPatterns = {
+            vocals: (i) => Math.sin(i * 0.2) * 0.5 + 0.5,
+            drums: (i) => Math.random() > 0.7 ? Math.random() : Math.random() * 0.3,
+            bass: (i) => Math.sin(i * 0.05) * 0.8 + 0.2,
+            guitar: (i) => Math.sin(i * 0.15) * Math.sin(i * 0.03) * 0.6 + 0.4,
+            piano: (i) => Math.abs(Math.sin(i * 0.1)) * 0.7 + 0.1,
+            other: (i) => (Math.sin(i * 0.08) + Math.cos(i * 0.12)) * 0.3 + 0.3
+        };
+
+        const container = document.getElementById('tracks');
+
+        tracks.forEach(trackName => {
+            const trackDiv = document.createElement('div');
+            trackDiv.className = 'track';
+            
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'track-name';
+            nameDiv.textContent = trackName.toUpperCase();
+            trackDiv.appendChild(nameDiv);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 800;
+            canvas.height = 80;
+            canvas.style.width = '800px';
+            canvas.style.height = '80px';
+            
+            const ctx = canvas.getContext('2d');
+            const width = 800;
+            const height = 80;
+            const centerY = height / 2;
+            const barWidth = width / 400; // 400 bars
+            
+            ctx.fillStyle = colors[trackName];
+            
+            for (let i = 0; i < 400; i++) {
+                const patternValue = trackPatterns[trackName](i);
+                const amplitude = patternValue * height / 4; // Scale to quarter height
+                const x = i * barWidth;
+                
+                // Draw symmetric waveform
+                ctx.fillRect(x, centerY - amplitude, barWidth, amplitude);
+                ctx.fillRect(x, centerY, barWidth, amplitude);
+            }
+            
+            trackDiv.appendChild(canvas);
+            container.appendChild(trackDiv);
+        });
+    </script>
+</body>
+</html>

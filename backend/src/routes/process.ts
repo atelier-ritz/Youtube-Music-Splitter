@@ -6,6 +6,7 @@
 import { Router, Request, Response } from 'express';
 import { audioProcessingService } from '../services/audioProcessingService';
 import { ProcessingRequest, ProcessingResponse, ProcessingStatusResponse } from '../types/processingTypes';
+import { asyncHandler, ValidationError, AppError, ProcessingError } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -13,24 +14,20 @@ const router = Router();
  * POST /api/process
  * Start a new audio processing job
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', asyncHandler(async (req: Request, res: Response) => {
+  const { audioFilePath }: ProcessingRequest = req.body;
+
+  if (!audioFilePath) {
+    throw new ValidationError('Audio file path is required', 'audioFilePath');
+  }
+
+  // Validate that the audio file exists
+  const fs = require('fs');
+  if (!fs.existsSync(audioFilePath)) {
+    throw new ValidationError('Audio file not found', 'audioFilePath');
+  }
+
   try {
-    const { audioFilePath }: ProcessingRequest = req.body;
-
-    if (!audioFilePath) {
-      return res.status(400).json({
-        error: 'Audio file path is required'
-      });
-    }
-
-    // Validate that the audio file exists
-    const fs = require('fs');
-    if (!fs.existsSync(audioFilePath)) {
-      return res.status(400).json({
-        error: 'Audio file not found'
-      });
-    }
-
     // Start processing
     const jobId = await audioProcessingService.startProcessing(audioFilePath);
 
@@ -41,14 +38,11 @@ router.post('/', async (req: Request, res: Response) => {
     };
 
     res.status(202).json(response);
-
   } catch (error) {
     console.error('Processing start error:', error);
-    res.status(500).json({
-      error: 'Failed to start audio processing'
-    });
+    throw new ProcessingError('Failed to start audio processing. Please try again.', undefined, 'start');
   }
-});
+}));
 
 /**
  * GET /api/process/:jobId

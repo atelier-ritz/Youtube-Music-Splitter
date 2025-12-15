@@ -7,6 +7,7 @@ import { Router, Request, Response } from 'express';
 import { validateYouTubeUrl } from '../utils/youtubeValidator';
 import { youtubeDownloaderService } from '../services/youtubeDownloader';
 import { DownloadRequest, DownloadResponse, DownloadStatusResponse } from '../types/downloadTypes';
+import { asyncHandler, ValidationError, AppError } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -14,24 +15,20 @@ const router = Router();
  * POST /api/download
  * Start a new YouTube audio download
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', asyncHandler(async (req: Request, res: Response) => {
+  const { youtubeUrl }: DownloadRequest = req.body;
+
+  if (!youtubeUrl) {
+    throw new ValidationError('YouTube URL is required', 'youtubeUrl');
+  }
+
+  // Validate YouTube URL
+  const validation = validateYouTubeUrl(youtubeUrl);
+  if (!validation.isValid) {
+    throw new ValidationError(validation.error || 'Invalid YouTube URL', 'youtubeUrl');
+  }
+
   try {
-    const { youtubeUrl }: DownloadRequest = req.body;
-
-    if (!youtubeUrl) {
-      return res.status(400).json({
-        error: 'YouTube URL is required'
-      });
-    }
-
-    // Validate YouTube URL
-    const validation = validateYouTubeUrl(youtubeUrl);
-    if (!validation.isValid) {
-      return res.status(400).json({
-        error: validation.error || 'Invalid YouTube URL'
-      });
-    }
-
     // Start download
     const jobId = await youtubeDownloaderService.startDownload(youtubeUrl);
 
@@ -42,69 +39,47 @@ router.post('/', async (req: Request, res: Response) => {
     };
 
     res.status(202).json(response);
-
   } catch (error) {
     console.error('Download start error:', error);
-    res.status(500).json({
-      error: 'Failed to start download'
-    });
+    throw new AppError('Failed to start download. Please try again.', 500, 'DOWNLOAD_START_ERROR');
   }
-});
+}));
 
 /**
  * GET /api/download/:jobId
  * Get the status of a download job
  */
-router.get('/:jobId', (req: Request, res: Response) => {
-  try {
-    const { jobId } = req.params;
+router.get('/:jobId', asyncHandler(async (req: Request, res: Response) => {
+  const { jobId } = req.params;
 
-    if (!jobId) {
-      return res.status(400).json({
-        error: 'Job ID is required'
-      });
-    }
-
-    const job = youtubeDownloaderService.getJobStatus(jobId);
-    
-    if (!job) {
-      return res.status(404).json({
-        error: 'Download job not found'
-      });
-    }
-
-    const response: DownloadStatusResponse = {
-      jobId: job.id,
-      status: job.status,
-      progress: job.progress,
-      audioFilePath: job.audioFilePath,
-      error: job.error
-    };
-
-    res.json(response);
-
-  } catch (error) {
-    console.error('Download status error:', error);
-    res.status(500).json({
-      error: 'Failed to get download status'
-    });
+  if (!jobId) {
+    throw new ValidationError('Job ID is required', 'jobId');
   }
-});
+
+  const job = youtubeDownloaderService.getJobStatus(jobId);
+  
+  if (!job) {
+    throw new AppError('Download job not found', 404, 'JOB_NOT_FOUND');
+  }
+
+  const response: DownloadStatusResponse = {
+    jobId: job.id,
+    status: job.status,
+    progress: job.progress,
+    audioFilePath: job.audioFilePath,
+    error: job.error
+  };
+
+  res.json(response);
+}));
 
 /**
  * GET /api/download
  * Get all download jobs (for debugging/admin)
  */
-router.get('/', (req: Request, res: Response) => {
-  try {
-    const jobs = youtubeDownloaderService.getAllJobs();
-    res.json(jobs);
-  } catch (error) {
-    console.error('Get all jobs error:', error);
-    res.status(500).json({
-      error: 'Failed to get download jobs'
-    });
-  }
-});
+router.get('/', asyncHandler(async (req: Request, res: Response) => {
+  const jobs = youtubeDownloaderService.getAllJobs();
+  res.json(jobs);
+}));
 
 export default router;

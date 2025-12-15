@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AudioPlayer, type Track } from '../services/AudioPlayer';
+import { useWaveformData } from '../hooks/useWaveformData';
+import WaveformVisualization from './WaveformVisualization';
+import LoadingSpinner from './LoadingSpinner';
+import InteractiveButton from './InteractiveButton';
 import './TrackView.css';
 
 interface TrackViewProps {
@@ -7,12 +11,18 @@ interface TrackViewProps {
   bpm?: number;
   title?: string;
   onBack?: () => void;
+  onShowToast?: {
+    showSuccess: (title: string, message?: string) => void;
+    showError: (title: string, message?: string) => void;
+    showInfo: (title: string, message?: string) => void;
+  };
 }
 
 const TrackView: React.FC<TrackViewProps> = ({ 
   tracks, 
   bpm, 
-  onBack 
+  onBack,
+  onShowToast 
 }) => {
   const [audioPlayer] = useState(() => new AudioPlayer());
   const [isPlaying, setIsPlaying] = useState(false);
@@ -22,6 +32,19 @@ const TrackView: React.FC<TrackViewProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [trackStates, setTrackStates] = useState<Track[]>(tracks);
   const timelineRef = useRef<HTMLDivElement>(null);
+
+  // Use waveform data hook for real audio visualization with performance optimizations
+  // Only pass audioPlayer when tracks are loaded (not loading and no error)
+  const { waveformData, isGenerating: isGeneratingWaveforms, error: waveformError } = useWaveformData(
+    !isLoading && !loadError ? audioPlayer : null, 
+    { 
+      targetWidth: 800, 
+      heightScale: 100,
+      enableRealtimeAnalysis: false,
+      enableCaching: true,
+      debounceMs: 150
+    }
+  );
 
   // Initialize track states when tracks prop changes
   useEffect(() => {
@@ -65,8 +88,12 @@ const TrackView: React.FC<TrackViewProps> = ({
       } catch (error) {
         console.error('Failed to initialize audio player after retries:', error);
         const errorMessage = error instanceof Error ? error.message : 'Failed to load audio tracks';
-        setLoadError(`${errorMessage}. Please try refreshing the page or check your browser's audio permissions.`);
+        const fullErrorMessage = `${errorMessage}. Please try refreshing the page or check your browser's audio permissions.`;
+        setLoadError(fullErrorMessage);
         setIsLoading(false);
+        
+        // Show error toast
+        onShowToast?.showError('Audio Loading Failed', errorMessage);
       }
     };
 
@@ -81,7 +108,7 @@ const TrackView: React.FC<TrackViewProps> = ({
     return () => {
       audioPlayer.dispose();
     };
-  }, [trackStates, audioPlayer]);
+  }, [tracks, audioPlayer]); // Use original tracks prop, not trackStates
 
   // Handle play/pause
   const handlePlayPause = async () => {
@@ -109,11 +136,21 @@ const TrackView: React.FC<TrackViewProps> = ({
     }
   };
 
+  // Handle go to beginning
+  const handleGoToBeginning = () => {
+    try {
+      audioPlayer.seek(0);
+      setCurrentPosition(0);
+    } catch (error) {
+      console.error('Seek to beginning error:', error);
+    }
+  };
+
   // Handle timeline click for seeking
-  const handleTimelineClick = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleTimelineClick = (event: React.MouseEvent<HTMLDivElement | HTMLCanvasElement>) => {
     if (!timelineRef.current || duration === 0) return;
 
-    const rect = timelineRef.current.getBoundingClientRect();
+    const rect = event.currentTarget.getBoundingClientRect();
     const clickX = event.clientX - rect.left;
     const timelineWidth = rect.width;
     const clickRatio = clickX / timelineWidth;
@@ -139,40 +176,91 @@ const TrackView: React.FC<TrackViewProps> = ({
 
   // Handle track mute/unmute
   const handleTrackMuteToggle = (trackId: string, muted: boolean) => {
+    // Update UI state immediately for instant feedback
+    setTrackStates(prevStates => 
+      prevStates.map(track => 
+        track.id === trackId ? { ...track, muted } : track
+      )
+    );
+    
+    // Apply audio mute without error handling that could trigger re-renders
     try {
       audioPlayer.muteTrack(trackId, muted);
-      setTrackStates(prevStates => 
-        prevStates.map(track => 
-          track.id === trackId ? { ...track, muted } : track
-        )
-      );
     } catch (error) {
-      console.error('Failed to toggle track mute:', error);
+      // Silently handle errors to prevent UI flashing
+      console.warn('Audio mute failed (UI already updated):', error);
     }
   };
 
-  // Handle track volume change
-  const handleTrackVolumeChange = (trackId: string, volume: number) => {
+
+
+  // Handle track solo/unsolo
+  const handleTrackSoloToggle = (trackId: string, soloed: boolean) => {
+    // Update UI state immediately for instant feedback
+    setTrackStates(prevStates => 
+      prevStates.map(track => 
+        track.id === trackId 
+          ? { 
+              ...track, 
+              soloed,
+              // When soloing a track, automatically unmute it
+              muted: soloed ? false : track.muted
+            } 
+          : track
+      )
+    );
+    
+    // Apply audio solo without error handling that could trigger re-renders
     try {
-      audioPlayer.setTrackVolume(trackId, volume);
-      setTrackStates(prevStates => 
-        prevStates.map(track => 
-          track.id === trackId ? { ...track, volume } : track
-        )
-      );
+      audioPlayer.soloTrack(trackId, soloed);
+      
+      // If soloing, also unmute the track in the audio player
+      if (soloed) {
+        audioPlayer.muteTrack(trackId, false);
+      }
     } catch (error) {
-      console.error('Failed to change track volume:', error);
+      // Silently handle errors to prevent UI flashing
+      console.warn('Audio solo failed (UI already updated):', error);
     }
   };
 
+  // Helper function to determine if a track should be playing (for visual feedback)
+  const isTrackPlaying = (track: Track) => {
+    const hasSoloedTracks = trackStates.some(t => t.soloed);
+    
+    if (hasSoloedTracks) {
+      // If any track is soloed, only soloed tracks are playing
+      return track.soloed;
+    } else {
+      // If no tracks are soloed, playing depends on mute state
+      return !track.muted;
+    }
+  };
 
+  // Helper function to determine dimming type
+  const getTrackDimmingClass = (track: Track) => {
+    const hasSoloedTracks = trackStates.some(t => t.soloed);
+    
+    if (hasSoloedTracks && !track.soloed) {
+      // Track is silenced due to solo - full dimming (controls + waveform)
+      return 'daw-track--silenced';
+    } else if (!hasSoloedTracks && track.muted) {
+      // Track is just muted - only dim waveform
+      return 'daw-track--muted-only';
+    }
+    
+    return '';
+  };
 
   if (isLoading) {
     return (
       <div className="track-view">
         <div className="track-view__loading">
-          <div className="track-view__loading-spinner"></div>
-          <p>Loading audio tracks...</p>
+          <LoadingSpinner
+            size="large"
+            variant="accent"
+            message="Loading audio tracks..."
+          />
         </div>
       </div>
     );
@@ -192,13 +280,23 @@ const TrackView: React.FC<TrackViewProps> = ({
           <h2>Failed to Load Tracks</h2>
           <p>{loadError}</p>
           <div className="track-view__error-actions">
-            <button className="track-view__retry-button" onClick={handleRetry}>
+            <InteractiveButton 
+              variant="success" 
+              size="medium"
+              onClick={handleRetry}
+              className="track-view__retry-button"
+            >
               Retry Loading
-            </button>
+            </InteractiveButton>
             {onBack && (
-              <button className="track-view__back-button" onClick={onBack}>
+              <InteractiveButton 
+                variant="secondary" 
+                size="medium"
+                onClick={onBack}
+                className="track-view__back-button"
+              >
                 Back to Main Page
-              </button>
+              </InteractiveButton>
             )}
           </div>
         </div>
@@ -221,8 +319,14 @@ const TrackView: React.FC<TrackViewProps> = ({
         
         <div className="daw-toolbar__center">
           <div className="daw-transport-controls">
-            <button className="daw-transport-btn daw-transport-btn--prev">⏮</button>
-            <button className="daw-transport-btn daw-transport-btn--stop">⏹</button>
+            <button 
+              className="daw-transport-btn daw-transport-btn--prev"
+              onClick={handleGoToBeginning}
+              disabled={trackStates.length === 0}
+              title="Go to beginning"
+            >
+              ⏮
+            </button>
             <button className="daw-transport-btn daw-transport-btn--loop">🔄</button>
             <button 
               className={`daw-transport-btn daw-transport-btn--play ${isPlaying ? 'daw-transport-btn--playing' : ''}`}
@@ -231,8 +335,6 @@ const TrackView: React.FC<TrackViewProps> = ({
             >
               {isPlaying ? '⏸' : '▶'}
             </button>
-            <button className="daw-transport-btn daw-transport-btn--record">⏺</button>
-            <button className="daw-transport-btn daw-transport-btn--next">⏭</button>
           </div>
         </div>
         
@@ -253,9 +355,9 @@ const TrackView: React.FC<TrackViewProps> = ({
         <div className="daw-timeline-ruler">
           <div className="daw-ruler-track-header"></div>
           <div className="daw-ruler-content">
-            {Array.from({ length: Math.ceil(duration / 4) }, (_, i) => (
-              <div key={i} className="daw-ruler-marker" style={{ left: `${(i * 4 / duration) * 100}%` }}>
-                <span className="daw-ruler-number">{i * 4}</span>
+            {Array.from({ length: Math.ceil(duration / 10) }, (_, i) => (
+              <div key={i} className="daw-ruler-marker" style={{ left: `${(i * 10 / duration) * 100}%` }}>
+                <span className="daw-ruler-number">{formatTime(i * 10)}</span>
               </div>
             ))}
             {/* Playhead cursor */}
@@ -269,7 +371,7 @@ const TrackView: React.FC<TrackViewProps> = ({
         {/* Track area */}
         <div className="daw-track-area">
           {trackStates.map((track, index) => (
-            <div key={track.id} className="daw-track">
+            <div key={track.id} className={`daw-track ${getTrackDimmingClass(track)}`}>
               {/* Track header */}
               <div className="daw-track-header">
                 <div className="daw-track-number">{index + 1}</div>
@@ -279,24 +381,20 @@ const TrackView: React.FC<TrackViewProps> = ({
                     <button 
                       className={`daw-track-btn daw-track-btn--mute ${track.muted ? 'daw-track-btn--active' : ''}`}
                       onClick={() => handleTrackMuteToggle(track.id, !track.muted)}
+                      title={track.muted ? 'Unmute track' : 'Mute track'}
                     >
                       M
                     </button>
-                    <button className="daw-track-btn daw-track-btn--solo">S</button>
+                    <button 
+                      className={`daw-track-btn daw-track-btn--solo ${track.soloed ? 'daw-track-btn--active' : ''}`}
+                      onClick={() => handleTrackSoloToggle(track.id, !track.soloed)}
+                      title={track.soloed ? 'Unsolo track' : 'Solo track'}
+                    >
+                      S
+                    </button>
                   </div>
                 </div>
-                <div className="daw-track-volume">
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={track.volume}
-                    onChange={(e) => handleTrackVolumeChange(track.id, parseFloat(e.target.value))}
-                    className="daw-volume-slider"
-                  />
-                  <div className="daw-volume-value">{Math.round(track.volume * 100)}</div>
-                </div>
+
               </div>
               
               {/* Track content area with waveform */}
@@ -306,19 +404,50 @@ const TrackView: React.FC<TrackViewProps> = ({
                 ref={index === 0 ? timelineRef : undefined}
               >
                 <div className="daw-waveform-container">
-                  {/* Simulated waveform */}
-                  <div className={`daw-waveform daw-waveform--${track.name}`}>
-                    {Array.from({ length: 200 }, (_, i) => (
-                      <div 
-                        key={i} 
-                        className="daw-waveform-bar"
-                        style={{ 
-                          height: `${Math.random() * 60 + 20}%`,
-                          opacity: track.muted ? 0.3 : 1
-                        }}
+                  {/* Real waveform visualization */}
+                  {(() => {
+                    const trackWaveformData = waveformData.get(track.id);
+                    
+                    if (isGeneratingWaveforms) {
+                      return (
+                        <div className="daw-waveform-loading">
+                          <span>Generating waveform...</span>
+                        </div>
+                      );
+                    }
+                    
+                    if (waveformError) {
+                      return (
+                        <div className="daw-waveform-error">
+                          <span>Waveform unavailable</span>
+                        </div>
+                      );
+                    }
+                    
+                    if (!trackWaveformData) {
+                      return (
+                        <div className="daw-waveform-placeholder">
+                          <span>No waveform data</span>
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <WaveformVisualization
+                        bars={trackWaveformData.bars}
+                        trackName={track.name}
+                        isPlaying={isTrackPlaying(track)}
+                        progress={progressPercentage / 100}
+                        showSilentSections={false}
+                        silentSections={[]}
+                        totalDuration={trackWaveformData.duration}
+                        onClick={handleTimelineClick}
+                        enableHighDPI={true}
+                        enableCaching={true}
                       />
-                    ))}
-                  </div>
+                    );
+                  })()}
+                  
                   {/* Track progress overlay */}
                   <div 
                     className="daw-track-progress"

@@ -1,0 +1,286 @@
+/* Interactive Button Styles */
+.interactive-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  text-decoration: none;
+  user-select: none;
+  outline: none;
+  font-family: inherit;
+}
+
+/* Size Variants */
+.interactive-button--small {
+  padding: 8px 16px;
+  font-size: 12px;
+  min-height: 32px;
+}
+
+.interactive-button--medium {
+  padding: 12px 24px;
+  font-size: 14px;
+  min-height: 40px;
+}
+
+.interactive-button--large {
+  padding: 16px 32px;
+  font-size: 16px;
+  min-height: 48px;
+}
+
+/* Color Variants */
+.interactive-button--primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.interactive-button--primary:hover:not(.interactive-button--disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+.interactive-button--primary:active:not(.interactive-button--disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.interactive-button--secondary {
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.interactive-button--secondary:hover:not(.interactive-button--disabled) {
+  background: #e9ecef;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.interactive-button--success {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.interactive-button--success:hover:not(.interactive-button--disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(76, 175, 80, 0.4);
+}
+
+.interactive-button--danger {
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+}
+
+.interactive-button--danger:hover:not(.interactive-button--disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(244, 67, 54, 0.4);
+}
+
+.interactive-button--warning {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+}
+
+.interactive-button--warning:hover:not(.interactive-button--disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 152, 0, 0.4);
+}
+
+.interactive-button--info {
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.interactive-button--info:hover:not(.interactive-button--disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(33, 150, 243, 0.4);
+}
+
+/* Button States */
+.interactive-button--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.interactive-button--loading {
+  cursor: wait;
+}
+
+/* Button Content */
+.interactive-button__content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.interactive-button__text {
+  transition: opacity 0.2s ease;
+}
+
+.interactive-button__text--loading {
+  opacity: 0.7;
+}
+
+/* Loading Spinner */
+.interactive-button__spinner {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.interactive-button__spinner-dot {
+  width: 4px;
+  height: 4px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: interactive-button-pulse 1.4s ease-in-out infinite both;
+}
+
+.interactive-button__spinner-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.interactive-button__spinner-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.interactive-button__spinner-dot:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes interactive-button-pulse {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* Ripple Effect */
+.interactive-button__ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: interactive-button-ripple 0.6s ease-out;
+}
+
+@keyframes interactive-button-ripple {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  100% {
+    width: 200px;
+    height: 200px;
+    opacity: 0;
+  }
+}
+
+/* Focus States */
+.interactive-button:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+.interactive-button--secondary:focus-visible {
+  outline-color: #495057;
+}
+
+.interactive-button--success:focus-visible {
+  outline-color: #4CAF50;
+}
+
+.interactive-button--danger:focus-visible {
+  outline-color: #f44336;
+}
+
+.interactive-button--warning:focus-visible {
+  outline-color: #ff9800;
+}
+
+.interactive-button--info:focus-visible {
+  outline-color: #2196F3;
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  .interactive-button--secondary {
+    background: #343a40;
+    color: #f8f9fa;
+    border-color: #495057;
+  }
+  
+  .interactive-button--secondary:hover:not(.interactive-button--disabled) {
+    background: #495057;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .interactive-button {
+    transition: none;
+  }
+  
+  .interactive-button:hover:not(.interactive-button--disabled) {
+    transform: none;
+  }
+  
+  .interactive-button__ripple {
+    animation: none;
+  }
+  
+  .interactive-button__spinner-dot {
+    animation: interactive-button-pulse-reduced 1s ease-in-out infinite;
+  }
+  
+  @keyframes interactive-button-pulse-reduced {
+    0%, 100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .interactive-button {
+    border: 2px solid currentColor;
+  }
+  
+  .interactive-button--primary {
+    background: #0000ff;
+  }
+  
+  .interactive-button--success {
+    background: #008000;
+  }
+  
+  .interactive-button--danger {
+    background: #ff0000;
+  }
+}

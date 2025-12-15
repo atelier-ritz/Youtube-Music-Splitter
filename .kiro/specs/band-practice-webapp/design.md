@@ -15,7 +15,7 @@ graph TB
     A[React Frontend] --> B[Node.js Backend :3000]
     B --> C[YouTube Audio Extractor ✅]
     B -.-> D[Local Demucs Service :8000 ✅]
-    D --> E[Demucs htdemucs Model ✅]
+    D --> E[Demucs htdemucs_6s Model ✅]
     D --> F[Librosa BPM Detection ✅]
     D --> G[File Management System ✅]
     D --> H[HTTP File Serving ✅]
@@ -82,11 +82,13 @@ graph TB
 #### TrackController Component
 - **Purpose**: Individual track control interface
 - **Interface**:
-  - Mute/unmute toggle button
+  - Mute/unmute toggle button with active state styling
+  - Solo toggle button with active state styling
   - Volume slider (0-100% range)
   - Pan control (-100% left to +100% right)
   - Track name/instrument label
   - Visual feedback for control states
+  - Dimming effects for non-playing tracks
 
 #### AudioPlayer Service
 - **Purpose**: Web Audio API abstraction for multi-track playback
@@ -98,6 +100,8 @@ graph TB
   - `setTrackVolume(trackIndex: number, volume: number): void`
   - `setTrackPan(trackIndex: number, pan: number): void`
   - `muteTrack(trackIndex: number, muted: boolean): void`
+  - `soloTrack(trackIndex: number, soloed: boolean): void`
+  - `updateTrackAudioLevels(): void` (private method for managing solo/mute interactions)
 
 ### Backend Components
 
@@ -171,12 +175,13 @@ graph TB
 ```typescript
 interface Track {
   id: string;
-  name: string; // e.g., "vocals", "drums", "bass", "other"
+  name: string; // e.g., "vocals", "drums", "bass", "guitar", "piano", "other"
   audioUrl: string;
   duration: number; // in seconds
   volume: number; // 0-1 range
   pan: number; // -1 to 1 range (-1 = full left, 1 = full right)
   muted: boolean;
+  soloed: boolean; // true when track is soloed (isolates this track)
 }
 ```
 
@@ -256,9 +261,29 @@ interface AudioSession {
 **Status**: ✅ **VALIDATED** - Service successfully processes real audio files and serves separated tracks
 
 ### Property 11: Audio separation quality and completeness
-*For any* valid audio file processed by the Demucs service, the output should contain exactly four separated tracks (vocals, drums, bass, other) with proper file format and accessibility via HTTP endpoints
-**Validates: Requirements 8.2, 8.3**
-**Status**: ✅ **VALIDATED** - Confirmed with real audio processing test
+*For any* valid audio file processed by the Demucs service, the output should contain up to six separated tracks (vocals, drums, bass, guitar, piano, other) with proper file format and accessibility via HTTP endpoints
+**Validates: Requirements 2.3**
+**Status**: ✅ **VALIDATED** - Confirmed with real audio processing test using htdemucs_6s model
+
+### Property 12: Solo functionality exclusivity
+*For any* track that is soloed, all other tracks should be muted regardless of their individual mute states, and only soloed tracks should produce audio output
+**Validates: Requirements 7.1, 7.2**
+
+### Property 13: Solo state independence
+*For any* combination of solo and mute operations, the system should maintain independent solo states per track while correctly prioritizing solo over mute for audio output decisions
+**Validates: Requirements 7.3, 7.5**
+
+### Property 14: Visual feedback consistency for track states
+*For any* track state change (mute, solo, volume), the system should provide appropriate visual feedback with silenced tracks dimmed fully and muted tracks dimmed only in waveform visualization
+**Validates: Requirements 8.1, 8.2, 8.3**
+
+### Property 15: Granular progress reporting accuracy
+*For any* audio processing operation, the system should provide regular progress updates with descriptive messages that accurately reflect the current processing stage
+**Validates: Requirements 9.5**
+
+### Property 16: Waveform visualization accuracy
+*For any* loaded audio track, the waveform visualization should accurately represent the actual audio content with amplitude variations corresponding to signal strength and silent sections showing minimal amplitude
+**Validates: Requirements 11.1, 11.2, 11.3**
 
 ## Error Handling
 

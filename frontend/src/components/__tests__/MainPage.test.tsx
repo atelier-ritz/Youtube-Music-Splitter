@@ -20,7 +20,8 @@ describe('MainPage', () => {
   })
 
   it('renders the main page with title and input field', () => {
-    render(<MainPage />)
+    const mockOnProcessingComplete = vi.fn()
+    render(<MainPage onProcessingComplete={mockOnProcessingComplete} />)
     
     expect(screen.getByText('Band Practice Webapp')).toBeInTheDocument()
     expect(screen.getByText('Enter a YouTube URL to separate tracks and start practicing')).toBeInTheDocument()
@@ -30,7 +31,8 @@ describe('MainPage', () => {
 
   it('validates YouTube URLs and shows error for invalid URLs', async () => {
     const user = userEvent.setup()
-    render(<MainPage />)
+    const mockOnProcessingComplete = vi.fn()
+    render(<MainPage onProcessingComplete={mockOnProcessingComplete} />)
     
     const input = screen.getByPlaceholderText('https://www.youtube.com/watch?v=...')
     const form = input.closest('form')!
@@ -46,7 +48,8 @@ describe('MainPage', () => {
 
   it('accepts valid YouTube URLs', async () => {
     const user = userEvent.setup()
-    render(<MainPage />)
+    const mockOnProcessingComplete = vi.fn()
+    render(<MainPage onProcessingComplete={mockOnProcessingComplete} />)
     
     const input = screen.getByPlaceholderText('https://www.youtube.com/watch?v=...')
     const submitButton = screen.getByRole('button', { name: 'Start Practice' })
@@ -69,7 +72,8 @@ describe('MainPage', () => {
 
   it('shows progress indicator during download', async () => {
     const user = userEvent.setup()
-    render(<MainPage />)
+    const mockOnProcessingComplete = vi.fn()
+    render(<MainPage onProcessingComplete={mockOnProcessingComplete} />)
     
     const input = screen.getByPlaceholderText('https://www.youtube.com/watch?v=...')
     const submitButton = screen.getByRole('button', { name: 'Start Practice' })
@@ -90,7 +94,8 @@ describe('MainPage', () => {
 
   it('handles download errors and shows retry button', async () => {
     const user = userEvent.setup()
-    render(<MainPage />)
+    const mockOnProcessingComplete = vi.fn()
+    render(<MainPage onProcessingComplete={mockOnProcessingComplete} />)
     
     const input = screen.getByPlaceholderText('https://www.youtube.com/watch?v=...')
     const submitButton = screen.getByRole('button', { name: 'Start Practice' })
@@ -113,7 +118,8 @@ describe('MainPage', () => {
 
   it('clears validation error when user starts typing', async () => {
     const user = userEvent.setup()
-    render(<MainPage />)
+    const mockOnProcessingComplete = vi.fn()
+    render(<MainPage onProcessingComplete={mockOnProcessingComplete} />)
     
     const input = screen.getByPlaceholderText('https://www.youtube.com/watch?v=...')
     const form = input.closest('form')!
@@ -137,7 +143,8 @@ describe('MainPage', () => {
   })
 
   it('disables submit button when input is empty', () => {
-    render(<MainPage />)
+    const mockOnProcessingComplete = vi.fn()
+    render(<MainPage onProcessingComplete={mockOnProcessingComplete} />)
     
     const submitButton = screen.getByRole('button', { name: 'Start Practice' })
     expect(submitButton).toBeDisabled()
@@ -145,7 +152,8 @@ describe('MainPage', () => {
 
   it('disables input and submit button during loading', async () => {
     const user = userEvent.setup()
-    render(<MainPage />)
+    const mockOnProcessingComplete = vi.fn()
+    render(<MainPage onProcessingComplete={mockOnProcessingComplete} />)
     
     const input = screen.getByPlaceholderText('https://www.youtube.com/watch?v=...')
     const submitButton = screen.getByRole('button', { name: 'Start Practice' })

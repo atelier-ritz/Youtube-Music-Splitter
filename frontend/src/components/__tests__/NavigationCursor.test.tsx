@@ -59,7 +59,8 @@ describe('Navigation Cursor', () => {
       duration: 180,
       volume: 1,
       pan: 0,
-      muted: false
+      muted: false,
+      soloed: false
     }
   ]
 

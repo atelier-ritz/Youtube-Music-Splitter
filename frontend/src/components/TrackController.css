@@ -106,66 +106,7 @@
   gap: 12px;
 }
 
-/* Volume section */
-.track-controller__volume-section {
-  display: flex;
-  flex-direction: column;
-}
 
-.track-controller__volume-slider {
-  flex: 1;
-  height: 6px;
-  border-radius: 3px;
-  background: #e9ecef;
-  outline: none;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.track-controller__volume-slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #007bff;
-  cursor: pointer;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
-}
-
-.track-controller__volume-slider::-webkit-slider-thumb:hover {
-  background: #0056b3;
-  transform: scale(1.1);
-}
-
-.track-controller__volume-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #007bff;
-  cursor: pointer;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.track-controller__volume-slider--muted {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.track-controller__volume-slider--muted::-webkit-slider-thumb {
-  background: #6c757d;
-  cursor: not-allowed;
-}
-
-.track-controller__volume-value {
-  font-size: 12px;
-  color: #6c757d;
-  font-family: 'Courier New', monospace;
-  min-width: 40px;
-  text-align: right;
-}
 
 /* Pan section */
 .track-controller__pan-section {

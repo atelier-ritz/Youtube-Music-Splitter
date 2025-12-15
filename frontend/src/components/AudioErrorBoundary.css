@@ -1,0 +1,185 @@
+.audio-error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.audio-error-boundary__container {
+  max-width: 600px;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+}
+
+.audio-error-boundary__icon {
+  font-size: 40px;
+  margin-bottom: 16px;
+}
+
+.audio-error-boundary__title {
+  color: #dc3545;
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.audio-error-boundary__message {
+  color: #6c757d;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.audio-error-boundary__suggestions {
+  text-align: left;
+  margin: 20px 0;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #007bff;
+}
+
+.audio-error-boundary__suggestions h4 {
+  margin: 0 0 12px 0;
+  color: #495057;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.audio-error-boundary__suggestions ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.audio-error-boundary__suggestions li {
+  margin-bottom: 8px;
+  color: #6c757d;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.audio-error-boundary__suggestions li:last-child {
+  margin-bottom: 0;
+}
+
+.audio-error-boundary__details {
+  margin: 16px 0;
+  text-align: left;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+}
+
+.audio-error-boundary__details summary {
+  padding: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #495057;
+  background-color: #e9ecef;
+  border-radius: 6px 6px 0 0;
+  font-size: 12px;
+}
+
+.audio-error-boundary__details summary:hover {
+  background-color: #dee2e6;
+}
+
+.audio-error-boundary__stack {
+  margin: 0;
+  padding: 12px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #dc3545;
+  background-color: #fff;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.audio-error-boundary__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.audio-error-boundary__retry,
+.audio-error-boundary__reset,
+.audio-error-boundary__reload {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+}
+
+.audio-error-boundary__retry {
+  background-color: #007bff;
+  color: white;
+}
+
+.audio-error-boundary__retry:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.audio-error-boundary__reset {
+  background-color: #28a745;
+  color: white;
+}
+
+.audio-error-boundary__reset:hover {
+  background-color: #1e7e34;
+  transform: translateY(-1px);
+}
+
+.audio-error-boundary__reload {
+  background-color: #6c757d;
+  color: white;
+}
+
+.audio-error-boundary__reload:hover {
+  background-color: #545b62;
+  transform: translateY(-1px);
+}
+
+.audio-error-boundary__retry:active,
+.audio-error-boundary__reset:active,
+.audio-error-boundary__reload:active {
+  transform: translateY(0);
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .audio-error-boundary {
+    padding: 16px;
+    margin: 16px 0;
+  }
+  
+  .audio-error-boundary__container {
+    padding: 20px;
+  }
+  
+  .audio-error-boundary__actions {
+    flex-direction: column;
+  }
+  
+  .audio-error-boundary__retry,
+  .audio-error-boundary__reset,
+  .audio-error-boundary__reload {
+    width: 100%;
+  }
+}
