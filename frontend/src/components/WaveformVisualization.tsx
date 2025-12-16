@@ -51,9 +51,9 @@ const waveformCache = new Map<string, WaveformCache>();
 
 // Track-specific colors for consistent styling
 const TRACK_COLORS: Record<string, string> = {
-  vocals: '#d77c57',
+  vocals: '#d75757ff',
   drums: '#964fa5',
-  bass: '#396594ff',
+  bass: '#3f88adff',
   guitar: '#d0ab25',
   piano: '#3dc77d',
   other: '#b640a7'
@@ -213,7 +213,7 @@ const WaveformVisualization: React.FC<WaveformVisualizationProps> = ({
         let firstPoint = true;
         bars.forEach((bar, index) => {
           const x = (index / bars.length) * displayWidth;
-          const amplitude = bar.height * displayHeight / 400; // Scale to quarter height for symmetric display
+          const amplitude = Math.min(bar.height * displayHeight / 300, centerY - 5); // Scale to use 2/3 of half height, leave 5px margin
           const y1 = centerY - amplitude;
           
           if (firstPoint) {
@@ -227,7 +227,7 @@ const WaveformVisualization: React.FC<WaveformVisualizationProps> = ({
         // Draw the bottom half
         for (let i = bars.length - 1; i >= 0; i--) {
           const x = (i / bars.length) * displayWidth;
-          const amplitude = bars[i].height * displayHeight / 400; // Match the scaling above
+          const amplitude = Math.min(bars[i].height * displayHeight / 300, centerY - 5); // Match the scaling above
           const y2 = centerY + amplitude;
           ctx.lineTo(x, y2);
         }
@@ -238,7 +238,7 @@ const WaveformVisualization: React.FC<WaveformVisualizationProps> = ({
         // For normal density, use waveform-style bars
         bars.forEach((bar, index) => {
           const x = index * barWidth;
-          const amplitude = Math.max(bar.height * displayHeight / 400, 1); // Scale to quarter height for symmetric display
+          const amplitude = Math.max(Math.min(bar.height * displayHeight / 300, centerY - 5), 1); // Scale to use 2/3 of half height, leave 5px margin
           
           // Draw symmetric waveform bar (top and bottom from center)
           ctx.globalAlpha = containerOpacity * Math.max(bar.opacity, 0.3);

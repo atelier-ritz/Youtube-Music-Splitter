@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import downloadRoutes from './routes/download';
 import processRoutes from './routes/process';
 import cacheRoutes from './routes/cache';
+import tracksRoutes from './routes/tracks';
 import { 
   errorHandler, 
   notFoundHandler, 
@@ -12,6 +13,15 @@ import {
   rateLimitHandler,
   AppError 
 } from './middleware/errorHandler';
+
+// More lenient rate limiting for track serving (audio files)
+const trackServingLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 200, // allow many track requests for loading 6 tracks + waveform generation
+  message: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 dotenv.config();
 
@@ -21,24 +31,17 @@ const PORT = process.env.PORT || 3001;
 // Request timeout middleware (30 seconds)
 app.use(timeoutHandler(30000));
 
-// Rate limiting middleware
+// Rate limiting middleware - more lenient for development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 500, // increased limit for track loading and waveform generation
   message: rateLimitHandler,
   standardHeaders: true,
   legacyHeaders: false,
 });
 app.use('/api/', limiter);
 
-// Stricter rate limiting for download endpoints
-const downloadLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 5, // limit each IP to 5 download requests per minute
-  message: rateLimitHandler,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+
 
 // Basic middleware
 app.use(cors());
@@ -51,10 +54,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes with rate limiting
-app.use('/api/download', downloadLimiter, downloadRoutes);
+// Routes with differentiated rate limiting
+app.use('/api/download', downloadRoutes);
 app.use('/api/process', processRoutes);
 app.use('/api/cache', cacheRoutes);
+app.use('/api/tracks', trackServingLimiter, tracksRoutes);
 
 // Health check endpoint with error handling
 app.get('/api/health', (req, res, next) => {

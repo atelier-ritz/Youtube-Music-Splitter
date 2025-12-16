@@ -153,6 +153,27 @@ def separate_audio(job_id, input_file):
         input_name = Path(input_file).stem
         separated_dir = job_output_dir / 'htdemucs_6s' / input_name
         
+        # Debug: Check what Demucs actually created
+        print(f"Looking for separated files in: {separated_dir}")
+        if job_output_dir.exists():
+            print(f"Contents of {job_output_dir}:")
+            for item in job_output_dir.rglob('*'):
+                print(f"  {item}")
+        
+        # If the expected directory doesn't exist, try to find the actual directory
+        if not separated_dir.exists():
+            htdemucs_dir = job_output_dir / 'htdemucs_6s'
+            if htdemucs_dir.exists():
+                # Find the first subdirectory (should be the separated tracks)
+                subdirs = [d for d in htdemucs_dir.iterdir() if d.is_dir()]
+                if subdirs:
+                    separated_dir = subdirs[0]
+                    print(f"Using actual separated directory: {separated_dir}")
+                else:
+                    print(f"No subdirectories found in {htdemucs_dir}")
+            else:
+                print(f"htdemucs_6s directory not found in {job_output_dir}")
+        
         if not separated_dir.exists():
             raise Exception(f"Separated files not found at {separated_dir}")
         
@@ -170,8 +191,8 @@ def separate_audio(job_id, input_file):
         for demucs_file, track_name in track_mapping.items():
             track_file = separated_dir / demucs_file
             if track_file.exists():
-                # Create a URL that our backend can serve
-                tracks[track_name] = f"http://localhost:8000/api/tracks/{job_id}/{demucs_file}"
+                # Create a URL that points to the backend proxy (which will proxy to this service)
+                tracks[track_name] = f"http://localhost:3001/api/tracks/{job_id}/{demucs_file}"
         
         update_progress(job_id, 90, "Detecting BPM...")
         
@@ -317,17 +338,43 @@ def serve_track(job_id, filename):
         with jobs_lock:
             job = jobs.get(job_id)
             if job:
-                # The actual directory name is: job_id + "_" + original_filename_stem
                 original_filename = job['filename']
                 original_stem = Path(original_filename).stem
-                input_name = f"{job_id}_{original_stem}"
+                input_name = original_stem  # Demucs uses just the stem, not job_id prefix
         
         if not input_name:
             return jsonify({'error': 'Job not found'}), 404
         
-        track_file = OUTPUT_FOLDER / job_id / 'htdemucs_6s' / input_name / filename
+        # Try multiple possible locations for the track file
+        possible_paths = [
+            OUTPUT_FOLDER / job_id / 'htdemucs_6s' / input_name / filename,
+            OUTPUT_FOLDER / job_id / 'htdemucs_6s' / f"{job_id}_{input_name}" / filename
+        ]
         
-        if not track_file.exists():
+        # Also check if there are any subdirectories in htdemucs_6s
+        htdemucs_dir = OUTPUT_FOLDER / job_id / 'htdemucs_6s'
+        if htdemucs_dir.exists():
+            for subdir in htdemucs_dir.iterdir():
+                if subdir.is_dir():
+                    possible_paths.append(subdir / filename)
+        
+        track_file = None
+        for path in possible_paths:
+            if path.exists():
+                track_file = path
+                break
+        
+        if not track_file:
+            print(f"Track file not found. Tried paths:")
+            for path in possible_paths:
+                print(f"  {path} - exists: {path.exists()}")
+            
+            # List what actually exists
+            if htdemucs_dir.exists():
+                print(f"Contents of {htdemucs_dir}:")
+                for item in htdemucs_dir.rglob('*'):
+                    print(f"  {item}")
+            
             return jsonify({'error': 'Track file not found'}), 404
         
         return send_file(track_file, as_attachment=False)

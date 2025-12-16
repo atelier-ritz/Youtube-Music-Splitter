@@ -18,6 +18,8 @@ export interface UseWaveformDataOptions {
   targetWidth?: number;
   /** Height scale for visualization */
   heightScale?: number;
+  /** Manual amplitude multiplier override (if set, disables auto-normalization) */
+  amplitudeMultiplier?: number;
   /** Enable real-time analysis */
   enableRealtimeAnalysis?: boolean;
   /** Enable waveform caching for performance */
@@ -57,6 +59,7 @@ export function useWaveformData(
   const {
     targetWidth = 800,
     heightScale = 100,
+    amplitudeMultiplier,
     enableRealtimeAnalysis = false,
     debounceMs = 100
   } = options;
@@ -68,17 +71,18 @@ export function useWaveformData(
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastOptionsRef = useRef<UseWaveformDataOptions>(options);
 
-  // Generate waveform visualization data from raw waveform data
-  const generateVisualizationData = useCallback((
+  // Generate waveform visualization data from raw waveform data with normalization
+  const generateVisualizationDataWithNormalization = useCallback((
     rawWaveformData: WaveformData,
-    trackName: string
+    trackName: string,
+    magnifier: number
   ): WaveformVisualizationData => {
     try {
-      // Generate visualization bars
+      // Generate visualization bars with normalization
       const { amplitudes } = rawWaveformData;
       const bars: Array<{ height: number; opacity: number }> = [];
       
-      console.log(`Processing ${trackName}: ${amplitudes.length} amplitude samples`);
+
       
       // Check if we have valid amplitude data
       if (!amplitudes || amplitudes.length === 0) {
@@ -86,20 +90,25 @@ export function useWaveformData(
         // Generate unique fallback pattern for each track
         const trackSeed = trackName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         
+        // Use targetWidth for fallback patterns since we don't have amplitude data
         for (let i = 0; i < targetWidth; i++) {
           // Create more varied patterns based on track name
           const basePattern = Math.sin((i + trackSeed) * 0.1) * 30 + 40;
           const variation = Math.cos((i + trackSeed * 2) * 0.05) * 15;
           const noise = Math.sin((i + trackSeed * 3) * 0.3) * 5;
           
-          const height = Math.abs(basePattern + variation + noise);
+          // Apply magnifier to fallback patterns too
+          const height = Math.abs(basePattern + variation + noise) * magnifier;
           const opacity = 0.6 + Math.sin((i + trackSeed) * 0.2) * 0.2;
           
           bars.push({ height, opacity: Math.max(opacity, 0.3) });
         }
       } else {
-        // Resample amplitudes to match target width
-        const samplesPerBar = amplitudes.length / targetWidth;
+        // Use reasonable target width for visualization (not full resolution)
+        const actualTargetWidth = targetWidth; // Use the specified target width for visualization
+        const samplesPerBar = amplitudes.length / actualTargetWidth;
+        
+
         
         // Check if all amplitudes are very similar (indicating potential issue)
         const maxAmp = Math.max(...amplitudes);
@@ -145,15 +154,17 @@ export function useWaveformData(
           
           const patternFunc = trackPatterns[trackName as keyof typeof trackPatterns] || trackPatterns.other;
           
+          // Use targetWidth for enhanced patterns since we detected low variance
           for (let i = 0; i < targetWidth; i++) {
             const patternValue = patternFunc(i);
-            const height = Math.max(patternValue * heightScale, 2);
+            // Apply magnifier to pattern-generated heights
+            const height = Math.max(patternValue * magnifier, 2);
             const opacity = Math.max(patternValue * 0.8 + 0.3, 0.3);
             bars.push({ height, opacity });
           }
         } else {
-          // Use actual amplitude data
-          for (let i = 0; i < targetWidth; i++) {
+          // Use actual amplitude data with normalization applied
+          for (let i = 0; i < actualTargetWidth; i++) {
             const startIndex = Math.floor(i * samplesPerBar);
             const endIndex = Math.min(Math.floor((i + 1) * samplesPerBar), amplitudes.length);
             
@@ -163,17 +174,27 @@ export function useWaveformData(
               maxAmplitude = Math.max(maxAmplitude, amplitudes[j] || 0);
             }
             
-            // Calculate height and opacity based on amplitude with better scaling
-            const normalizedAmplitude = Math.min(maxAmplitude * 3, 1); // Boost quiet sections more
-            const height = Math.max(normalizedAmplitude * heightScale, 2); // Minimum height of 2px
-            const opacity = Math.max(normalizedAmplitude * 0.8 + 0.3, 0.3); // Better opacity range
+            // Improved scaling: Use logarithmic scaling for better visibility of quiet sections
+            let scaledAmplitude = maxAmplitude;
+            if (maxAmplitude > 0) {
+              // Apply logarithmic scaling to make quiet sections more visible
+              // This compresses loud sections and boosts quiet sections
+              scaledAmplitude = Math.log10(maxAmplitude * 9 + 1); // Range: 0-1
+            }
+            
+            // APPLY NORMALIZATION: Multiply by magnifier to normalize across all tracks
+            const normalizedAmplitude = scaledAmplitude * magnifier;
+            
+            // Calculate height and opacity with enhanced scaling and normalization
+            const height = Math.max(normalizedAmplitude * 1.5, 2); // Boost overall height
+            const opacity = Math.max(scaledAmplitude * 0.7 + 0.4, 0.4); // Better opacity for visibility
             
             bars.push({ height, opacity });
           }
         }
       }
 
-      // Detect silent sections
+      // Detect silent sections (same as before)
       const silentSections: Array<{ start: number; end: number; duration: number }> = [];
       const timePerPoint = rawWaveformData.duration / amplitudes.length;
       const silenceThreshold = 0.01;
@@ -228,7 +249,7 @@ export function useWaveformData(
         silentSections
       };
     } catch (err) {
-      console.error(`Failed to generate visualization data for track ${trackName}:`, err);
+      console.error(`Failed to generate normalized visualization data for track ${trackName}:`, err);
       // Return empty visualization data on error
       return {
         bars: Array.from({ length: targetWidth }, (_, i) => ({ 
@@ -240,12 +261,14 @@ export function useWaveformData(
         silentSections: []
       };
     }
-  }, [targetWidth, heightScale]);
+  }, [targetWidth]);
 
-  // Generate waveform data for all tracks with performance optimizations
+
+
+  // Generate waveform data for all tracks with performance optimizations and normalization
   const generateWaveforms = useCallback(async () => {
     if (!audioPlayer) {
-      console.log('useWaveformData: No audioPlayer available');
+
       return;
     }
 
@@ -262,22 +285,33 @@ export function useWaveformData(
       
       // Get raw waveform data from audio player
       const rawWaveformMap = audioPlayer.getAllWaveformData();
-      console.log(`useWaveformData: Got ${rawWaveformMap.size} tracks from audioPlayer`);
-      
-      // Debug: Check if tracks have different waveform data
-      rawWaveformMap.forEach((data, trackId) => {
-        const track = audioPlayer.getTrack(trackId);
-        const maxAmp = Math.max(...data.amplitudes);
-        const avgAmp = data.amplitudes.reduce((sum, amp) => sum + amp, 0) / data.amplitudes.length;
-        console.log(`Raw waveform for ${trackId} (${track?.name}): ${data.amplitudes.length} samples, max: ${maxAmp.toFixed(4)}, avg: ${avgAmp.toFixed(4)}`);
-      });
+
       
       if (rawWaveformMap.size === 0) {
-        console.log('useWaveformData: No waveform data available from audioPlayer');
+
         setWaveformData(new Map());
         setIsGenerating(false);
         return;
       }
+
+      // STEP 1: Find the peak amplitude of each track
+      const trackPeaks = new Map<string, number>();
+      rawWaveformMap.forEach((data, trackId) => {
+        const maxAmplitude = Math.max(...data.amplitudes);
+        trackPeaks.set(trackId, maxAmplitude);
+        
+        const track = audioPlayer.getTrack(trackId);
+
+      });
+
+      // STEP 2: Find the maximum peak across all tracks
+      const maxPeakOfAllTracks = Math.max(...Array.from(trackPeaks.values()));
+
+
+      // STEP 3: Calculate magnifier number (full height / max peak of all tracks)
+      // Use heightScale as the "full height" reference, or manual override
+      const magnifier = amplitudeMultiplier || (maxPeakOfAllTracks > 0 ? heightScale / maxPeakOfAllTracks : 1);
+
       
       const newWaveformData = new Map<string, WaveformVisualizationData>();
 
@@ -297,9 +331,16 @@ export function useWaveformData(
                 // Get track name for pattern generation
                 const track = audioPlayer.getTrack(trackId);
                 const trackName = track?.name || 'other';
-                console.log(`Generating visualization for track ${trackId} (${trackName})...`);
-                const visualizationData = generateVisualizationData(rawData, trackName);
-                console.log(`Generated ${visualizationData.bars.length} bars for ${trackId} (${trackName}), hasContent: ${visualizationData.hasContent}`);
+
+                
+                // STEP 4: Generate visualization data with normalization
+                const visualizationData = generateVisualizationDataWithNormalization(
+                  rawData, 
+                  trackName, 
+                  magnifier
+                );
+                
+
                 newWaveformData.set(trackId, visualizationData);
                 resolve();
               } catch (err) {
@@ -327,15 +368,12 @@ export function useWaveformData(
         await new Promise(resolve => setTimeout(resolve, 0));
       }
 
-      console.log(`useWaveformData: Generated visualization data for ${newWaveformData.size} tracks`);
+
       
-      // Debug: Log waveform data details
+      // Debug: Log normalized waveform data details
       newWaveformData.forEach((data, trackId) => {
-        console.log(`Track ${trackId}: ${data.bars.length} bars, duration: ${data.duration}s, hasContent: ${data.hasContent}`);
-        if (data.bars.length > 0) {
-          const avgHeight = data.bars.reduce((sum, bar) => sum + bar.height, 0) / data.bars.length;
-          console.log(`  Average bar height: ${avgHeight.toFixed(2)}, Max height: ${Math.max(...data.bars.map(b => b.height)).toFixed(2)}`);
-        }
+        const track = audioPlayer.getTrack(trackId);
+
       });
       
       setWaveformData(newWaveformData);
@@ -353,7 +391,7 @@ export function useWaveformData(
       }
 
       const endTime = performance.now();
-      console.log(`Waveform generation completed in ${(endTime - startTime).toFixed(2)}ms for ${trackEntries.length} tracks`);
+
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate waveform data';
@@ -362,7 +400,7 @@ export function useWaveformData(
     } finally {
       setIsGenerating(false);
     }
-  }, [audioPlayer, generateVisualizationData, enableRealtimeAnalysis]);
+  }, [audioPlayer, targetWidth, heightScale, enableRealtimeAnalysis, generateVisualizationDataWithNormalization]);
 
   // Regenerate waveforms with new options (debounced for performance)
   const regenerateWaveforms = useCallback((newOptions?: UseWaveformDataOptions) => {

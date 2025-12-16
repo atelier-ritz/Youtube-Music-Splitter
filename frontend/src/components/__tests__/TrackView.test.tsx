@@ -111,63 +111,68 @@ describe('TrackView', () => {
       expect(screen.queryByText('Loading audio tracks...')).not.toBeInTheDocument()
     })
 
-    expect(screen.getByText('Test Song')).toBeInTheDocument()
+    // DAW interface shows BPM in the toolbar
     expect(screen.getByText('BPM')).toBeInTheDocument()
     expect(screen.getByText('120')).toBeInTheDocument()
+    // Note: Title is not displayed in current DAW interface design
   })
 
-  it('renders track view without BPM when not provided', async () => {
+  it('renders DAW interface without BPM when not provided', async () => {
     render(<TrackView tracks={mockTracks} title="Test Song" />)
     
     await waitFor(() => {
       expect(screen.queryByText('Loading audio tracks...')).not.toBeInTheDocument()
     })
 
-    expect(screen.getByText('Test Song')).toBeInTheDocument()
-    expect(screen.queryByText('BPM')).not.toBeInTheDocument()
+    // DAW interface should show BPM section but with --- when no BPM provided
+    expect(screen.getByText('BPM')).toBeInTheDocument()
+    expect(screen.getByText('---')).toBeInTheDocument() // Default BPM display
   })
 
-  it('displays all provided tracks in the track list', async () => {
+  it('displays all provided tracks in the DAW interface', async () => {
     render(<TrackView tracks={mockTracks} />)
     
     await waitFor(() => {
       expect(screen.queryByText('Loading audio tracks...')).not.toBeInTheDocument()
     })
 
-    expect(screen.getByText('Separated Tracks')).toBeInTheDocument()
-    expect(screen.getByText('Vocals')).toBeInTheDocument() // Capitalized by TrackController
+    // Check for DAW interface elements
+    expect(document.querySelector('.daw-interface')).toBeInTheDocument()
+    expect(screen.getByText('Vocals')).toBeInTheDocument() // Capitalized track names
     expect(screen.getByText('Drums')).toBeInTheDocument()
     expect(screen.getByText('Bass')).toBeInTheDocument()
     expect(screen.getByText('Other')).toBeInTheDocument()
   })
 
-  it('shows play button and time information', async () => {
+  it('shows DAW transport controls and time information', async () => {
     render(<TrackView tracks={mockTracks} />)
     
     await waitFor(() => {
       expect(screen.queryByText('Loading audio tracks...')).not.toBeInTheDocument()
     })
 
-    // Find the main play button specifically
-    const playButton = document.querySelector('.track-view__play-button')
+    // Check for DAW transport controls
+    const playButton = document.querySelector('.daw-transport-btn--play')
     expect(playButton).toBeInTheDocument()
-    expect(screen.getByText('0:00')).toBeInTheDocument() // Current time
-    expect(screen.getByText('/', { selector: '.track-view__time-separator' })).toBeInTheDocument() // Time separator
-    expect(document.querySelector('.track-view__total-time')).toHaveTextContent('3:00') // Total duration
+    expect(screen.getByText('00:00.000')).toBeInTheDocument() // Current time with milliseconds
+    
+    // Check for other transport controls
+    expect(document.querySelector('.daw-transport-btn--prev')).toBeInTheDocument()
+    expect(document.querySelector('.daw-transport-btn--stop')).toBeInTheDocument()
   })
 
-  it('renders navigation timeline with cursor', async () => {
+  it('renders DAW timeline ruler with playhead', async () => {
     render(<TrackView tracks={mockTracks} />)
     
     await waitFor(() => {
       expect(screen.queryByText('Loading audio tracks...')).not.toBeInTheDocument()
     })
 
-    const timeline = document.querySelector('.track-view__timeline')
-    const cursor = document.querySelector('.track-view__timeline-cursor')
+    const timeline = document.querySelector('.daw-timeline-ruler')
+    const playhead = document.querySelector('.daw-playhead')
     
     expect(timeline).toBeInTheDocument()
-    expect(cursor).toBeInTheDocument()
+    expect(playhead).toBeInTheDocument()
   })
 
   it('shows back button when onBack callback is provided', async () => {
@@ -188,34 +193,38 @@ describe('TrackView', () => {
   it('handles empty tracks array', async () => {
     render(<TrackView tracks={[]} />)
     
-    // For empty tracks, the component should still show loading initially, then show empty state
+    // For empty tracks, the component should still show loading initially, then show DAW interface
     await waitFor(() => {
       expect(screen.queryByText('Loading audio tracks...')).not.toBeInTheDocument()
     }, { timeout: 2000 })
 
-    expect(screen.getByText('No tracks available for playback')).toBeInTheDocument()
+    // Should show DAW interface even with no tracks
+    expect(document.querySelector('.daw-interface')).toBeInTheDocument()
+    expect(document.querySelector('.daw-track-area')).toBeInTheDocument()
   })
 
-  it('displays track controllers with mute buttons and volume controls', async () => {
+  it('displays DAW track controls with mute and solo buttons', async () => {
     render(<TrackView tracks={mockTracks} />)
     
     await waitFor(() => {
       expect(screen.queryByText('Loading audio tracks...')).not.toBeInTheDocument()
     })
 
-    // Check that each track has a mute button
-    const muteButtons = document.querySelectorAll('.track-controller__mute-button')
+    // Check that each track has mute and solo buttons in DAW interface
+    const muteButtons = document.querySelectorAll('.daw-track-btn--mute')
+    const soloButtons = document.querySelectorAll('.daw-track-btn--solo')
+    const exportButtons = document.querySelectorAll('.daw-track-btn--export')
+    
     expect(muteButtons).toHaveLength(4)
+    expect(soloButtons).toHaveLength(4)
+    expect(exportButtons).toHaveLength(4)
     
-    // Check that each track has volume and pan controls
-    const volumeSliders = document.querySelectorAll('.track-controller__volume-slider')
-    const panSliders = document.querySelectorAll('.track-controller__pan-slider')
-    expect(volumeSliders).toHaveLength(4)
-    expect(panSliders).toHaveLength(4)
+    // Check that M and S labels are displayed
+    expect(screen.getAllByText('M')).toHaveLength(4) // Mute buttons
+    expect(screen.getAllByText('S')).toHaveLength(4) // Solo buttons
     
-    // Check that volume labels are displayed
-    expect(screen.getAllByText('Volume')).toHaveLength(4)
-    expect(screen.getAllByText('Pan')).toHaveLength(4)
+    // DAW interface doesn't show individual pan controls, but has export buttons
+    expect(screen.getAllByText('📊')).toHaveLength(4) // Export buttons
   })
 
   it('formats track duration correctly in track controllers', async () => {
@@ -248,8 +257,11 @@ describe('TrackView', () => {
       expect(screen.queryByText('Loading audio tracks...')).not.toBeInTheDocument()
     })
 
-    expect(screen.getByText('1:05')).toBeInTheDocument()
-    expect(screen.getByText('2:05')).toBeInTheDocument()
+    // In DAW interface, track durations are not displayed as text labels
+    // Instead, they're represented in the timeline and waveform visualization
+    expect(document.querySelector('.daw-track-area')).toBeInTheDocument()
+    expect(screen.getByText('Test track 1')).toBeInTheDocument()
+    expect(screen.getByText('Test track 2')).toBeInTheDocument()
   })
 
   it('displays timestamp inspector with milliseconds format', async () => {

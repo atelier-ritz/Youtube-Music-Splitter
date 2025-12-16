@@ -31,6 +31,44 @@ export class YouTubeDownloaderService {
   }
 
   /**
+   * Simulate download progress for better user feedback
+   */
+  private simulateDownloadProgress(jobId: string): NodeJS.Timeout {
+    const job = this.jobs.get(jobId);
+    if (!job) return setTimeout(() => {}, 0);
+
+    let currentProgress = 5;
+    const targetProgress = 85; // Stop at 85% to let the actual completion set 90%
+    const progressIncrement = 2; // Increase by 2% every interval
+    const intervalMs = 1500; // Update every 1.5 seconds
+
+    return setInterval(() => {
+      const job = this.jobs.get(jobId);
+      if (!job || job.status !== 'downloading') {
+        return;
+      }
+
+      currentProgress = Math.min(currentProgress + progressIncrement, targetProgress);
+      job.progress = currentProgress;
+
+      // Add realistic download messages
+      if (currentProgress < 20) {
+        job.message = 'Connecting to YouTube...';
+      } else if (currentProgress < 40) {
+        job.message = 'Downloading video stream...';
+      } else if (currentProgress < 60) {
+        job.message = 'Extracting audio...';
+      } else if (currentProgress < 80) {
+        job.message = 'Converting to MP3...';
+      } else {
+        job.message = 'Finalizing download...';
+      }
+
+      console.log(`Download progress for ${jobId}: ${currentProgress}%`);
+    }, intervalMs);
+  }
+
+  /**
    * Start a new download job
    */
   async startDownload(youtubeUrl: string): Promise<string> {
@@ -107,10 +145,13 @@ export class YouTubeDownloaderService {
 
     try {
       job.status = 'downloading';
-      job.progress = 10;
+      job.progress = 5;
 
       // Generate output filename
       const outputTemplate = path.join(this.downloadDir, `${jobId}.%(ext)s`);
+
+      // Simulate more granular progress during download
+      const progressSimulation = this.simulateDownloadProgress(jobId);
 
       // Download audio using youtube-dl-exec
       const output = await ytDlp(job.youtubeUrl, {
@@ -122,6 +163,8 @@ export class YouTubeDownloaderService {
         // Progress callback would be nice but youtube-dl-exec doesn't support it directly
       });
 
+      // Stop progress simulation
+      clearInterval(progressSimulation);
       job.progress = 90;
 
       // Find the downloaded file

@@ -94,7 +94,7 @@ class AudioProcessingService {
       this.updateJobStatus(jobId, 'processing', 30);
 
       // Poll external service for completion
-      const result = await this.pollExternalService(externalJobId);
+      const result = await this.pollExternalService(externalJobId, jobId);
 
       // Process results and create tracks
       const tracks = await this.processExternalServiceResult(result);
@@ -161,7 +161,7 @@ class AudioProcessingService {
   /**
    * Poll external service for processing completion
    */
-  private async pollExternalService(externalJobId: string): Promise<ExternalProcessingServiceResponse> {
+  private async pollExternalService(externalJobId: string, jobId?: string): Promise<ExternalProcessingServiceResponse> {
     const maxPollingTime = 10 * 60 * 1000; // 10 minutes
     const startTime = Date.now();
 
@@ -174,10 +174,9 @@ class AudioProcessingService {
         const result = response.data as ExternalProcessingServiceResponse;
 
         // Update local job progress based on external service progress
-        const job = this.jobs.get(externalJobId);
-        if (job) {
-          const adjustedProgress = 30 + (result.progress * 0.6); // Map external progress to 30-90% range
-          this.updateJobStatus(job.id, 'processing', adjustedProgress);
+        if (jobId) {
+          const adjustedProgress = Math.round(30 + (result.progress * 0.6)); // Map external progress to 30-90% range
+          this.updateJobStatus(jobId, 'processing', adjustedProgress);
         }
 
         if (result.status === 'completed') {
@@ -253,7 +252,7 @@ class AudioProcessingService {
     const job = this.jobs.get(jobId);
     if (job) {
       job.status = status;
-      job.progress = progress;
+      job.progress = Math.round(progress);
       if (tracks) job.tracks = tracks;
       if (bpm) job.bpm = bpm;
       if (error) job.error = error;

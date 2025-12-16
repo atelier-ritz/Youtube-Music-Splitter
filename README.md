@@ -225,9 +225,8 @@ chmod +x scripts/cache-management.sh  # Make executable (first time only)
 
 ### 📋 Planned
 1. Practice session management
-2. Loop and repeat functionality
-3. Audio effects and filters
-4. Export and sharing features
+2. Audio effects and filters
+3. Export and sharing features
 
 ## Usage
 

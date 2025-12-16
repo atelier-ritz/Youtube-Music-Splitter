@@ -4,18 +4,37 @@
  */
 
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import { validateYouTubeUrl } from '../utils/youtubeValidator';
 import { youtubeDownloaderService } from '../services/youtubeDownloader';
 import { DownloadRequest, DownloadResponse, DownloadStatusResponse } from '../types/downloadTypes';
-import { asyncHandler, ValidationError, AppError } from '../middleware/errorHandler';
+import { asyncHandler, ValidationError, AppError, rateLimitHandler } from '../middleware/errorHandler';
 
 const router = Router();
+
+// Rate limiting for download initiation - more reasonable for testing
+const downloadInitLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // increased to 10 download initiations per minute
+  message: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// More lenient rate limiting for status checks
+const downloadStatusLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100, // limit each IP to 100 status checks per minute
+  message: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 /**
  * POST /api/download
  * Start a new YouTube audio download
  */
-router.post('/', asyncHandler(async (req: Request, res: Response) => {
+router.post('/', downloadInitLimiter, asyncHandler(async (req: Request, res: Response) => {
   const { youtubeUrl }: DownloadRequest = req.body;
 
   if (!youtubeUrl) {
@@ -49,7 +68,7 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
  * GET /api/download/:jobId
  * Get the status of a download job
  */
-router.get('/:jobId', asyncHandler(async (req: Request, res: Response) => {
+router.get('/:jobId', downloadStatusLimiter, asyncHandler(async (req: Request, res: Response) => {
   const { jobId } = req.params;
 
   if (!jobId) {
@@ -66,6 +85,7 @@ router.get('/:jobId', asyncHandler(async (req: Request, res: Response) => {
     jobId: job.id,
     status: job.status,
     progress: job.progress,
+    message: job.message,
     audioFilePath: job.audioFilePath,
     error: job.error
   };

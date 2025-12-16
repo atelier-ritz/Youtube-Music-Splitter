@@ -4,6 +4,8 @@
  * Provides synchronized playback control for multiple audio tracks with
  * individual volume, pan, and mute controls per track.
  * 
+ * Uses SoundTouchJS for pitch-preserving speed control.
+ * 
  * Includes comprehensive error handling for audio-related failures.
  * Requirements: 2.4, 7.4
  */
@@ -11,6 +13,7 @@
 import { retryWithBackoff, withTimeout } from '../utils/retryUtils';
 import { AudioAnalysisService } from './AudioAnalysisService';
 import type { WaveformData } from './AudioAnalysisService';
+import * as SoundTouchJS from 'soundtouchjs';
 
 export interface Track {
   id: string;
@@ -30,6 +33,9 @@ interface AudioTrack {
   panNode: StereoPannerNode;
   track: Track;
   waveformData?: WaveformData;
+  soundTouch?: any;
+  filter?: any;
+  soundTouchNode?: AudioNode;
 }
 
 export class AudioPlayer {
@@ -38,15 +44,21 @@ export class AudioPlayer {
   private isPlaying: boolean = false;
   private startTime: number = 0;
   private currentPosition: number = 0;
+  private lastPlayStartPosition: number = 0;
   private animationFrameId: number | null = null;
   private positionUpdateCallback?: (position: number) => void;
   private analysisService: AudioAnalysisService;
   private playbackRate: number = 1.0;
+  private usingSoundTouch: boolean = false;
+  private soundTouchStartTime: number = 0;
+  private soundTouchStartPosition: number = 0;
+  private lastSoundTouchPosition: number = 0;
+  private lastSoundTouchUpdateTime: number = 0;
 
   constructor() {
     // Don't initialize AudioContext in constructor - wait for user interaction
     this.analysisService = new AudioAnalysisService();
-    console.log('AudioPlayer constructor called');
+
   }
 
   /**
@@ -54,7 +66,7 @@ export class AudioPlayer {
    */
   private initializeAudioContext(): void {
     if (this.audioContext) {
-      console.log('AudioContext already initialized');
+
       return;
     }
     
@@ -66,14 +78,17 @@ export class AudioPlayer {
       }
       
       this.audioContext = new AudioContextClass();
-      console.log('AudioContext initialized successfully:', this.audioContext.state);
+
       
       // Initialize analysis service with the audio context
       this.analysisService.initialize(this.audioContext);
       
+      // Clear any existing waveform cache to ensure fresh generation with track-specific keys
+      this.analysisService.clearWaveformStorage();
+      
       // Add error event listener
       this.audioContext.addEventListener('statechange', () => {
-        console.log('AudioContext state changed to:', this.audioContext?.state);
+
       });
       
     } catch (error) {
@@ -91,12 +106,12 @@ export class AudioPlayer {
       return;
     }
     
-    console.log('AudioContext state before resume attempt:', this.audioContext.state);
+
     
     if (this.audioContext.state === 'suspended') {
       try {
         await this.audioContext.resume();
-        console.log('AudioContext resumed successfully, new state:', this.audioContext.state);
+
       } catch (error) {
         console.error('Failed to resume AudioContext:', error);
         throw new Error('Failed to resume audio context. User interaction may be required.');
@@ -108,11 +123,11 @@ export class AudioPlayer {
    * Load audio tracks from URLs and prepare for playback
    */
   async loadTracks(tracks: Track[]): Promise<void> {
-    console.log('Loading tracks:', tracks.length, 'tracks');
+
     
     // Initialize AudioContext if not already done (requires user interaction)
     if (!this.audioContext) {
-      console.log('Initializing AudioContext on user interaction');
+
       this.initializeAudioContext();
     }
     
@@ -121,18 +136,28 @@ export class AudioPlayer {
       throw new Error('AudioContext not initialized');
     }
 
-    console.log('AudioContext state before resume:', this.audioContext.state);
-    await this.resumeAudioContext();
-    console.log('AudioContext state after resume:', this.audioContext.state);
 
+    await this.resumeAudioContext();
+
+
+    // Store current positions before clearing cache
+    const savedCurrentPosition = this.currentPosition;
+    const savedLastPlayStartPosition = this.lastPlayStartPosition;
+    
     // Clear existing tracks and cache
     this.clearCache();
+    
+    // Restore positions after cache clear
+    this.currentPosition = savedCurrentPosition;
+    this.lastPlayStartPosition = savedLastPlayStartPosition;
+    
+
 
     // Load each track with retry and timeout
     const loadPromises = tracks.map(async (track) => {
       return retryWithBackoff(async () => {
         try {
-          console.log(`Loading track: ${track.name} from ${track.audioUrl}`);
+
           
           // Fetch with timeout
           const response = await withTimeout(
@@ -146,7 +171,7 @@ export class AudioPlayer {
           }
           
           const arrayBuffer = await response.arrayBuffer();
-          console.log(`Fetched ${arrayBuffer.byteLength} bytes for track ${track.name}`);
+
           
           if (arrayBuffer.byteLength === 0) {
             throw new Error(`Empty audio file received for track ${track.name}`);
@@ -157,7 +182,7 @@ export class AudioPlayer {
             throw new Error('AudioContext became null during track loading');
           }
           
-          console.log(`Decoding audio data for track ${track.name}, AudioContext state:`, this.audioContext.state);
+
           
           // Decode with timeout
           const audioBuffer = await withTimeout(
@@ -183,14 +208,13 @@ export class AudioPlayer {
           panNode.pan.value = track.pan;
 
           // Generate waveform data for visualization
-          console.log(`Generating waveform data for track ${track.name}...`);
-          const waveformData = this.analysisService.extractWaveformData(audioBuffer, 1000);
+
           
-          // Debug: Check amplitude characteristics for each track
-          const maxAmp = Math.max(...waveformData.amplitudes);
-          const avgAmp = waveformData.amplitudes.reduce((sum, amp) => sum + amp, 0) / waveformData.amplitudes.length;
-          const nonZeroCount = waveformData.amplitudes.filter(amp => amp > 0.001).length;
-          console.log(`Track ${track.name} waveform: max=${maxAmp.toFixed(4)}, avg=${avgAmp.toFixed(4)}, nonZero=${nonZeroCount}/${waveformData.amplitudes.length}`);
+
+          
+          const waveformData = this.analysisService.extractWaveformData(audioBuffer, 1000, track.id);
+          
+
 
           const audioTrack: AudioTrack = {
             buffer: audioBuffer,
@@ -201,7 +225,7 @@ export class AudioPlayer {
           };
 
           this.audioTracks.set(track.id, audioTrack);
-          console.log(`Successfully loaded track ${track.name} (${audioBuffer.duration.toFixed(2)}s)`);
+
           
         } catch (error) {
           console.error(`Failed to load track ${track.name}:`, error);
@@ -230,7 +254,7 @@ export class AudioPlayer {
                  error.message.includes('fetch');
         },
         onRetry: (attempt, error) => {
-          console.log(`Retrying track ${track.name} load (attempt ${attempt}):`, error.message);
+
         }
       });
     });
@@ -252,27 +276,43 @@ export class AudioPlayer {
 
     this.resumeAudioContext().then(() => {
       this.isPlaying = true;
-      this.startTime = this.audioContext!.currentTime - this.currentPosition / this.playbackRate;
+      this.startTime = this.audioContext!.currentTime;
+      // Remember where we started playing from
+      this.lastPlayStartPosition = this.currentPosition;
+
+      // Set up timing for the playback method being used
+      if (this.playbackRate === 1.0) {
+        this.usingSoundTouch = false;
+      } else {
+        this.usingSoundTouch = true;
+        this.soundTouchStartTime = this.audioContext!.currentTime;
+        this.soundTouchStartPosition = this.currentPosition;
+        this.lastSoundTouchPosition = 0; // Reset for new playback
+        this.lastSoundTouchUpdateTime = 0; // Reset update time
+      }
 
       // Create and start source nodes for all tracks
       this.audioTracks.forEach((audioTrack) => {
-        const source = this.audioContext!.createBufferSource();
-        source.buffer = audioTrack.buffer;
-        source.playbackRate.value = this.playbackRate;
-        // Compensate pitch by detuning inversely to maintain original pitch
-        source.detune.value = 1200 * Math.log2(1 / this.playbackRate);
-        source.connect(audioTrack.gainNode);
-        
-        // Start from current position
-        source.start(0, this.currentPosition);
-        audioTrack.source = source;
+        if (this.playbackRate === 1.0) {
+          // Use direct Web Audio API for normal speed (no processing needed)
+          const source = this.audioContext!.createBufferSource();
+          source.buffer = audioTrack.buffer;
+          source.connect(audioTrack.gainNode);
+          
+          // Start from current position
+          source.start(0, this.currentPosition);
+          audioTrack.source = source;
 
-        // Handle track end
-        source.onended = () => {
-          if (this.isPlaying) {
-            this.handleTrackEnd();
-          }
-        };
+          // Handle track end
+          source.onended = () => {
+            if (this.isPlaying) {
+              this.handleTrackEnd();
+            }
+          };
+        } else {
+          // Use SoundTouchJS for pitch-preserving speed control
+          this.setupSoundTouchPlayback(audioTrack);
+        }
       });
 
       // Start position updates
@@ -289,18 +329,56 @@ export class AudioPlayer {
     }
 
     this.isPlaying = false;
-    this.currentPosition = this.audioContext!.currentTime - this.startTime;
+    
+    // Update current position based on the playback method used
+    if (this.usingSoundTouch) {
+      // Use the current interpolated position for accurate pause position
+      this.currentPosition = this.getCurrentPosition();
+    } else {
+      this.currentPosition = this.currentPosition + (this.audioContext!.currentTime - this.startTime) * this.playbackRate;
+    }
+    
+    // Reset SoundTouch tracking
+    this.usingSoundTouch = false;
+    this.lastSoundTouchPosition = 0;
+    this.lastSoundTouchUpdateTime = 0;
 
-    // Stop all source nodes
+    // Stop all source nodes and clean up SoundTouch resources
     this.audioTracks.forEach((audioTrack) => {
       if (audioTrack.source) {
         audioTrack.source.stop();
         audioTrack.source = undefined;
       }
+      
+      // Clean up SoundTouch resources
+      if (audioTrack.soundTouchNode) {
+        audioTrack.soundTouchNode.disconnect();
+        audioTrack.soundTouchNode = undefined;
+      }
+      
+      audioTrack.soundTouch = undefined;
+      audioTrack.filter = undefined;
     });
 
     // Stop position updates
     this.stopPositionUpdates();
+  }
+
+  /**
+   * Stop playback and revert to last play start position
+   */
+  stop(): void {
+    if (this.isPlaying) {
+      this.pause();
+    }
+
+    // Revert to the position where we last started playing
+    this.currentPosition = this.lastPlayStartPosition;
+    
+    // Update position callback to reflect the revert
+    if (this.positionUpdateCallback) {
+      this.positionUpdateCallback(this.lastPlayStartPosition);
+    }
   }
 
   /**
@@ -314,6 +392,11 @@ export class AudioPlayer {
     }
 
     this.currentPosition = Math.max(0, position);
+    
+    // If not playing, update the last play start position so stop will revert to this new position
+    if (!wasPlaying) {
+      this.lastPlayStartPosition = this.currentPosition;
+    }
 
     if (wasPlaying) {
       this.play();
@@ -409,31 +492,63 @@ export class AudioPlayer {
    */
   getCurrentPosition(): number {
     if (this.isPlaying && this.audioContext) {
-      return (this.audioContext.currentTime - this.startTime) * this.playbackRate;
+      if (this.usingSoundTouch) {
+        // For SoundTouch playback, use direct position from SoundTouch when available
+        // with minimal interpolation to prevent time jumping
+        if (this.lastSoundTouchPosition > 0) {
+          // Use the last reported SoundTouch position as the authoritative source
+          // Only add minimal interpolation for very recent updates to maintain smoothness
+          if (this.lastSoundTouchUpdateTime > 0) {
+            const timeSinceLastUpdate = this.audioContext.currentTime - this.lastSoundTouchUpdateTime;
+            // Only interpolate for very recent updates (less than 100ms) to avoid jumping
+            if (timeSinceLastUpdate < 0.1) {
+              const interpolatedProgress = timeSinceLastUpdate * this.playbackRate;
+              return this.lastSoundTouchPosition + interpolatedProgress;
+            }
+          }
+          // For older updates, just return the last known position to prevent jumping
+          return this.lastSoundTouchPosition;
+        } else {
+          // Fallback calculation for initial playback before SoundTouch reports position
+          const elapsedRealTime = this.audioContext.currentTime - this.soundTouchStartTime;
+          const elapsedAudioTime = elapsedRealTime * this.playbackRate;
+          return this.soundTouchStartPosition + elapsedAudioTime;
+        }
+      } else {
+        // For regular playback, use the standard calculation
+        return this.currentPosition + (this.audioContext.currentTime - this.startTime) * this.playbackRate;
+      }
     }
     return this.currentPosition;
   }
 
   /**
    * Set playback rate (speed multiplier) while maintaining pitch
-   * Uses detune to compensate for pitch changes caused by playback rate
-   * Valid range: 0.5 to 2.0
+   * Uses SoundTouchJS for pitch-preserving speed control
+   * Valid range: 0.5 to 1.0
    */
   setPlaybackRate(rate: number): void {
-    const clampedRate = Math.max(0.5, Math.min(2.0, rate));
+    const clampedRate = Math.max(0.5, Math.min(1.0, rate));
+    const wasPlaying = this.isPlaying;
+    
+    // Store the current position before stopping
+    if (wasPlaying) {
+      this.currentPosition = this.getCurrentPosition();
+      this.pause();
+    }
+    
     this.playbackRate = clampedRate;
-
-    // If currently playing, update all active source nodes
-    if (this.isPlaying) {
-      this.audioTracks.forEach((audioTrack) => {
-        if (audioTrack.source) {
-          audioTrack.source.playbackRate.value = clampedRate;
-          // Compensate pitch by detuning inversely
-          // Formula: detune (cents) = 1200 * log2(playbackRate)
-          // This keeps pitch constant while changing speed
-          audioTrack.source.detune.value = 1200 * Math.log2(1 / clampedRate);
-        }
-      });
+    
+    // Update SoundTouch instances if they exist
+    this.audioTracks.forEach((audioTrack) => {
+      if (audioTrack.soundTouch) {
+        audioTrack.soundTouch.tempo = clampedRate;
+      }
+    });
+    
+    // If was playing, restart with new rate
+    if (wasPlaying) {
+      this.play();
     }
   }
 
@@ -546,6 +661,15 @@ export class AudioPlayer {
         audioTrack.source = undefined;
       }
 
+      // Clean up SoundTouch resources
+      if (audioTrack.soundTouchNode) {
+        audioTrack.soundTouchNode.disconnect();
+        audioTrack.soundTouchNode = undefined;
+      }
+      
+      audioTrack.soundTouch = undefined;
+      audioTrack.filter = undefined;
+
       // Disconnect gain and pan nodes
       audioTrack.gainNode.disconnect();
       audioTrack.panNode.disconnect();
@@ -556,13 +680,21 @@ export class AudioPlayer {
 
     // Reset playback state
     this.currentPosition = 0;
+    this.lastPlayStartPosition = 0;
     this.startTime = 0;
     this.isPlaying = false;
+    this.usingSoundTouch = false;
+    this.soundTouchStartTime = 0;
+    this.soundTouchStartPosition = 0;
+    this.lastSoundTouchPosition = 0;
+    this.lastSoundTouchUpdateTime = 0;
+    
+
 
     // Stop position updates
     this.stopPositionUpdates();
 
-    console.log('Audio cache cleared - all tracks and buffers removed from memory');
+
   }
 
   /**
@@ -589,6 +721,105 @@ export class AudioPlayer {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+  }
+
+  /**
+   * Setup SoundTouchJS for pitch-preserving speed control
+   */
+  private setupSoundTouchPlayback(audioTrack: AudioTrack): void {
+    if (!this.audioContext) return;
+
+    try {
+      // Create SoundTouch instance
+      const soundTouch = new SoundTouchJS.SoundTouch();
+      soundTouch.tempo = this.playbackRate;
+      soundTouch.pitch = 1.0; // Keep original pitch
+      
+      // Create WebAudioBufferSource for SoundTouchJS
+      const bufferSource = new SoundTouchJS.WebAudioBufferSource(audioTrack.buffer);
+      
+      // Create filter for processing
+      const filter = new SoundTouchJS.SimpleFilter(bufferSource, soundTouch, () => {
+        // Called when processing ends
+        if (this.isPlaying) {
+          this.handleTrackEnd();
+        }
+      });
+      
+      // Set the starting position in the filter
+      if (this.currentPosition > 0) {
+        const startPositionInSamples = Math.floor(this.currentPosition * audioTrack.buffer.sampleRate);
+        (filter as any).sourcePosition = startPositionInSamples;
+
+      }
+      
+      // Create the Web Audio node using SoundTouchJS
+      const soundTouchNode = SoundTouchJS.getWebAudioNode(
+        this.audioContext,
+        filter,
+        (sourcePosition: number) => {
+          // Position callback - ensure position never goes backward to prevent jumping
+          if (this.usingSoundTouch && this.audioContext) {
+            const positionInSeconds = sourcePosition / audioTrack.buffer.sampleRate;
+            
+            // Only update if the new position is ahead of our last known position
+            // This prevents backward jumps when SoundTouch reports positions out of order
+            if (positionInSeconds >= this.lastSoundTouchPosition) {
+              this.lastSoundTouchPosition = positionInSeconds;
+              this.lastSoundTouchUpdateTime = this.audioContext.currentTime;
+            }
+          }
+        },
+        4096 // buffer size
+      );
+      
+      // Connect to audio graph
+      soundTouchNode.connect(audioTrack.gainNode);
+      
+      // Store references for cleanup
+      audioTrack.soundTouch = soundTouch;
+      audioTrack.filter = filter;
+      audioTrack.soundTouchNode = soundTouchNode;
+      
+      // Create a dummy source to trigger the processing
+      const source = this.audioContext.createBufferSource();
+      const silentBuffer = this.audioContext.createBuffer(2, 1, this.audioContext.sampleRate);
+      source.buffer = silentBuffer;
+      source.loop = true;
+      source.connect(soundTouchNode);
+      source.start();
+      audioTrack.source = source;
+      
+
+      
+    } catch (error) {
+      console.error('Failed to setup SoundTouch playback:', error);
+      // Fallback to regular playback if SoundTouch fails
+      this.setupRegularPlayback(audioTrack);
+    }
+  }
+
+  /**
+   * Setup regular Web Audio API playback (fallback)
+   */
+  private setupRegularPlayback(audioTrack: AudioTrack): void {
+    if (!this.audioContext) return;
+    
+    const source = this.audioContext.createBufferSource();
+    source.buffer = audioTrack.buffer;
+    source.playbackRate.value = this.playbackRate;
+    source.connect(audioTrack.gainNode);
+    
+    // Start from current position
+    source.start(0, this.currentPosition);
+    audioTrack.source = source;
+
+    // Handle track end
+    source.onended = () => {
+      if (this.isPlaying) {
+        this.handleTrackEnd();
+      }
+    };
   }
 
   /**

@@ -29,11 +29,11 @@ export interface RealTimeAnalysisData {
   peakAmplitude: number;
 }
 
-// Cache for waveform data to avoid expensive re-computation
-interface WaveformDataCache {
+// Persistent storage for waveform data - no expiry for static audio files
+interface WaveformDataStorage {
   key: string;
   data: WaveformData;
-  timestamp: number;
+  generatedAt: number;
 }
 
 export class AudioAnalysisService {
@@ -41,17 +41,10 @@ export class AudioAnalysisService {
   private analyserNodes: Map<string, AnalyserNode> = new Map();
   private animationFrameId: number | null = null;
   private analysisCallback?: (trackId: string, data: RealTimeAnalysisData) => void;
-  private waveformCache: Map<string, WaveformDataCache> = new Map();
-  private readonly CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
-  private readonly MAX_CACHE_SIZE = 20; // Maximum cached waveforms
+  private waveformStorage: Map<string, WaveformDataStorage> = new Map();
 
   constructor() {
-    console.log('AudioAnalysisService constructor called');
-    
-    // Clean up expired cache entries periodically
-    setInterval(() => {
-      this.cleanupExpiredCache();
-    }, 60000); // Check every minute
+    // No periodic cleanup needed - waveforms are permanent once generated
   }
 
   /**
@@ -59,70 +52,60 @@ export class AudioAnalysisService {
    */
   initialize(audioContext: AudioContext): void {
     this.audioContext = audioContext;
-    console.log('AudioAnalysisService initialized with AudioContext');
   }
 
   /**
-   * Generate cache key for waveform data
+   * Generate storage key for waveform data - track-specific for unique caching
    */
-  private generateWaveformCacheKey(audioBuffer: AudioBuffer, targetPoints: number): string {
-    // Use buffer properties to create a unique key
-    return `${audioBuffer.length}-${audioBuffer.sampleRate}-${audioBuffer.duration}-${targetPoints}`;
+  private generateWaveformStorageKey(audioBuffer: AudioBuffer, targetPoints: number, trackId?: string): string {
+    // Include track ID to ensure each track gets its own cache entry
+    const trackPrefix = trackId ? `${trackId}_` : '';
+    return `waveform_${trackPrefix}${audioBuffer.length}_${audioBuffer.sampleRate}_${targetPoints}`;
   }
 
   /**
-   * Clean up expired cache entries
+   * Check if waveform data exists in storage
    */
-  private cleanupExpiredCache(): void {
-    const now = Date.now();
-    const expiredKeys: string[] = [];
+  hasWaveformData(audioBuffer: AudioBuffer, targetPoints: number = 1000, trackId?: string): boolean {
+    const storageKey = this.generateWaveformStorageKey(audioBuffer, targetPoints, trackId);
+    return this.waveformStorage.has(storageKey);
+  }
 
-    this.waveformCache.forEach((cache, key) => {
-      if (now - cache.timestamp > this.CACHE_EXPIRY_MS) {
-        expiredKeys.push(key);
-      }
+  /**
+   * Get storage statistics for debugging
+   */
+  getStorageStats(): { count: number; totalMemoryMB: number } {
+    let totalSamples = 0;
+    this.waveformStorage.forEach(storage => {
+      totalSamples += storage.data.amplitudes.length;
     });
-
-    expiredKeys.forEach(key => {
-      this.waveformCache.delete(key);
-    });
-
-    // Also enforce max cache size
-    if (this.waveformCache.size > this.MAX_CACHE_SIZE) {
-      const sortedEntries = Array.from(this.waveformCache.entries())
-        .sort((a, b) => a[1].timestamp - b[1].timestamp);
-      
-      const entriesToRemove = sortedEntries.slice(0, this.waveformCache.size - this.MAX_CACHE_SIZE);
-      entriesToRemove.forEach(([key]) => {
-        this.waveformCache.delete(key);
-      });
-    }
-
-    if (expiredKeys.length > 0) {
-      console.log(`Cleaned up ${expiredKeys.length} expired waveform cache entries`);
-    }
+    
+    // Rough memory calculation: each amplitude is a number (8 bytes) + object overhead
+    const totalMemoryMB = (totalSamples * 8 + this.waveformStorage.size * 200) / (1024 * 1024);
+    
+    return {
+      count: this.waveformStorage.size,
+      totalMemoryMB: Math.round(totalMemoryMB * 100) / 100
+    };
   }
 
   /**
    * Extract waveform data from an audio buffer for visualization
-   * Uses efficient amplitude sampling and caching to create visualization-ready data
+   * Uses persistent storage - waveforms are generated once and stored permanently
    */
-  extractWaveformData(audioBuffer: AudioBuffer, targetPoints: number = 1000): WaveformData {
+  extractWaveformData(audioBuffer: AudioBuffer, targetPoints: number = 1000, trackId?: string): WaveformData {
     if (!audioBuffer || audioBuffer.length === 0) {
       throw new Error('Invalid audio buffer provided');
     }
 
-    // Check cache first
-    const cacheKey = this.generateWaveformCacheKey(audioBuffer, targetPoints);
-    const cached = this.waveformCache.get(cacheKey);
+    // Check persistent storage first
+    const storageKey = this.generateWaveformStorageKey(audioBuffer, targetPoints, trackId);
+    const stored = this.waveformStorage.get(storageKey);
     
-    if (cached && (Date.now() - cached.timestamp) < this.CACHE_EXPIRY_MS) {
-      console.log('Using cached waveform data');
-      return cached.data;
+    if (stored) {
+      return stored.data;
     }
 
-    console.log('Generating new waveform data');
-    const startTime = performance.now();
 
     const channelData = audioBuffer.getChannelData(0); // Use first channel (mono or left channel)
     const totalSamples = channelData.length;
@@ -135,7 +118,7 @@ export class AudioAnalysisService {
       this.extractWaveformDataHighCompression(channelData, totalSamples, targetPoints, amplitudes);
     } else {
       // For lower compression ratios, use standard sampling
-      this.extractWaveformDataStandard(channelData, totalSamples, targetPoints, samplesPerPoint, amplitudes);
+      this.extractWaveformDataStandard(channelData, totalSamples, targetPoints, amplitudes);
     }
 
     const waveformData: WaveformData = {
@@ -145,15 +128,15 @@ export class AudioAnalysisService {
       samplesPerPoint
     };
 
-    // Cache the result
-    this.waveformCache.set(cacheKey, {
-      key: cacheKey,
+
+
+    // Store permanently - no expiry for static audio files
+    this.waveformStorage.set(storageKey, {
+      key: storageKey,
       data: waveformData,
-      timestamp: Date.now()
+      generatedAt: Date.now()
     });
 
-    const endTime = performance.now();
-    console.log(`Waveform extraction took ${(endTime - startTime).toFixed(2)}ms for ${targetPoints} points`);
 
     return waveformData;
   }
@@ -165,12 +148,12 @@ export class AudioAnalysisService {
     channelData: Float32Array, 
     totalSamples: number, 
     targetPoints: number, 
-    samplesPerPoint: number, 
     amplitudes: number[]
   ): void {
     for (let i = 0; i < targetPoints; i++) {
-      const startSample = i * samplesPerPoint;
-      const endSample = Math.min(startSample + samplesPerPoint, totalSamples);
+      // Ensure we cover the full range by using floating-point division
+      const startSample = Math.floor((i * totalSamples) / targetPoints);
+      const endSample = Math.floor(((i + 1) * totalSamples) / targetPoints);
       
       let sum = 0;
       let maxAmplitude = 0;
@@ -199,11 +182,10 @@ export class AudioAnalysisService {
     targetPoints: number, 
     amplitudes: number[]
   ): void {
-    const samplesPerPoint = totalSamples / targetPoints;
-    
     for (let i = 0; i < targetPoints; i++) {
-      const startSample = Math.floor(i * samplesPerPoint);
-      const endSample = Math.min(Math.floor((i + 1) * samplesPerPoint), totalSamples);
+      // Ensure we cover the full range by using floating-point division
+      const startSample = Math.floor((i * totalSamples) / targetPoints);
+      const endSample = Math.floor(((i + 1) * totalSamples) / targetPoints);
       
       // Use more sophisticated peak detection for high compression
       let rmsSum = 0;
@@ -261,7 +243,7 @@ export class AudioAnalysisService {
     // Store the analyser for this track
     this.analyserNodes.set(trackId, analyser);
 
-    console.log(`Created analyser for track ${trackId}`);
+
     return analyser;
   }
 
@@ -326,7 +308,7 @@ export class AudioAnalysisService {
 
     // Start the analysis loop
     analyze();
-    console.log('Started real-time audio analysis');
+
   }
 
   /**
@@ -339,7 +321,7 @@ export class AudioAnalysisService {
     }
     
     this.analysisCallback = undefined;
-    console.log('Stopped real-time audio analysis');
+
   }
 
   /**
@@ -350,7 +332,7 @@ export class AudioAnalysisService {
     if (analyser) {
       analyser.disconnect();
       this.analyserNodes.delete(trackId);
-      console.log(`Removed analyser for track ${trackId}`);
+
     }
   }
 
@@ -444,7 +426,42 @@ export class AudioAnalysisService {
   }
 
   /**
+   * Pre-generate waveforms for multiple audio buffers at once
+   * Ideal for band practice app - generate all 6 tracks upfront
+   */
+  async preGenerateWaveforms(
+    audioBuffers: Map<string, AudioBuffer>, 
+    targetPoints: number = 1000
+  ): Promise<Map<string, WaveformData>> {
+
+    const results = new Map<string, WaveformData>();
+
+    // Process all tracks - no batching needed since this is done once at load time
+    for (const [trackId, audioBuffer] of audioBuffers) {
+      try {
+        const waveformData = this.extractWaveformData(audioBuffer, targetPoints, trackId);
+        results.set(trackId, waveformData);
+      } catch (error) {
+        console.error(`✗ Failed to generate waveform for track ${trackId}:`, error);
+      }
+    }
+
+
+    return results;
+  }
+
+  /**
+   * Clear all stored waveform data (useful for testing or memory management)
+   */
+  clearWaveformStorage(): void {
+    const stats = this.getStorageStats();
+    this.waveformStorage.clear();
+
+  }
+
+  /**
    * Clean up all analysers and stop analysis
+   * Note: Waveform storage is preserved - only real-time analysis is cleaned up
    */
   dispose(): void {
     this.stopRealtimeAnalysis();
@@ -456,6 +473,8 @@ export class AudioAnalysisService {
     this.analyserNodes.clear();
     
     this.audioContext = null;
-    console.log('AudioAnalysisService disposed');
+    
+    const stats = this.getStorageStats();
+
   }
 }

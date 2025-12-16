@@ -4,6 +4,9 @@ import { useWaveformData } from '../hooks/useWaveformData';
 import WaveformVisualization from './WaveformVisualization';
 import LoadingSpinner from './LoadingSpinner';
 import InteractiveButton from './InteractiveButton';
+import WaveformDebugger from '../debug/WaveformDebugger';
+import { checkTrackUrls } from '../debug/trackUrlChecker';
+import { exportWaveformToCSV, exportAllWaveformsToCSV } from '../utils/waveformExport';
 import './TrackView.css';
 
 interface TrackViewProps {
@@ -34,8 +37,51 @@ const TrackView: React.FC<TrackViewProps> = ({
   const [isEditingTimestamp, setIsEditingTimestamp] = useState(false);
   const [timestampInputValue, setTimestampInputValue] = useState('');
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
+  const [showDebugger, setShowDebugger] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
   const timestampInputRef = useRef<HTMLInputElement>(null);
+
+  // Export handlers
+  const handleExportAllWaveforms = () => {
+    if (waveformData.size === 0) {
+      onShowToast?.showError('Export Error', 'No waveform data available to export');
+      return;
+    }
+
+    try {
+      const rawWaveformDataMap = audioPlayer.getAllWaveformData();
+      const getTrackName = (trackId: string) => {
+        const track = audioPlayer.getTrack(trackId);
+        return track?.name || 'unknown';
+      };
+
+      exportAllWaveformsToCSV(waveformData, rawWaveformDataMap, getTrackName);
+      onShowToast?.showSuccess('Export Complete', `Exported waveform data for ${waveformData.size} tracks to CSV`);
+    } catch (error) {
+      console.error('Export failed:', error);
+      onShowToast?.showError('Export Failed', 'Failed to export waveform data');
+    }
+  };
+
+  const handleExportSingleTrack = (trackId: string) => {
+    const visualizationData = waveformData.get(trackId);
+    const rawWaveformDataMap = audioPlayer.getAllWaveformData();
+    const rawData = rawWaveformDataMap.get(trackId);
+    const track = audioPlayer.getTrack(trackId);
+
+    if (!visualizationData || !rawData || !track) {
+      onShowToast?.showError('Export Error', 'Track data not available for export');
+      return;
+    }
+
+    try {
+      exportWaveformToCSV(trackId, track.name, rawData, visualizationData);
+      onShowToast?.showSuccess('Export Complete', `Exported ${track.name} waveform data to CSV`);
+    } catch (error) {
+      console.error('Export failed:', error);
+      onShowToast?.showError('Export Failed', `Failed to export ${track.name} waveform data`);
+    }
+  };
 
   // Use waveform data hook for real audio visualization with performance optimizations
   // Only pass audioPlayer when tracks are loaded (not loading and no error)
@@ -53,6 +99,12 @@ const TrackView: React.FC<TrackViewProps> = ({
   // Initialize track states when tracks prop changes
   useEffect(() => {
     setTrackStates([...tracks]);
+    
+    // Debug: Check track URLs when tracks change
+    if (tracks.length > 0) {
+      console.log('🎵 TrackView: Tracks loaded, checking URLs...');
+      checkTrackUrls(tracks);
+    }
   }, [tracks]);
 
   // Initialize audio player and load tracks
@@ -75,6 +127,8 @@ const TrackView: React.FC<TrackViewProps> = ({
           try {
             await audioPlayer.loadTracks(trackStates);
             setDuration(audioPlayer.getDuration());
+            // Ensure position is synced after loading (should be 0 initially)
+            setCurrentPosition(audioPlayer.getCurrentPosition());
             setIsLoading(false);
             return; // Success, exit retry loop
           } catch (error) {
@@ -124,6 +178,8 @@ const TrackView: React.FC<TrackViewProps> = ({
         setIsLoading(true);
         await audioPlayer.loadTracks(trackStates);
         setDuration(audioPlayer.getDuration());
+        // Ensure position is synced after reloading
+        setCurrentPosition(audioPlayer.getCurrentPosition());
         setIsLoading(false);
       }
       
@@ -144,9 +200,20 @@ const TrackView: React.FC<TrackViewProps> = ({
   const handleGoToBeginning = () => {
     try {
       audioPlayer.seek(0);
-      setCurrentPosition(0);
+      // Don't set currentPosition here - let the AudioPlayer's position callback handle it
     } catch (error) {
       console.error('Seek to beginning error:', error);
+    }
+  };
+
+  // Handle stop
+  const handleStop = () => {
+    try {
+      audioPlayer.stop();
+      setIsPlaying(false);
+      // Don't set currentPosition here - let the AudioPlayer's position callback handle it
+    } catch (error) {
+      console.error('Stop error:', error);
     }
   };
 
@@ -198,6 +265,7 @@ const TrackView: React.FC<TrackViewProps> = ({
   };
 
   // Calculate progress percentage for timeline
+  // Always show playhead at 0% when at beginning, even if duration is unknown
   const progressPercentage = duration > 0 ? (currentPosition / duration) * 100 : 0;
 
   // Handle track mute/unmute
@@ -337,6 +405,85 @@ const TrackView: React.FC<TrackViewProps> = ({
     }
   };
 
+  // Handle seeking by offset (for arrow key navigation)
+  const handleSeekByOffset = (offsetSeconds: number) => {
+    try {
+      const currentPos = audioPlayer.getCurrentPosition();
+      const newPosition = Math.max(0, Math.min(duration, currentPos + offsetSeconds));
+      
+      // Only seek if the position actually changes
+      if (Math.abs(newPosition - currentPos) > 0.01) {
+        audioPlayer.seek(newPosition);
+        setCurrentPosition(newPosition);
+      }
+    } catch (error) {
+      console.error('Seek by offset error:', error);
+      onShowToast?.showError('Seek Failed', 'Could not seek to the specified position');
+    }
+  };
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't handle shortcuts when editing timestamp or if no tracks are loaded
+      if (isEditingTimestamp || trackStates.length === 0 || isLoading || loadError) {
+        return;
+      }
+
+      // Don't handle shortcuts when user is typing in input fields
+      const activeElement = document.activeElement;
+      if (activeElement && (
+        activeElement.tagName === 'INPUT' || 
+        activeElement.tagName === 'TEXTAREA' || 
+        activeElement.tagName === 'SELECT' ||
+        (activeElement as HTMLElement).contentEditable === 'true'
+      )) {
+        return;
+      }
+
+      switch (event.code) {
+        case 'Space':
+          event.preventDefault(); // Prevent page scroll
+          handlePlayPause();
+          break;
+        case 'Enter':
+          event.preventDefault();
+          handleStop();
+          break;
+        case 'ArrowLeft':
+          event.preventDefault(); // Prevent default browser behavior
+          if (event.shiftKey) {
+            // Shift + Left Arrow: Move backward 10 seconds
+            handleSeekByOffset(-10);
+          } else {
+            // Left Arrow: Move backward 1 second
+            handleSeekByOffset(-1);
+          }
+          break;
+        case 'ArrowRight':
+          event.preventDefault(); // Prevent default browser behavior
+          if (event.shiftKey) {
+            // Shift + Right Arrow: Move forward 10 seconds
+            handleSeekByOffset(10);
+          } else {
+            // Right Arrow: Move forward 1 second
+            handleSeekByOffset(1);
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup on unmount
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isEditingTimestamp, trackStates.length, isLoading, loadError, isPlaying, duration]); // Dependencies for the keyboard handler
+
   if (isLoading) {
     return (
       <div className="track-view">
@@ -434,13 +581,21 @@ const TrackView: React.FC<TrackViewProps> = ({
             >
               ⏮
             </button>
-            <button className="daw-transport-btn daw-transport-btn--loop">🔄</button>
             <button 
               className={`daw-transport-btn daw-transport-btn--play ${isPlaying ? 'daw-transport-btn--playing' : ''}`}
               onClick={handlePlayPause}
               disabled={trackStates.length === 0}
+              title={isPlaying ? 'Pause (Spacebar)' : 'Play (Spacebar)'}
             >
               {isPlaying ? '⏸' : '▶'}
+            </button>
+            <button 
+              className="daw-transport-btn daw-transport-btn--stop"
+              onClick={handleStop}
+              disabled={trackStates.length === 0}
+              title="Stop and return to last play start position (Enter)"
+            >
+              ⏹
             </button>
           </div>
         </div>
@@ -470,6 +625,18 @@ const TrackView: React.FC<TrackViewProps> = ({
             <span className="daw-signature-value">4/4</span>
             <span className="daw-signature-label">TIME SIG.</span>
           </div>
+          
+          {/* Export controls */}
+          <div className="daw-export-controls">
+            <button 
+              className="daw-export-btn"
+              onClick={handleExportAllWaveforms}
+              disabled={waveformData.size === 0 || isGeneratingWaveforms}
+              title="Export all waveform data to CSV"
+            >
+              📊 Export CSV
+            </button>
+          </div>
         </div>
       </div>
 
@@ -478,7 +645,11 @@ const TrackView: React.FC<TrackViewProps> = ({
         {/* Timeline ruler */}
         <div className="daw-timeline-ruler">
           <div className="daw-ruler-track-header"></div>
-          <div className="daw-ruler-content">
+          <div 
+            className="daw-ruler-content"
+            onClick={handleTimelineClick}
+            ref={timelineRef}
+          >
             {Array.from({ length: Math.ceil(duration / 10) }, (_, i) => (
               <div key={i} className="daw-ruler-marker" style={{ left: `${(i * 10 / duration) * 100}%` }}>
                 <span className="daw-ruler-number">{formatTime(i * 10)}</span>
@@ -516,6 +687,14 @@ const TrackView: React.FC<TrackViewProps> = ({
                     >
                       S
                     </button>
+                    <button 
+                      className="daw-track-btn daw-track-btn--export"
+                      onClick={() => handleExportSingleTrack(track.id)}
+                      disabled={!waveformData.has(track.id) || isGeneratingWaveforms}
+                      title={`Export ${track.name} waveform to CSV`}
+                    >
+                      📊
+                    </button>
                   </div>
                 </div>
 
@@ -524,8 +703,6 @@ const TrackView: React.FC<TrackViewProps> = ({
               {/* Track content area with waveform */}
               <div 
                 className="daw-track-content"
-                onClick={handleTimelineClick}
-                ref={index === 0 ? timelineRef : undefined}
               >
                 <div className="daw-waveform-container">
                   {/* Real waveform visualization */}
@@ -556,6 +733,14 @@ const TrackView: React.FC<TrackViewProps> = ({
                       );
                     }
                     
+                    // Debug: Log duration mismatch
+                    if (Math.abs(trackWaveformData.duration - duration) > 1) {
+                      console.warn(`⚠️ Duration mismatch for ${track.name}:`);
+                      console.warn(`  AudioPlayer duration: ${duration.toFixed(2)}s`);
+                      console.warn(`  Waveform duration: ${trackWaveformData.duration.toFixed(2)}s`);
+                      console.warn(`  Track URL: ${track.audioUrl}`);
+                    }
+                    
                     return (
                       <WaveformVisualization
                         bars={trackWaveformData.bars}
@@ -564,7 +749,7 @@ const TrackView: React.FC<TrackViewProps> = ({
                         progress={progressPercentage / 100}
                         showSilentSections={false}
                         silentSections={[]}
-                        totalDuration={trackWaveformData.duration}
+                        totalDuration={duration} // Use AudioPlayer duration for consistency
                         onClick={handleTimelineClick}
                         enableHighDPI={true}
                         enableCaching={true}
@@ -583,6 +768,59 @@ const TrackView: React.FC<TrackViewProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Debug Toggle Button - Development Only */}
+      {import.meta.env.DEV && (
+        <button
+          onClick={() => setShowDebugger(!showDebugger)}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            padding: '10px',
+            backgroundColor: showDebugger ? '#ff6b35' : '#2a2d3a',
+            color: 'white',
+            border: '1px solid #3a3d4a',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            zIndex: 1001,
+            fontSize: '12px'
+          }}
+        >
+          🔍 {showDebugger ? 'Hide' : 'Show'} Waveform Debug
+        </button>
+      )}
+
+      {/* Debug Panel - Development Only */}
+      {import.meta.env.DEV && showDebugger && (
+        <div style={{
+          position: 'fixed',
+          bottom: '70px',
+          right: '20px',
+          width: '400px',
+          maxHeight: '70vh',
+          overflow: 'auto',
+          backgroundColor: 'white',
+          border: '2px solid #3a3d4a',
+          borderRadius: '8px',
+          zIndex: 1001,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+        }}>
+          <div style={{ padding: '10px', borderBottom: '1px solid #ccc', backgroundColor: '#f0f0f0' }}>
+            <h3 style={{ margin: 0, color: '#333' }}>🎵 Waveform Debug Panel</h3>
+          </div>
+          <div style={{ maxHeight: '60vh', overflow: 'auto' }}>
+            {trackStates.map((track) => (
+              <WaveformDebugger
+                key={track.id}
+                audioPlayer={audioPlayer}
+                trackId={track.id}
+                trackName={track.name}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

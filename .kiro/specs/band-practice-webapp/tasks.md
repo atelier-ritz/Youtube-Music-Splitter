@@ -308,5 +308,126 @@
     - **Property 16: Waveform visualization accuracy**
     - **Validates: Requirements 11.1, 11.2, 11.3**
 
-- [ ] 16. Final checkpoint - Ensure all tests pass
+- [x] 16. Implement playback speed control for practice
+  - [x] 16.1 Add playback speed control to TrackView interface
+    - Create speed selection dropdown with practice-focused range (0.5x - 1.0x)
+    - Implement AudioPlayer.setPlaybackRate() method with pitch compensation
+    - Ensure speed changes work during both playing and paused states
+    - _Requirements: Practice-focused speed control for learning difficult passages_
+  
+  - [x] 16.2 Fix playback speed synchronization issues
+    - Resolve timing calculation issues when changing speed during playback
+    - Ensure proper position tracking with variable playback rates
+    - Fix source node recreation for speed changes to take effect immediately
+    - _Requirements: Reliable speed control functionality_
+  
+  - [x] 16.3 Integrate SoundTouchJS for proper pitch-preserving speed control
+    - Replace Web Audio API playbackRate/detune approach with SoundTouchJS library
+    - Implement SoundTouch-based audio processing for speed changes without pitch shift
+    - Create setupSoundTouchPlayback method using getWebAudioNode and SimpleFilter
+    - Add fallback to regular playback if SoundTouch initialization fails
+    - Use direct Web Audio API for normal speed (1.0x) to avoid unnecessary processing
+    - Add proper cleanup for SoundTouch resources in pause and clearCache methods
+    - Create TypeScript declarations for SoundTouchJS API compatibility
+    - _Requirements: Professional-quality pitch-preserving speed control for practice_
+  
+  - [x] 16.4 Fix playhead synchronization with SoundTouch playback
+    - Add separate position tracking for SoundTouch vs regular Web Audio playback
+    - Implement usingSoundTouch flag and soundTouchStartTime/soundTouchStartPosition tracking
+    - Update getCurrentPosition() method to handle tempo-adjusted time calculation
+    - Improve SoundTouch position callback to sync with actual processed audio position
+    - Ensure playhead remains accurate when switching between different playback speeds
+    - _Requirements: Accurate visual feedback during speed-controlled practice sessions_
+  
+  - [x] 16.5 Fix SoundTouch playback starting position
+    - Set filter.sourcePosition to start SoundTouch playback from current position instead of beginning
+    - Convert current position from seconds to sample position for SoundTouch API
+    - Add logging to track SoundTouch starting position for debugging
+    - Ensure resume functionality works correctly with pitch-preserving speed control
+    - _Requirements: Proper resume behavior when using speed control for practice_
+  
+  - [x] 16.6 Fix timestamp inspector behavior during SoundTouch playback
+    - Simplify SoundTouch position tracking to use direct position reports from SoundTouch
+    - Replace complex position adjustment logic with direct lastSoundTouchPosition tracking
+    - Add fallback calculation for initial playback before SoundTouch reports position
+    - Ensure smooth and consistent timestamp updates during pitch-preserving speed control
+    - _Requirements: Accurate and stable timestamp display during practice sessions_
+  
+  - [x] 16.7 Fix UI refresh rate during slower playback speeds
+    - Implement position interpolation between SoundTouch position updates
+    - Add lastSoundTouchUpdateTime tracking to enable smooth interpolation
+    - Maintain consistent 60fps UI updates regardless of SoundTouch processing rate
+    - Calculate interpolated position based on time elapsed since last SoundTouch update
+    - Ensure playhead and timestamp move smoothly at all playback speeds
+    - _Requirements: Consistent UI responsiveness during practice at any speed_
+
+- [x] 17. Improve progress bar granularity and real-time feedback
+  - [x] 17.1 Add granular YouTube download progress simulation
+    - Implement simulateDownloadProgress method with 2% increments every 1.5 seconds
+    - Add realistic progress messages for different download stages
+    - Increase progress reporting from 3 points (10%, 90%, 100%) to ~40 points (5%-85%)
+    - Add message field to DownloadJob type for descriptive progress feedback
+    - _Requirements: More responsive and informative download progress for users_
+  
+  - [x] 17.2 Improve frontend progress polling and display
+    - Reduce polling interval from 5 seconds to 2 seconds for more responsive updates
+    - Include backend progress percentage in frontend progress messages
+    - Maintain existing 0-50% (download) and 50-100% (processing) mapping
+    - Ensure progress messages are displayed to users during both phases
+    - _Requirements: Real-time feedback that keeps users informed of progress_
+
+- [x] 17. Add stop button functionality to transport controls
+  - [x] 17.1 Implement stop method in AudioPlayer service
+    - Create stop() method that pauses playback and reverts to last play start position
+    - Track lastPlayStartPosition to remember where playback was initiated
+    - Ensure stop functionality works independently from play/pause
+    - Update position callback to reflect reverted position
+    - _Requirements: Enhanced transport control for practice sessions_
+  
+  - [x] 17.2 Add stop button to TrackView interface
+    - Add stop button after play/pause button in transport controls
+    - Implement handleStop function to manage stop behavior
+    - Add CSS styling for stop button with appropriate visual feedback
+    - Update tooltip to reflect "return to last play start position" behavior
+    - _Requirements: Complete transport control interface_
+
+- [x] 18. Remove loop/refresh button from transport controls
+  - [x] 18.1 Remove loop button from TrackView interface
+    - Remove loop button from transport controls section
+    - Clean up transport controls layout without loop functionality
+    - _Requirements: Simplified transport interface focused on essential controls_
+  
+  - [x] 18.2 Update documentation to remove loop functionality references
+    - Remove loop and repeat functionality from planned features
+    - Update task documentation to reflect simplified transport controls
+    - _Requirements: Accurate documentation reflecting current feature set_
+
+- [x] 19. Fix cursor alignment between timeline and waveform tracks
+  - [x] 19.1 Correct playhead cursor positioning
+    - Move timeline click handler from track content to ruler content area
+    - Ensure timeline ruler playhead and waveform progress cursors are synchronized
+    - Fix click-to-seek functionality to work from both timeline ruler and waveforms
+    - _Requirements: Accurate visual feedback for playback position and seeking_
+
+- [x] 20. Fix stop button visual cursor behavior
+  - [x] 20.1 Ensure visual cursor updates when stop button is pressed
+    - Remove incorrect setCurrentPosition(0) override in handleStop function
+    - Allow AudioPlayer's position callback to properly update visual cursor position
+    - Ensure cursor moves to last play start position when stop is pressed
+    - _Requirements: Visual feedback matches actual playback position after stop_
+
+- [x] 21. Improve playhead visibility and navigation behavior
+  - [x] 21.1 Fix back/previous button behavior
+    - Remove incorrect setCurrentPosition(0) override in handleGoToBeginning function
+    - Allow AudioPlayer's seek and position callback to properly handle navigation
+    - Ensure playhead moves to beginning and updates last play start position
+    - _Requirements: Consistent navigation behavior with proper position tracking_
+  
+  - [x] 21.2 Ensure playhead is visible at beginning on track view entry
+    - Sync currentPosition with AudioPlayer position after tracks are loaded
+    - Ensure playhead is visible at position 0 when entering track view
+    - Add position sync after error recovery to maintain visual consistency
+    - _Requirements: Clear visual feedback of playback position from the start_
+
+- [ ] 17. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.

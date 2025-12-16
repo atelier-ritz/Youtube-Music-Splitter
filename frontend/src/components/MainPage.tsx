@@ -215,14 +215,14 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
         const response = await retryableAxios.get(`/api/process/${jobId}`);
         const { status, progress, message, error, tracks, bpm } = (response as any).data;
 
-        // Map processing progress to 50-100% range
+        // Map processing progress to 50-100% range with more granular updates
         const mappedProgress = 50 + (progress * 0.5); // 50% + (0-100% * 0.5) = 50-100%
 
         setDownloadStatus(prev => ({
           ...prev,
           status,
           progress: Math.round(mappedProgress),
-          message: message || `Audio processing... ${progress}%`,
+          message: message || `Audio processing... ${Math.round(progress)}%`,
           jobId
         }));
 
@@ -257,7 +257,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
         if (status === 'processing') {
           attempts++;
           if (attempts < maxAttempts) {
-            setTimeout(poll, 5000); // Poll every 5 seconds
+            setTimeout(poll, 2000); // Poll every 2 seconds for more responsive updates
           } else {
             setDownloadStatus({
               status: 'error',
@@ -277,7 +277,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
     };
 
     // Start polling immediately
-    setTimeout(poll, 2000); // Initial delay of 2 seconds
+    setTimeout(poll, 3000); // Initial delay of 3 seconds
   };
 
   const pollDownloadStatus = async (jobId: string) => {
@@ -289,13 +289,13 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
         const response = await retryableAxios.get(`/api/download/${jobId}`);
         const { status, progress, message, error } = (response as any).data;
 
-        // Map download progress to 0-50% range
+        // Map download progress to 0-50% range with more granular updates
         const mappedProgress = Math.round((progress || 0) * 0.5); // 0-100% * 0.5 = 0-50%
 
         setDownloadStatus({
           status,
           progress: mappedProgress,
-          message: message || 'Downloading...',
+          message: message || `Downloading... ${Math.round(progress || 0)}%`,
           jobId
         });
 
@@ -337,7 +337,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
         if (status === 'downloading' || status === 'processing') {
           attempts++;
           if (attempts < maxAttempts) {
-            setTimeout(poll, 5000); // Poll every 5 seconds
+            setTimeout(poll, 5000); // Poll every 5 seconds to avoid rate limiting
           } else {
             setDownloadStatus({
               status: 'error',
@@ -346,18 +346,32 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
             });
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Status polling failed:', error);
+        
+        // Handle rate limiting specifically
+        if (error?.response?.status === 429) {
+          // Wait longer before retrying on rate limit
+          attempts++;
+          if (attempts < maxAttempts) {
+            console.log('Rate limited, waiting 10 seconds before retry...');
+            setTimeout(poll, 10000); // Wait 10 seconds on rate limit
+            return;
+          }
+        }
+        
         setDownloadStatus({
           status: 'error',
           progress: 0,
-          message: 'Failed to check download status. Please try again.'
+          message: error?.response?.status === 429 
+            ? 'Server is busy. Please wait a moment and try again.'
+            : 'Failed to check download status. Please try again.'
         });
       }
     };
 
     // Start polling
-    setTimeout(poll, 2000); // Initial delay of 2 seconds
+    setTimeout(poll, 3000); // Initial delay of 3 seconds
   };
 
   const handleRetry = () => {

@@ -18,7 +18,6 @@ describe('TrackController', () => {
 
   const mockCallbacks = {
     onMuteToggle: vi.fn(),
-    onVolumeChange: vi.fn(),
     onPanChange: vi.fn()
   }
 
@@ -61,23 +60,20 @@ describe('TrackController', () => {
     expect(mockCallbacks.onMuteToggle).toHaveBeenCalledWith('vocals', true)
   })
 
-  it('displays volume slider with correct initial value', () => {
+  it('displays track name and duration correctly', () => {
     render(<TrackController track={mockTrack} {...mockCallbacks} />)
     
-    const volumeSlider = screen.getByDisplayValue('1') // Volume slider
-    expect(volumeSlider).toBeInTheDocument()
-    expect(volumeSlider).toHaveAttribute('min', '0')
-    expect(volumeSlider).toHaveAttribute('max', '1')
-    expect(screen.getByText('100%')).toBeInTheDocument() // Volume percentage
+    expect(screen.getByText('Vocals')).toBeInTheDocument() // Capitalized track name
+    expect(screen.getByText('3:00')).toBeInTheDocument() // Duration formatted as MM:SS
   })
 
-  it('calls onVolumeChange when volume slider is moved', async () => {
+  it('calls onPanChange when pan slider is moved', async () => {
     render(<TrackController track={mockTrack} {...mockCallbacks} />)
     
-    const volumeSlider = screen.getByDisplayValue('1')
-    fireEvent.change(volumeSlider, { target: { value: '0.5' } })
+    const panSlider = screen.getByDisplayValue('0')
+    fireEvent.change(panSlider, { target: { value: '0.5' } })
     
-    expect(mockCallbacks.onVolumeChange).toHaveBeenCalledWith('vocals', 0.5)
+    expect(mockCallbacks.onPanChange).toHaveBeenCalledWith('vocals', 0.5)
   })
 
   it('displays pan slider with correct initial value', () => {
@@ -113,20 +109,20 @@ describe('TrackController', () => {
     expect(screen.getByText('R50')).toBeInTheDocument()
   })
 
-  it('disables volume slider when track is muted', () => {
+  it('shows muted state when track is muted', () => {
     const mutedTrack = { ...mockTrack, muted: true }
     render(<TrackController track={mutedTrack} {...mockCallbacks} />)
     
-    const volumeSlider = screen.getByDisplayValue('1')
-    expect(volumeSlider).toBeDisabled()
+    expect(screen.getByText('Muted')).toBeInTheDocument()
+    expect(screen.getByText('🔇')).toBeInTheDocument()
   })
 
-  it('displays activity indicator with correct width based on volume', () => {
-    const halfVolumeTrack = { ...mockTrack, volume: 0.5 }
-    render(<TrackController track={halfVolumeTrack} {...mockCallbacks} />)
+  it('displays activity indicator with full width when track is active', () => {
+    const activeTrack = { ...mockTrack, muted: false }
+    render(<TrackController track={activeTrack} {...mockCallbacks} />)
     
     const activityBar = document.querySelector('.track-controller__activity-bar')
-    expect(activityBar).toHaveStyle({ width: '50%' })
+    expect(activityBar).toHaveStyle({ width: '100%' })
   })
 
   it('shows inactive activity indicator when muted', () => {
