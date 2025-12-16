@@ -6,7 +6,7 @@ import LoadingSpinner from './LoadingSpinner';
 import InteractiveButton from './InteractiveButton';
 import WaveformDebugger from '../debug/WaveformDebugger';
 import { checkTrackUrls } from '../debug/trackUrlChecker';
-import { exportWaveformToCSV, exportAllWaveformsToCSV } from '../utils/waveformExport';
+
 import './TrackView.css';
 
 interface TrackViewProps {
@@ -41,47 +41,7 @@ const TrackView: React.FC<TrackViewProps> = ({
   const timelineRef = useRef<HTMLDivElement>(null);
   const timestampInputRef = useRef<HTMLInputElement>(null);
 
-  // Export handlers
-  const handleExportAllWaveforms = () => {
-    if (waveformData.size === 0) {
-      onShowToast?.showError('Export Error', 'No waveform data available to export');
-      return;
-    }
 
-    try {
-      const rawWaveformDataMap = audioPlayer.getAllWaveformData();
-      const getTrackName = (trackId: string) => {
-        const track = audioPlayer.getTrack(trackId);
-        return track?.name || 'unknown';
-      };
-
-      exportAllWaveformsToCSV(waveformData, rawWaveformDataMap, getTrackName);
-      onShowToast?.showSuccess('Export Complete', `Exported waveform data for ${waveformData.size} tracks to CSV`);
-    } catch (error) {
-      console.error('Export failed:', error);
-      onShowToast?.showError('Export Failed', 'Failed to export waveform data');
-    }
-  };
-
-  const handleExportSingleTrack = (trackId: string) => {
-    const visualizationData = waveformData.get(trackId);
-    const rawWaveformDataMap = audioPlayer.getAllWaveformData();
-    const rawData = rawWaveformDataMap.get(trackId);
-    const track = audioPlayer.getTrack(trackId);
-
-    if (!visualizationData || !rawData || !track) {
-      onShowToast?.showError('Export Error', 'Track data not available for export');
-      return;
-    }
-
-    try {
-      exportWaveformToCSV(trackId, track.name, rawData, visualizationData);
-      onShowToast?.showSuccess('Export Complete', `Exported ${track.name} waveform data to CSV`);
-    } catch (error) {
-      console.error('Export failed:', error);
-      onShowToast?.showError('Export Failed', `Failed to export ${track.name} waveform data`);
-    }
-  };
 
   // Use waveform data hook for real audio visualization with performance optimizations
   // Only pass audioPlayer when tracks are loaded (not loading and no error)
@@ -627,16 +587,7 @@ const TrackView: React.FC<TrackViewProps> = ({
           </div>
           
           {/* Export controls */}
-          <div className="daw-export-controls">
-            <button 
-              className="daw-export-btn"
-              onClick={handleExportAllWaveforms}
-              disabled={waveformData.size === 0 || isGeneratingWaveforms}
-              title="Export all waveform data to CSV"
-            >
-              📊 Export CSV
-            </button>
-          </div>
+
         </div>
       </div>
 
@@ -687,14 +638,7 @@ const TrackView: React.FC<TrackViewProps> = ({
                     >
                       S
                     </button>
-                    <button 
-                      className="daw-track-btn daw-track-btn--export"
-                      onClick={() => handleExportSingleTrack(track.id)}
-                      disabled={!waveformData.has(track.id) || isGeneratingWaveforms}
-                      title={`Export ${track.name} waveform to CSV`}
-                    >
-                      📊
-                    </button>
+
                   </div>
                 </div>
 
@@ -752,16 +696,12 @@ const TrackView: React.FC<TrackViewProps> = ({
                         totalDuration={duration} // Use AudioPlayer duration for consistency
                         onClick={handleTimelineClick}
                         enableHighDPI={true}
-                        enableCaching={true}
+                        enableCaching={false}
                       />
                     );
                   })()}
                   
-                  {/* Track progress overlay */}
-                  <div 
-                    className="daw-track-progress"
-                    style={{ width: `${progressPercentage}%` }}
-                  />
+
                 </div>
               </div>
             </div>

@@ -153,11 +153,13 @@ const WaveformVisualization: React.FC<WaveformVisualizationProps> = ({
     // Scale context for high DPI
     ctx.scale(devicePixelRatio, devicePixelRatio);
 
-    // Check cache first
+    // Check cache first (after scaling context)
     if (enableCaching && waveformCache.has(cacheKey)) {
       const cached = waveformCache.get(cacheKey)!;
       if (cached.width === displayWidth && cached.height === displayHeight) {
         measureRenderTime(() => {
+          // Temporarily reset scale to put image data at correct size
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
           ctx.putImageData(cached.imageData, 0, 0);
         }, trackName, true); // Cache hit
         return;
@@ -256,7 +258,9 @@ const WaveformVisualization: React.FC<WaveformVisualizationProps> = ({
     // Cache the rendered waveform if caching is enabled
     if (enableCaching && bars.length > 0) {
       try {
-        const imageData = ctx.getImageData(0, 0, displayWidth, displayHeight);
+        // Reset scale temporarily to get image data at actual canvas resolution
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
         waveformCache.set(cacheKey, {
           key: cacheKey,
           imageData,
@@ -294,7 +298,7 @@ const WaveformVisualization: React.FC<WaveformVisualizationProps> = ({
     
     // Add progress cursor line only (no overlay fill)
     if (progress > 0) {
-      const progressWidth = progress * actualWidth;
+      const progressWidth = progress * actualWidth - ctx.lineWidth / 2;
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
       ctx.lineWidth = 2;
       ctx.beginPath();

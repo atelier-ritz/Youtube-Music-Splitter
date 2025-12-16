@@ -798,18 +798,7 @@
   background: #9C27B0;
 }
 
-.daw-track-progress {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  background: transparent;
-  pointer-events: none;
-  z-index: 10;
-  /* Ensure progress stays within container bounds */
-  contain: layout;
-  overflow: hidden;
-}
+
 
 /* Waveform States */
 .daw-waveform-loading,
@@ -1387,55 +1376,4 @@
   .daw-track-content {
     min-height: 44px;
   }
-}
-/* Export Controls */
-.daw-export-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: 12px;
-}
-
-.daw-export-btn {
-  background: var(--daw-bg-tertiary);
-  border: 1px solid var(--daw-border-color);
-  color: var(--daw-text-primary);
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.daw-export-btn:hover:not(:disabled) {
-  background: var(--daw-accent-color);
-  border-color: var(--daw-accent-color);
-  transform: translateY(-1px);
-}
-
-.daw-export-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.daw-track-btn--export {
-  background: transparent;
-  border: 1px solid var(--daw-border-color);
-  color: var(--daw-text-secondary);
-  font-size: 10px;
-  padding: 2px 4px;
-  min-width: var(--daw-track-btn-size);
-  transition: all 0.2s ease;
-}
-
-.daw-track-btn--export:hover:not(:disabled) {
-  background: var(--daw-accent-color);
-  color: var(--daw-text-primary);
-  border-color: var(--daw-accent-color);
-}
-
-.daw-track-btn--export:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
 }
