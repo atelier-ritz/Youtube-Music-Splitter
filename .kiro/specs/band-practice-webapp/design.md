@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Band Practice Webapp is a client-server web application that enables musicians to practice with YouTube audio by providing track separation and advanced playback controls. The system consists of a React-based frontend for user interaction and audio playback, a Node.js backend for YouTube audio extraction, and integration with an external audio processing service for track separation and BPM detection.
+The Band Practice Partner is a client-server web application that enables musicians to practice with YouTube audio by providing track separation and advanced playback controls. The system consists of a React-based frontend for user interaction and audio playback, a Node.js backend for YouTube audio extraction, and integration with an external audio processing service for track separation and BPM detection.
 
 The application follows a three-phase workflow: audio acquisition (YouTube download), audio processing (track separation and analysis), and interactive playback (mixing and control interface).
 

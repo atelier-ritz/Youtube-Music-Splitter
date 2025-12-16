@@ -23,7 +23,7 @@ describe('MainPage', () => {
     const mockOnProcessingComplete = vi.fn()
     render(<MainPage onProcessingComplete={mockOnProcessingComplete} />)
     
-    expect(screen.getByText('Band Practice Webapp')).toBeInTheDocument()
+    expect(screen.getByText('Band Practice Partner')).toBeInTheDocument()
     expect(screen.getByText('Enter a YouTube URL to separate tracks and start practicing')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('https://www.youtube.com/watch?v=...')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Start Practice' })).toBeInTheDocument()

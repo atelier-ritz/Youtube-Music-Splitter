@@ -1,4 +1,4 @@
-# Band Practice Webapp
+# Band Practice Partner
 
 A web application that helps musicians practice with their band by providing audio track separation and playback control features. Users can download audio from YouTube videos, separate the audio into individual instrument tracks, and use interactive playback controls for focused practice sessions.
 
@@ -30,8 +30,22 @@ band-practice-webapp/
 
 - Node.js (v20.19+ or v22.12+)
 - Python 3.12+ (for audio processing service)
+- yt-dlp (for YouTube audio downloading)
+- ffmpeg (for audio format conversion)
 - npm or yarn
 - curl (for cache management commands)
+
+### System Dependencies
+
+Install yt-dlp and ffmpeg using your system package manager:
+
+```bash
+# macOS (using Homebrew)
+brew install yt-dlp ffmpeg
+
+# Ubuntu/Debian
+sudo apt install yt-dlp ffmpeg
+```
 
 ## Installation
 
@@ -104,6 +118,48 @@ npm run dev:backend
 # Start frontend only
 npm run dev:frontend
 ```
+
+### Cross-Device Access
+
+To access the application from other devices on your network:
+
+1. **Find your server's IP address:**
+   ```bash
+   # On macOS/Linux
+   ifconfig | grep "inet " | grep -v 127.0.0.1
+   
+   # On Windows
+   ipconfig | findstr "IPv4"
+   ```
+
+2. **Configure the frontend for network access:**
+   ```bash
+   # In the frontend directory, create a .env file
+   cd frontend
+   cp .env.example .env
+   
+   # Edit .env and set your server's IP address
+   VITE_BACKEND_URL=http://YOUR_SERVER_IP:3001
+   ```
+
+3. **Configure the audio processing service for network access:**
+   ```bash
+   # In the audio-processing-service directory, create a .env file
+   cd audio-processing-service
+   cp .env.example .env
+   
+   # Edit .env and set your server's IP address
+   BACKEND_URL=http://YOUR_SERVER_IP:3001
+   ```
+
+4. **Access from other devices:**
+   - Frontend: `http://YOUR_SERVER_IP:5174`
+   - Backend API: `http://YOUR_SERVER_IP:3001`
+
+**Example:** If your server IP is `192.168.1.100`:
+- Set `VITE_BACKEND_URL=http://192.168.1.100:3001` in `frontend/.env`
+- Set `BACKEND_URL=http://192.168.1.100:3001` in `audio-processing-service/.env`
+- Access frontend from other devices at `http://192.168.1.100:5174`
 
 ## Build
 

@@ -33,10 +33,14 @@ function App() {
       title
     });
     
-    // Show success toast
+    // Show success toast with BPM info
+    const bpmInfo = bpm ? 
+      ` • ${bpm} BPM detected (${bpm < 60 ? 'Very Slow' : bpm < 90 ? 'Slow' : bpm < 120 ? 'Moderate' : bpm < 140 ? 'Fast' : 'Very Fast'})` : 
+      ' • BPM detection unavailable';
+    
     showSuccess(
       'Processing Complete!', 
-      `Successfully separated ${tracks.length} tracks${bpm ? ` • ${bpm} BPM detected` : ''}`
+      `Successfully separated ${tracks.length} tracks${bpmInfo}`
     );
   };
 

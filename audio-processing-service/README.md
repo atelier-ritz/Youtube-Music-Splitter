@@ -80,7 +80,7 @@ GET /api/tracks/{job_id}/{track_name}.mp3
 curl http://localhost:8000/api/tracks/12345-67890-abcdef/vocals.mp3
 ```
 
-## Integration with Band Practice Webapp
+## Integration with Band Practice Partner
 
 Your Node.js backend is already configured to work with this service! Just:
 

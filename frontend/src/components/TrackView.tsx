@@ -4,7 +4,7 @@ import { useWaveformData } from '../hooks/useWaveformData';
 import WaveformVisualization from './WaveformVisualization';
 import LoadingSpinner from './LoadingSpinner';
 import InteractiveButton from './InteractiveButton';
-import WaveformDebugger from '../debug/WaveformDebugger';
+
 import { checkTrackUrls } from '../debug/trackUrlChecker';
 
 import './TrackView.css';
@@ -37,9 +37,12 @@ const TrackView: React.FC<TrackViewProps> = ({
   const [isEditingTimestamp, setIsEditingTimestamp] = useState(false);
   const [timestampInputValue, setTimestampInputValue] = useState('');
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
-  const [showDebugger, setShowDebugger] = useState(false);
+
+  const [showAudioInitPrompt, setShowAudioInitPrompt] = useState(false);
+  const [forceReload, setForceReload] = useState(0);
   const timelineRef = useRef<HTMLDivElement>(null);
   const timestampInputRef = useRef<HTMLInputElement>(null);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 
 
@@ -89,11 +92,25 @@ const TrackView: React.FC<TrackViewProps> = ({
             setDuration(audioPlayer.getDuration());
             // Ensure position is synced after loading (should be 0 initially)
             setCurrentPosition(audioPlayer.getCurrentPosition());
+            
+            // Clear timeout and prompts on successful load
+            if (loadingTimeoutRef.current) {
+              clearTimeout(loadingTimeoutRef.current);
+            }
+            setShowAudioInitPrompt(false);
             setIsLoading(false);
             return; // Success, exit retry loop
           } catch (error) {
             retryCount++;
             console.error(`Audio loading attempt ${retryCount} failed:`, error);
+            
+            // Check if it's an AudioContext suspended error
+            if ((error as Error).message.includes('AudioContext') || (error as Error).message.includes('suspended')) {
+              // This is likely an AudioContext suspended error - show a user interaction prompt
+              setLoadError('Audio requires user interaction. Click "Initialize Audio" to load tracks.');
+              setIsLoading(false);
+              return;
+            }
             
             if (retryCount > maxRetries) {
               throw error; // Re-throw after max retries
@@ -106,8 +123,14 @@ const TrackView: React.FC<TrackViewProps> = ({
       } catch (error) {
         console.error('Failed to initialize audio player after retries:', error);
         const errorMessage = error instanceof Error ? error.message : 'Failed to load audio tracks';
-        const fullErrorMessage = `${errorMessage}. Please try refreshing the page or check your browser's audio permissions.`;
-        setLoadError(fullErrorMessage);
+        
+        // Check if it's an AudioContext issue
+        if (errorMessage.includes('AudioContext') || errorMessage.includes('suspended') || errorMessage.includes('user interaction')) {
+          setLoadError('Audio requires user interaction. Click "Initialize Audio" to load tracks.');
+        } else {
+          const fullErrorMessage = `${errorMessage}. Please try refreshing the page or check your browser's audio permissions.`;
+          setLoadError(fullErrorMessage);
+        }
         setIsLoading(false);
         
         // Show error toast
@@ -116,6 +139,13 @@ const TrackView: React.FC<TrackViewProps> = ({
     };
 
     if (trackStates.length > 0) {
+      // Set a timeout to show audio init prompt if loading takes too long
+      loadingTimeoutRef.current = setTimeout(() => {
+        if (isLoading && !loadError) {
+          setShowAudioInitPrompt(true);
+        }
+      }, 3000); // Show prompt after 3 seconds
+      
       initializePlayer();
     } else {
       // No tracks to load, skip loading state
@@ -124,9 +154,12 @@ const TrackView: React.FC<TrackViewProps> = ({
 
     // Cleanup on unmount
     return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
       audioPlayer.dispose();
     };
-  }, [tracks, audioPlayer]); // Use original tracks prop, not trackStates
+  }, [tracks, audioPlayer, forceReload]); // Use original tracks prop, not trackStates, and forceReload trigger
 
   // Handle play/pause
   const handlePlayPause = async () => {
@@ -445,6 +478,41 @@ const TrackView: React.FC<TrackViewProps> = ({
   }, [isEditingTimestamp, trackStates.length, isLoading, loadError, isPlaying, duration]); // Dependencies for the keyboard handler
 
   if (isLoading) {
+    const handleInitializeAudioFromLoading = async () => {
+      console.log('🎵 Initialize Audio button clicked');
+      try {
+        // Force AudioContext initialization with user interaction
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        console.log('🎵 Creating temporary AudioContext...');
+        const tempContext = new AudioContextClass();
+        
+        console.log('🎵 AudioContext state:', tempContext.state);
+        if (tempContext.state === 'suspended') {
+          console.log('🎵 Resuming suspended AudioContext...');
+          await tempContext.resume();
+          console.log('🎵 AudioContext resumed, new state:', tempContext.state);
+        }
+        
+        // Close temp context
+        await tempContext.close();
+        console.log('🎵 Temporary AudioContext closed');
+        
+        // Clear the prompt and timeout
+        setShowAudioInitPrompt(false);
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+        }
+        
+        console.log('🎵 Triggering audio player re-initialization...');
+        // Force re-initialization by incrementing forceReload
+        setForceReload(prev => prev + 1);
+      } catch (error) {
+        console.error('🎵 Failed to initialize audio:', error);
+        setLoadError('Failed to initialize audio. Please try again or check your browser settings.');
+        setIsLoading(false);
+      }
+    };
+
     return (
       <div className="track-view">
         <div className="track-view__loading">
@@ -453,6 +521,20 @@ const TrackView: React.FC<TrackViewProps> = ({
             variant="accent"
             message="Loading audio tracks..."
           />
+          {showAudioInitPrompt && (
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <div style={{ marginBottom: '15px', fontSize: '14px', color: '#666' }}>
+                Audio requires user interaction to start
+              </div>
+              <InteractiveButton 
+                variant="success" 
+                size="medium"
+                onClick={handleInitializeAudioFromLoading}
+              >
+                Click to Initialize Audio
+              </InteractiveButton>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -462,9 +544,36 @@ const TrackView: React.FC<TrackViewProps> = ({
     const handleRetry = () => {
       setLoadError(null);
       setIsLoading(true);
-      // Trigger re-initialization by updating trackStates
-      setTrackStates([...trackStates]);
+      // Trigger re-initialization by incrementing forceReload
+      setForceReload(prev => prev + 1);
     };
+
+    const handleInitializeAudio = async () => {
+      try {
+        setLoadError(null);
+        setIsLoading(true);
+        
+        // Force AudioContext initialization with user interaction
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const tempContext = new AudioContextClass();
+        
+        if (tempContext.state === 'suspended') {
+          await tempContext.resume();
+        }
+        
+        // Close temp context
+        await tempContext.close();
+        
+        // Force re-initialization by incrementing forceReload
+        setForceReload(prev => prev + 1);
+      } catch (error) {
+        console.error('Failed to initialize audio:', error);
+        setLoadError('Failed to initialize audio. Please try again or check your browser settings.');
+        setIsLoading(false);
+      }
+    };
+
+    const isAudioContextError = loadError.includes('user interaction') || loadError.includes('AudioContext');
 
     return (
       <div className="track-view">
@@ -472,14 +581,25 @@ const TrackView: React.FC<TrackViewProps> = ({
           <h2>Failed to Load Tracks</h2>
           <p>{loadError}</p>
           <div className="track-view__error-actions">
-            <InteractiveButton 
-              variant="success" 
-              size="medium"
-              onClick={handleRetry}
-              className="track-view__retry-button"
-            >
-              Retry Loading
-            </InteractiveButton>
+            {isAudioContextError ? (
+              <InteractiveButton 
+                variant="success" 
+                size="medium"
+                onClick={handleInitializeAudio}
+                className="track-view__retry-button"
+              >
+                Initialize Audio
+              </InteractiveButton>
+            ) : (
+              <InteractiveButton 
+                variant="success" 
+                size="medium"
+                onClick={handleRetry}
+                className="track-view__retry-button"
+              >
+                Retry Loading
+              </InteractiveButton>
+            )}
             {onBack && (
               <InteractiveButton 
                 variant="secondary" 
@@ -577,9 +697,23 @@ const TrackView: React.FC<TrackViewProps> = ({
             </select>
             <span className="daw-speed-label">SPEED</span>
           </div>
-          <div className="daw-bpm-window">
-            <span className="daw-bpm-value">{bpm || '---'}</span>
+          <div 
+            className="daw-bpm-window"
+            title={bpm ? 
+              `Detected BPM: ${bpm}\nTempo: ${bpm < 60 ? 'Very Slow (Largo)' : bpm < 90 ? 'Slow (Andante)' : bpm < 120 ? 'Moderate (Moderato)' : bpm < 140 ? 'Fast (Allegro)' : 'Very Fast (Presto)'}\nAI-detected from audio analysis` : 
+              'BPM not detected - audio may be too complex or quiet for tempo analysis'
+            }
+          >
+            <div className="daw-bpm-display">
+              <span 
+                className={`daw-bpm-value ${bpm ? 'daw-bpm-value--detected' : 'daw-bpm-value--unknown'}`}
+              >
+                {bpm || '---'}
+              </span>
+
+            </div>
             <span className="daw-bpm-label">BPM</span>
+
           </div>
           <div className="daw-signature-window">
             <span className="daw-signature-value">4/4</span>
@@ -709,58 +843,7 @@ const TrackView: React.FC<TrackViewProps> = ({
         </div>
       </div>
 
-      {/* Debug Toggle Button - Development Only */}
-      {import.meta.env.DEV && (
-        <button
-          onClick={() => setShowDebugger(!showDebugger)}
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            padding: '10px',
-            backgroundColor: showDebugger ? '#ff6b35' : '#2a2d3a',
-            color: 'white',
-            border: '1px solid #3a3d4a',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            zIndex: 1001,
-            fontSize: '12px'
-          }}
-        >
-          🔍 {showDebugger ? 'Hide' : 'Show'} Waveform Debug
-        </button>
-      )}
 
-      {/* Debug Panel - Development Only */}
-      {import.meta.env.DEV && showDebugger && (
-        <div style={{
-          position: 'fixed',
-          bottom: '70px',
-          right: '20px',
-          width: '400px',
-          maxHeight: '70vh',
-          overflow: 'auto',
-          backgroundColor: 'white',
-          border: '2px solid #3a3d4a',
-          borderRadius: '8px',
-          zIndex: 1001,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-        }}>
-          <div style={{ padding: '10px', borderBottom: '1px solid #ccc', backgroundColor: '#f0f0f0' }}>
-            <h3 style={{ margin: 0, color: '#333' }}>🎵 Waveform Debug Panel</h3>
-          </div>
-          <div style={{ maxHeight: '60vh', overflow: 'auto' }}>
-            {trackStates.map((track) => (
-              <WaveformDebugger
-                key={track.id}
-                audioPlayer={audioPlayer}
-                trackId={track.id}
-                trackName={track.name}
-              />
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

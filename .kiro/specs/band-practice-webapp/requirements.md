@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Band Practice Webapp is a web-based application designed to help musicians practice with their band by providing audio track separation and playback control features. The system allows users to download audio from YouTube videos, separate the audio into individual instrument tracks, and provide interactive playback controls for focused practice sessions.
+The Band Practice Partner is a web-based application designed to help musicians practice with their band by providing audio track separation and playback control features. The system allows users to download audio from YouTube videos, separate the audio into individual instrument tracks, and provide interactive playback controls for focused practice sessions.
 
 ## Glossary
 

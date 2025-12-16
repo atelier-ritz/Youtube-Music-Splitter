@@ -54,9 +54,9 @@ const Toast: React.FC<ToastProps> = ({ toast, onRemove }) => {
       case 'warning':
         return '⚠';
       case 'info':
-        return 'ℹ';
+        return '●';
       default:
-        return 'ℹ';
+        return '●';
     }
   };
 

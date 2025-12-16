@@ -106,16 +106,20 @@ export class AudioPlayer {
       return;
     }
     
-
-    
     if (this.audioContext.state === 'suspended') {
       try {
+        console.log('AudioContext is suspended, attempting to resume...');
         await this.audioContext.resume();
-
+        console.log('AudioContext resumed successfully, state:', this.audioContext.state);
       } catch (error) {
         console.error('Failed to resume AudioContext:', error);
-        throw new Error('Failed to resume audio context. User interaction may be required.');
+        throw new Error('AudioContext is suspended and requires user interaction to resume. Please click to initialize audio.');
       }
+    }
+    
+    // Double-check the state after resume attempt
+    if (this.audioContext.state === 'suspended') {
+      throw new Error('AudioContext remains suspended after resume attempt. User interaction is required.');
     }
   }
 

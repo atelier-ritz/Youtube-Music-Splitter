@@ -5,8 +5,8 @@
 
 import youtubeDl from 'youtube-dl-exec';
 
-// Configure youtube-dl-exec to use system yt-dlp
-const ytDlp = youtubeDl.create('/opt/homebrew/bin/yt-dlp');
+// Use default youtube-dl-exec (will find yt-dlp automatically)
+const ytDlp = youtubeDl;
 import { randomUUID } from 'crypto';
 import path from 'path';
 import fs from 'fs/promises';
@@ -153,13 +153,15 @@ export class YouTubeDownloaderService {
       // Simulate more granular progress during download
       const progressSimulation = this.simulateDownloadProgress(jobId);
 
-      // Download audio using youtube-dl-exec
+      // Download audio using youtube-dl-exec with basic options
       const output = await ytDlp(job.youtubeUrl, {
         extractAudio: true,
         audioFormat: 'mp3',
         audioQuality: 192,
         output: outputTemplate,
         noPlaylist: true,
+        // Basic retry option
+        retries: 3,
         // Progress callback would be nice but youtube-dl-exec doesn't support it directly
       });
 

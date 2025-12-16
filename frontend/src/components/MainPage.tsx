@@ -390,7 +390,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
     <div className="main-page">
       <div className="main-page__container">
         <header className="main-page__header">
-          <h1>Band Practice Webapp</h1>
+          <h1>Band Practice Partner</h1>
           <p>Enter a YouTube URL to separate tracks and start practicing</p>
         </header>
 

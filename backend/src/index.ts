@@ -26,7 +26,7 @@ const trackServingLimiter = rateLimit({
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = parseInt(process.env.PORT || '3001', 10);
 
 // Request timeout middleware (30 seconds)
 app.use(timeoutHandler(30000));
@@ -66,7 +66,7 @@ app.get('/api/health', (req, res, next) => {
     // Basic health checks
     const healthStatus = {
       status: 'OK',
-      message: 'Band Practice Webapp Backend is running',
+      message: 'Band Practice Partner Backend is running',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       memory: process.memoryUsage(),
@@ -112,7 +112,8 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`Server accessible at: http://0.0.0.0:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });

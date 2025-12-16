@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Band Practice Webapp - Cache Management Script
+# Band Practice Partner - Cache Management Script
 # This script provides easy commands to manage cached audio files
 
 set -e
@@ -23,7 +23,7 @@ check_backend() {
 
 # Show usage information
 show_usage() {
-    echo -e "${BLUE}🎵 Band Practice Webapp - Cache Management${NC}"
+    echo -e "${BLUE}🎵 Band Practice Partner - Cache Management${NC}"
     echo ""
     echo "Usage: $0 [command]"
     echo ""

@@ -17,6 +17,13 @@ from werkzeug.utils import secure_filename
 import subprocess
 import librosa
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    print("python-dotenv not installed, using system environment variables only")
+
 app = Flask(__name__)
 CORS(app)
 
@@ -51,14 +58,44 @@ def get_audio_duration(file_path):
         return 0
 
 def detect_bpm(file_path):
-    """Detect BPM using librosa"""
+    """Detect BPM using librosa with fallback methods"""
     try:
-        y, sr = librosa.load(file_path)
-        tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
-        return int(tempo)
+        # Load only first 30 seconds for faster processing
+        y, sr = librosa.load(file_path, duration=30)
+        
+        # Method 1: Simple beat tracking (most reliable)
+        tempo, _ = librosa.beat.beat_track(y=y, sr=sr, hop_length=512, trim=False)
+        if tempo > 0:
+            return int(tempo)
+            
     except Exception as e:
-        print(f"Error detecting BPM: {e}")
-        return None
+        print(f"Primary BPM detection failed: {e}")
+    
+    try:
+        # Method 2: Onset-based tempo estimation
+        y, sr = librosa.load(file_path, duration=30)
+        onset_envelope = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512)
+        
+        # Try different tempo estimation methods
+        try:
+            # New librosa API (>= 0.10.0)
+            if hasattr(librosa.feature, 'rhythm') and hasattr(librosa.feature.rhythm, 'tempo'):
+                tempo = librosa.feature.rhythm.tempo(onset_envelope=onset_envelope, sr=sr, hop_length=512)[0]
+            else:
+                # Old librosa API (< 0.10.0)
+                tempo = librosa.beat.tempo(onset_envelope=onset_envelope, sr=sr, hop_length=512)[0]
+                
+            if tempo > 0:
+                return int(tempo)
+        except Exception as e2:
+            print(f"Onset-based BPM detection failed: {e2}")
+            
+    except Exception as e:
+        print(f"Secondary BPM detection failed: {e}")
+    
+    # If all methods fail, return None (BPM detection is optional)
+    print("BPM detection failed, continuing without BPM")
+    return None
 
 def update_progress(job_id, progress, message=None):
     """Helper function to update job progress"""
@@ -192,7 +229,9 @@ def separate_audio(job_id, input_file):
             track_file = separated_dir / demucs_file
             if track_file.exists():
                 # Create a URL that points to the backend proxy (which will proxy to this service)
-                tracks[track_name] = f"http://localhost:3001/api/tracks/{job_id}/{demucs_file}"
+                backend_url = os.getenv('BACKEND_URL', 'http://localhost:3001')
+                print(f"DEBUG: Using backend_url: {backend_url} (from env: {os.getenv('BACKEND_URL')})")
+                tracks[track_name] = f"{backend_url}/api/tracks/{job_id}/{demucs_file}"
         
         update_progress(job_id, 90, "Detecting BPM...")
         
@@ -333,50 +372,32 @@ def serve_track(job_id, filename):
         # Security: ensure filename is safe
         filename = secure_filename(filename)
         
-        # Find the track file
-        input_name = None
-        with jobs_lock:
-            job = jobs.get(job_id)
-            if job:
-                original_filename = job['filename']
-                original_stem = Path(original_filename).stem
-                input_name = original_stem  # Demucs uses just the stem, not job_id prefix
-        
-        if not input_name:
-            return jsonify({'error': 'Job not found'}), 404
-        
-        # Try multiple possible locations for the track file
-        possible_paths = [
-            OUTPUT_FOLDER / job_id / 'htdemucs_6s' / input_name / filename,
-            OUTPUT_FOLDER / job_id / 'htdemucs_6s' / f"{job_id}_{input_name}" / filename
-        ]
-        
-        # Also check if there are any subdirectories in htdemucs_6s
+        # Try to find the track file even without job metadata
         htdemucs_dir = OUTPUT_FOLDER / job_id / 'htdemucs_6s'
-        if htdemucs_dir.exists():
-            for subdir in htdemucs_dir.iterdir():
-                if subdir.is_dir():
-                    possible_paths.append(subdir / filename)
         
+        # Look for the file in any subdirectory of htdemucs_6s
         track_file = None
-        for path in possible_paths:
-            if path.exists():
-                track_file = path
-                break
+        if htdemucs_dir.exists():
+            # Search recursively for the filename
+            for file_path in htdemucs_dir.rglob(filename):
+                if file_path.is_file():
+                    track_file = file_path
+                    break
         
         if not track_file:
-            print(f"Track file not found. Tried paths:")
-            for path in possible_paths:
-                print(f"  {path} - exists: {path.exists()}")
+            print(f"Track file '{filename}' not found for job '{job_id}'")
             
-            # List what actually exists
+            # List what actually exists for debugging
             if htdemucs_dir.exists():
                 print(f"Contents of {htdemucs_dir}:")
                 for item in htdemucs_dir.rglob('*'):
                     print(f"  {item}")
+            else:
+                print(f"Directory {htdemucs_dir} does not exist")
             
             return jsonify({'error': 'Track file not found'}), 404
         
+        print(f"Serving track file: {track_file}")
         return send_file(track_file, as_attachment=False)
         
     except Exception as e:
