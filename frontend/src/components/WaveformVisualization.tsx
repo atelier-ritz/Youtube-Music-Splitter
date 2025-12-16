@@ -52,7 +52,7 @@ const waveformCache = new Map<string, WaveformCache>();
 // Track-specific colors for consistent styling
 const TRACK_COLORS: Record<string, string> = {
   vocals: '#d75757ff',
-  drums: '#964fa5',
+  drums: '#8a8a8a',
   bass: '#3f88adff',
   guitar: '#d0ab25',
   piano: '#3dc77d',
