@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "tsc --project tsconfig.prod.json",
     "build:dev": "tsc --project tsconfig.dev.json",
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
+    "postinstall": "npm run build",
     "test": "jest",
     "test:watch": "jest --watch",
     "clear-audio-files": "curl -X POST http://localhost:3001/api/cache/clear",
