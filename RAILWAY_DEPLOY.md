@@ -41,13 +41,21 @@
 2. **Configure Audio Service**:
    - In Settings → Service:
      - **Root Directory**: `audio-processing-service`
-     - **Build Command**: `pip install -r requirements.txt`
+     - **Build Command**: `pip install --no-cache-dir -r requirements.txt`
      - **Start Command**: `python app.py`
+   - **IMPORTANT**: Increase build timeout in Railway settings:
+     - Go to Settings → General
+     - Set **Build Timeout** to 20-30 minutes (Demucs installation is heavy)
    - Set Environment Variables:
      ```
      PORT=${{PORT}}
      BACKEND_URL=https://your-backend-service-url.railway.app
      ```
+
+3. **If Build Still Times Out**:
+   - Try deploying with a simpler requirements.txt first
+   - Then update to include Demucs after initial deployment
+   - Or use Railway's Docker deployment with pre-built image
 
 #### Step 3: Update Backend Environment
 
@@ -117,17 +125,39 @@ The frontend is automatically built and served by the backend service in product
 
 ### Common Issues
 
-1. **Build Timeout**:
-   - Increase build timeout in Railway settings
-   - Consider using Docker deployment for faster builds
+1. **Audio Service Build Timeout**:
+   - **Increase build timeout**: Go to Railway Settings → General → Build Timeout (set to 30 minutes)
+   - **Use lighter requirements**: Deploy with `requirements-light.txt` first, then update
+   - **Docker deployment**: Use the provided Dockerfile for optimized builds
+   - **Alternative**: Deploy audio service to a different platform (Render, Heroku) if Railway keeps timing out
 
 2. **Memory Issues**:
-   - Increase memory allocation for audio processing service
+   - Increase memory allocation for audio processing service (minimum 2GB)
    - Monitor usage in Railway metrics
+   - Consider using Railway's Pro plan for better resources
 
 3. **Port Conflicts**:
    - Ensure PORT environment variable is used
    - Check service communication URLs
+
+### Audio Service Deployment Strategies
+
+**Strategy 1: Light First, Then Heavy**
+1. Deploy with `requirements-light.txt`
+2. Once deployed, update to full `requirements.txt`
+3. Redeploy with Demucs
+
+**Strategy 2: Docker Deployment**
+1. Use the provided Dockerfile
+2. Railway will build the Docker image
+3. Better caching and optimization
+
+**Strategy 3: Alternative Platform**
+- If Railway keeps timing out, deploy audio service to:
+  - Render.com (good for Python apps)
+  - Heroku (with larger dynos)
+  - Google Cloud Run
+  - Then connect to Railway backend via environment variables
 
 ### Monitoring
 
