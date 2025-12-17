@@ -13,6 +13,10 @@ export class WaveformLogger {
     this.enabled = false;
   }
   
+  static isEnabled() {
+    return this.enabled;
+  }
+  
   static log(component: string, message: string, data?: any) {
     if (!this.enabled) return;
     
@@ -59,5 +63,5 @@ export class WaveformLogger {
 (window as any).waveformDebug = {
   enable: () => WaveformLogger.enable(),
   disable: () => WaveformLogger.disable(),
-  isEnabled: () => WaveformLogger.enabled
+  isEnabled: () => WaveformLogger.isEnabled()
 };

@@ -216,14 +216,16 @@ export class AudioPlayer {
       
       // Resume context
       this.audioContext.resume().then(() => {
+        if (!this.audioContext) return;
+        
         console.log('AudioContext resumed, state:', this.audioContext.state);
         
         // Create a test tone
-        const oscillator = this.audioContext!.createOscillator();
-        const gainNode = this.audioContext!.createGain();
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
         
         oscillator.connect(gainNode);
-        gainNode.connect(this.audioContext!.destination);
+        gainNode.connect(this.audioContext.destination);
         
         oscillator.frequency.value = 440; // A4 note
         gainNode.gain.value = 0.1; // Low volume
