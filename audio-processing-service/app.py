@@ -130,12 +130,9 @@ def separate_audio(job_id, input_file):
         cmd = [
             'python', '-m', 'demucs.separate',
             '--mp3',  # Output as MP3
-            '--mp3-bitrate', '128',  # Conservative bitrate for stability
+            '--mp3-bitrate', '196',  # Conservative bitrate for stability
             '-n', 'htdemucs_6s',  # Use lighter 4-stem model (vocals, drums, bass, other)
             '--device', 'cpu',  # Force CPU mode
-            '--jobs', '1',  # Single thread to minimize memory usage
-            '--segment', '10',  # Smaller segments for memory efficiency
-            '--shifts', '1',  # Reduce shifts for faster processing
             '-o', str(job_output_dir),
             str(input_file)
         ]
