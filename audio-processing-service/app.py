@@ -125,16 +125,17 @@ def separate_audio(job_id, input_file):
         
         update_progress(job_id, 15, "Preparing separation...")
         
-        # Run Demucs separation optimized for 8GB RAM + CPU
+        # Run Demucs separation optimized for Railway CPU environment
+        # Use the lightweight mdx_extra model instead of htdemucs_6s
         cmd = [
             'python', '-m', 'demucs.separate',
             '--mp3',  # Output as MP3
-            '--mp3-bitrate', '192',  # Higher quality with more RAM available
-            '-n', 'htdemucs_6s',  # Use 6-stem model (vocals, drums, bass, guitar, piano, other)
+            '--mp3-bitrate', '128',  # Conservative bitrate for stability
+            '-n', 'htdemucs_6s',  # Use lighter 4-stem model (vocals, drums, bass, other)
             '--device', 'cpu',  # Force CPU mode
-            '--jobs', '2',  # Use 2 threads with more RAM available
-            '--segment', '20',  # Larger segments for better efficiency with more RAM
-            '--overlap', '0.25',  # Better quality with segment overlap
+            '--jobs', '1',  # Single thread to minimize memory usage
+            '--segment', '10',  # Smaller segments for memory efficiency
+            '--shifts', '1',  # Reduce shifts for faster processing
             '-o', str(job_output_dir),
             str(input_file)
         ]
@@ -142,20 +143,21 @@ def separate_audio(job_id, input_file):
         print(f"Running Demucs command: {' '.join(cmd)}")
         update_progress(job_id, 20, "Starting audio separation...")
         
-        # Set memory limits for the process (increased for 8GB system)
+        # Set memory limits for the process (conservative for Railway)
         import resource
         def set_memory_limit():
-            # Limit memory to 6GB (6 * 1024 * 1024 * 1024 bytes) - leave 2GB for system
-            resource.setrlimit(resource.RLIMIT_AS, (6 * 1024 * 1024 * 1024, 6 * 1024 * 1024 * 1024))
+            # Limit memory to 4GB to leave plenty of headroom
+            resource.setrlimit(resource.RLIMIT_AS, (4 * 1024 * 1024 * 1024, 4 * 1024 * 1024 * 1024))
         
-        # Set environment variables for better CPU performance
+        # Set environment variables for minimal CPU usage
         import os
         env = os.environ.copy()
         env.update({
-            'OMP_NUM_THREADS': '2',  # OpenMP threads for CPU optimization
-            'MKL_NUM_THREADS': '2',  # Intel MKL threads
-            'NUMBA_NUM_THREADS': '2',  # Numba threads
-            'PYTORCH_NUM_THREADS': '2',  # PyTorch CPU threads
+            'OMP_NUM_THREADS': '1',  # Single thread for stability
+            'MKL_NUM_THREADS': '1',  # Intel MKL threads
+            'NUMBA_NUM_THREADS': '1',  # Numba threads
+            'PYTORCH_NUM_THREADS': '1',  # PyTorch CPU threads
+            'MALLOC_TRIM_THRESHOLD_': '0',  # Reduce memory fragmentation
         })
         
         # Start the process with optimized settings
@@ -184,19 +186,15 @@ def separate_audio(job_id, input_file):
                 time_progress = min(elapsed / estimated_processing_time, 1.0)
                 current_progress = 20 + (progress_range * time_progress)
                 
-                # Add some realistic stages
+                # Add some realistic stages for 4-stem model
                 if current_progress < 30:
-                    message = "Loading model..."
-                elif current_progress < 45:
+                    message = "Loading lightweight model..."
+                elif current_progress < 50:
                     message = "Separating vocals..."
-                elif current_progress < 55:
-                    message = "Separating drums..."
                 elif current_progress < 65:
-                    message = "Separating bass..."
-                elif current_progress < 75:
-                    message = "Separating guitar..."
+                    message = "Separating drums..."
                 elif current_progress < 80:
-                    message = "Separating piano..."
+                    message = "Separating bass..."
                 else:
                     message = "Finalizing separation..."
                 
@@ -217,9 +215,9 @@ def separate_audio(job_id, input_file):
         update_progress(job_id, 85, "Processing completed, organizing files...")
         
         # Find the separated files
-        # Demucs creates: job_output_dir/htdemucs_6s/{filename_without_ext}/{track}.mp3
+        # Demucs creates: job_output_dir/mdx_extra/{filename_without_ext}/{track}.mp3
         input_name = Path(input_file).stem
-        separated_dir = job_output_dir / 'htdemucs_6s' / input_name
+        separated_dir = job_output_dir / 'mdx_extra' / input_name
         
         # Debug: Check what Demucs actually created
         print(f"Looking for separated files in: {separated_dir}")
@@ -230,29 +228,27 @@ def separate_audio(job_id, input_file):
         
         # If the expected directory doesn't exist, try to find the actual directory
         if not separated_dir.exists():
-            htdemucs_dir = job_output_dir / 'htdemucs_6s'
-            if htdemucs_dir.exists():
+            mdx_dir = job_output_dir / 'mdx_extra'
+            if mdx_dir.exists():
                 # Find the first subdirectory (should be the separated tracks)
-                subdirs = [d for d in htdemucs_dir.iterdir() if d.is_dir()]
+                subdirs = [d for d in mdx_dir.iterdir() if d.is_dir()]
                 if subdirs:
                     separated_dir = subdirs[0]
                     print(f"Using actual separated directory: {separated_dir}")
                 else:
-                    print(f"No subdirectories found in {htdemucs_dir}")
+                    print(f"No subdirectories found in {mdx_dir}")
             else:
-                print(f"htdemucs_6s directory not found in {job_output_dir}")
+                print(f"mdx_extra directory not found in {job_output_dir}")
         
         if not separated_dir.exists():
             raise Exception(f"Separated files not found at {separated_dir}")
         
-        # Map Demucs output to our expected format (6-stem model)
+        # Map Demucs output to our expected format (4-stem model)
         track_mapping = {
             'vocals.mp3': 'vocals',
             'drums.mp3': 'drums', 
             'bass.mp3': 'bass',
-            'guitar.mp3': 'guitar',
-            'piano.mp3': 'piano',
-            'other.mp3': 'other'
+            'other.mp3': 'other'  # Contains guitar, piano, and other instruments
         }
         
         tracks = {}
@@ -404,13 +400,13 @@ def serve_track(job_id, filename):
         filename = secure_filename(filename)
         
         # Try to find the track file even without job metadata
-        htdemucs_dir = OUTPUT_FOLDER / job_id / 'htdemucs_6s'
+        mdx_dir = OUTPUT_FOLDER / job_id / 'mdx_extra'
         
-        # Look for the file in any subdirectory of htdemucs_6s
+        # Look for the file in any subdirectory of mdx_extra
         track_file = None
-        if htdemucs_dir.exists():
+        if mdx_dir.exists():
             # Search recursively for the filename
-            for file_path in htdemucs_dir.rglob(filename):
+            for file_path in mdx_dir.rglob(filename):
                 if file_path.is_file():
                     track_file = file_path
                     break
@@ -419,12 +415,12 @@ def serve_track(job_id, filename):
             print(f"Track file '{filename}' not found for job '{job_id}'")
             
             # List what actually exists for debugging
-            if htdemucs_dir.exists():
-                print(f"Contents of {htdemucs_dir}:")
-                for item in htdemucs_dir.rglob('*'):
+            if mdx_dir.exists():
+                print(f"Contents of {mdx_dir}:")
+                for item in mdx_dir.rglob('*'):
                     print(f"  {item}")
             else:
-                print(f"Directory {htdemucs_dir} does not exist")
+                print(f"Directory {mdx_dir} does not exist")
             
             return jsonify({'error': 'Track file not found'}), 404
         
