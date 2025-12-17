@@ -10,40 +10,57 @@
 
 ### Option 1: Deploy via Railway Dashboard (Recommended)
 
+**IMPORTANT**: Deploy each service separately for best results.
+
+#### Step 1: Deploy Backend Service
+
 1. **Connect Repository**:
    - Go to [railway.app](https://railway.app)
    - Click "New Project"
    - Select "Deploy from GitHub repo"
    - Choose your repository
 
-2. **Configure Services**:
-   Railway will automatically detect your app structure. You'll need to create 2 services:
+2. **Configure Backend Service**:
+   - Railway will auto-detect your Node.js app
+   - In Settings → Service:
+     - **Root Directory**: `backend`
+     - **Build Command**: `npm install && npm run build`
+     - **Start Command**: `npm start`
+   - Set Environment Variables:
+     ```
+     NODE_ENV=production
+     PORT=${{PORT}}
+     ```
 
-   **Service 1: Backend + Frontend (Main Service)**
-   - Root directory: `/`
-   - Build command: `npm run build`
-   - Start command: `npm run start:backend`
-   - Port: `3001`
+#### Step 2: Deploy Audio Processing Service
 
-   **Service 2: Audio Processing Service**
-   - Root directory: `/audio-processing-service`
-   - Build command: `pip install -r requirements.txt`
-   - Start command: `python app.py`
-   - Port: `5000`
+1. **Add Second Service**:
+   - In your Railway project, click "New Service"
+   - Select "GitHub Repo" (same repository)
+   
+2. **Configure Audio Service**:
+   - In Settings → Service:
+     - **Root Directory**: `audio-processing-service`
+     - **Build Command**: `pip install -r requirements.txt`
+     - **Start Command**: `python app.py`
+   - Set Environment Variables:
+     ```
+     PORT=${{PORT}}
+     BACKEND_URL=https://your-backend-service-url.railway.app
+     ```
 
-3. **Environment Variables**:
-   Set these in Railway dashboard for the main service:
+#### Step 3: Update Backend Environment
+
+After both services are deployed:
+1. Go to your backend service settings
+2. Add this environment variable:
    ```
-   NODE_ENV=production
-   PORT=3001
-   AUDIO_SERVICE_URL=http://audio-processing-service:5000
+   AUDIO_SERVICE_URL=https://your-audio-service-url.railway.app
    ```
 
-   For the audio processing service:
-   ```
-   PORT=5000
-   BACKEND_URL=${{RAILWAY_STATIC_URL}}
-   ```
+#### Step 4: Frontend (Served by Backend)
+
+The frontend is automatically built and served by the backend service in production mode. No separate deployment needed!
 
 ### Option 2: Deploy via Railway CLI
 
