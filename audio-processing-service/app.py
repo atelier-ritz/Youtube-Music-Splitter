@@ -125,15 +125,16 @@ def separate_audio(job_id, input_file):
         
         update_progress(job_id, 15, "Preparing separation...")
         
-        # Run Demucs separation with optimizations for Railway
+        # Run Demucs separation optimized for 8GB RAM + CPU
         cmd = [
             'python', '-m', 'demucs.separate',
             '--mp3',  # Output as MP3
-            '--mp3-bitrate', '128',  # Lower bitrate to save memory
+            '--mp3-bitrate', '192',  # Higher quality with more RAM available
             '-n', 'htdemucs_6s',  # Use 6-stem model (vocals, drums, bass, guitar, piano, other)
-            '--device', 'cpu',  # Force CPU mode (no GPU on Railway)
-            '--jobs', '1',  # Single thread to save memory
-            '--segment', '10',  # Process in 10-second segments to reduce memory usage
+            '--device', 'cpu',  # Force CPU mode
+            '--jobs', '2',  # Use 2 threads with more RAM available
+            '--segment', '20',  # Larger segments for better efficiency with more RAM
+            '--overlap', '0.25',  # Better quality with segment overlap
             '-o', str(job_output_dir),
             str(input_file)
         ]
@@ -141,20 +142,31 @@ def separate_audio(job_id, input_file):
         print(f"Running Demucs command: {' '.join(cmd)}")
         update_progress(job_id, 20, "Starting audio separation...")
         
-        # Set memory limits for the process
+        # Set memory limits for the process (increased for 8GB system)
         import resource
         def set_memory_limit():
-            # Limit memory to 3GB (3 * 1024 * 1024 * 1024 bytes)
-            resource.setrlimit(resource.RLIMIT_AS, (3 * 1024 * 1024 * 1024, 3 * 1024 * 1024 * 1024))
+            # Limit memory to 6GB (6 * 1024 * 1024 * 1024 bytes) - leave 2GB for system
+            resource.setrlimit(resource.RLIMIT_AS, (6 * 1024 * 1024 * 1024, 6 * 1024 * 1024 * 1024))
         
-        # Start the process with memory limits and timeout
+        # Set environment variables for better CPU performance
+        import os
+        env = os.environ.copy()
+        env.update({
+            'OMP_NUM_THREADS': '2',  # OpenMP threads for CPU optimization
+            'MKL_NUM_THREADS': '2',  # Intel MKL threads
+            'NUMBA_NUM_THREADS': '2',  # Numba threads
+            'PYTORCH_NUM_THREADS': '2',  # PyTorch CPU threads
+        })
+        
+        # Start the process with optimized settings
         try:
             process = subprocess.Popen(
                 cmd, 
                 stdout=subprocess.PIPE, 
                 stderr=subprocess.PIPE, 
                 text=True,
-                preexec_fn=set_memory_limit
+                preexec_fn=set_memory_limit,
+                env=env
             )
         except Exception as e:
             print(f"Failed to start Demucs process: {e}")
