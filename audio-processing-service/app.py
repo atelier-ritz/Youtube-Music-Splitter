@@ -265,9 +265,18 @@ def separate_audio(job_id, input_file):
             track_file = separated_dir / demucs_file
             if track_file.exists():
                 # Create a URL that points to the backend proxy (which will proxy to this service)
+                # This URL will be sent to the frontend, so it MUST be HTTPS to avoid mixed content issues
                 backend_url = os.getenv('BACKEND_URL', 'http://localhost:3001')
+                
+                # Ensure the frontend gets HTTPS URLs to avoid mixed content blocking
+                if 'railway.app' in backend_url and backend_url.startswith('http://'):
+                    # Convert to HTTPS for frontend consumption (mixed content security)
+                    backend_url = backend_url.replace('http://', 'https://')
+                    print(f"DEBUG: Railway detected, converting to HTTPS for frontend: {backend_url}")
+                
                 print(f"DEBUG: Using backend_url: {backend_url} (from env: {os.getenv('BACKEND_URL')})")
                 tracks[track_name] = f"{backend_url}/api/tracks/{job_id}/{demucs_file}"
+                print(f"DEBUG: Generated track URL: {tracks[track_name]}")
         
         update_progress(job_id, 90, "Detecting BPM...")
         
