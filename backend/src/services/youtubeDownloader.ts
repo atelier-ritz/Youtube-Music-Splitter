@@ -153,22 +153,16 @@ export class YouTubeDownloaderService {
       // Simulate more granular progress during download
       const progressSimulation = this.simulateDownloadProgress(jobId);
 
-      // Download audio using youtube-dl-exec with enhanced options
+      // Download audio using youtube-dl-exec with basic options
       const output = await ytDlp(job.youtubeUrl, {
         extractAudio: true,
         audioFormat: 'mp3',
         audioQuality: 192,
         output: outputTemplate,
         noPlaylist: true,
+        // Basic retry option
         retries: 3,
-        // Specify JavaScript runtime (use Node.js)
-        jsRuntimes: 'node',
-        // Try to find ffmpeg automatically
-        ffmpegLocation: '/usr/bin/ffmpeg',
-        // Add user agent to avoid blocking
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        // Additional options for better compatibility
-        format: 'bestaudio[ext=m4a]/bestaudio/best',
+        // Progress callback would be nice but youtube-dl-exec doesn't support it directly
       });
 
       // Stop progress simulation
