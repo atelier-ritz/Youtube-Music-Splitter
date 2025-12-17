@@ -29,6 +29,8 @@ const TrackView: React.FC<TrackViewProps> = ({
 }) => {
   const [audioPlayer] = useState(() => new AudioPlayer());
   const [isPlaying, setIsPlaying] = useState(false);
+
+
   const [currentPosition, setCurrentPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -192,8 +194,11 @@ const TrackView: React.FC<TrackViewProps> = ({
   // Handle go to beginning
   const handleGoToBeginning = () => {
     try {
+      console.log('Go to beginning clicked - current position:', currentPosition);
       audioPlayer.seek(0);
-      // Don't set currentPosition here - let the AudioPlayer's position callback handle it
+      // Force update the UI position immediately
+      setCurrentPosition(0);
+      console.log('Seek to 0 completed - position set to 0');
     } catch (error) {
       console.error('Seek to beginning error:', error);
     }
@@ -659,7 +664,7 @@ const TrackView: React.FC<TrackViewProps> = ({
               disabled={trackStates.length === 0}
               title="Go to beginning"
             >
-              ⏮
+              ◀◀
             </button>
             <button 
               className={`daw-transport-btn daw-transport-btn--play ${isPlaying ? 'daw-transport-btn--playing' : ''}`}
@@ -667,7 +672,7 @@ const TrackView: React.FC<TrackViewProps> = ({
               disabled={trackStates.length === 0}
               title={isPlaying ? 'Pause (Spacebar)' : 'Play (Spacebar)'}
             >
-              {isPlaying ? '⏸' : '▶'}
+              {isPlaying ? '❚❚' : '▶'}
             </button>
             <button 
               className="daw-transport-btn daw-transport-btn--stop"
@@ -675,7 +680,7 @@ const TrackView: React.FC<TrackViewProps> = ({
               disabled={trackStates.length === 0}
               title="Stop and return to last play start position (Enter)"
             >
-              ⏹
+              ◻
             </button>
           </div>
         </div>

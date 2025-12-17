@@ -111,6 +111,11 @@ export class AudioPlayer {
         console.log('AudioContext is suspended, attempting to resume...');
         await this.audioContext.resume();
         console.log('AudioContext resumed successfully, state:', this.audioContext.state);
+        
+        // iOS-specific: Create a silent buffer and play it to "unlock" audio
+        if (this.isIOSDevice()) {
+          await this.unlockIOSAudio();
+        }
       } catch (error) {
         console.error('Failed to resume AudioContext:', error);
         throw new Error('AudioContext is suspended and requires user interaction to resume. Please click to initialize audio.');
@@ -120,6 +125,123 @@ export class AudioPlayer {
     // Double-check the state after resume attempt
     if (this.audioContext.state === 'suspended') {
       throw new Error('AudioContext remains suspended after resume attempt. User interaction is required.');
+    }
+  }
+
+  /**
+   * Check if running on iOS device
+   */
+  private isIOSDevice(): boolean {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  /**
+   * iOS-specific audio unlock - play a silent buffer to enable audio
+   */
+  private async unlockIOSAudio(): Promise<void> {
+    if (!this.audioContext) return;
+    
+    try {
+      // Create a silent buffer
+      const buffer = this.audioContext.createBuffer(1, 1, 22050);
+      const source = this.audioContext.createBufferSource();
+      source.buffer = buffer;
+      source.connect(this.audioContext.destination);
+      
+      // Play the silent buffer
+      source.start(0);
+      
+      console.log('iOS audio unlocked');
+    } catch (error) {
+      console.warn('Failed to unlock iOS audio:', error);
+    }
+  }
+
+  /**
+   * iOS-specific: Check if audio is actually playing
+   */
+  private checkIOSAudioPlayback(): void {
+    if (!this.audioContext || !this.isPlaying) return;
+    
+    console.log('iOS Audio Playback Check:', {
+      contextState: this.audioContext.state,
+      isPlaying: this.isPlaying,
+      currentPosition: this.currentPosition,
+      tracksCount: this.audioTracks.size,
+      contextCurrentTime: this.audioContext.currentTime
+    });
+    
+    // Check if any tracks have gain > 0 (not muted)
+    let hasAudibleTracks = false;
+    this.audioTracks.forEach((audioTrack) => {
+      if (audioTrack.gainNode.gain.value > 0) {
+        hasAudibleTracks = true;
+        console.log(`iOS Track ${audioTrack.track.name}:`, {
+          gain: audioTrack.gainNode.gain.value,
+          pan: audioTrack.panNode.pan.value,
+          muted: audioTrack.track.muted,
+          soloed: audioTrack.track.soloed
+        });
+      }
+    });
+    
+    if (!hasAudibleTracks) {
+      console.warn('iOS: No audible tracks found - all tracks may be muted');
+    }
+  }
+
+  /**
+   * iOS Debug: Test basic audio functionality
+   * Call this from browser console: window.audioPlayer.testIOSAudio()
+   */
+  public testIOSAudio(): void {
+    if (!this.isIOSDevice()) {
+      console.log('Not an iOS device');
+      return;
+    }
+    
+    try {
+      // Initialize if needed
+      if (!this.audioContext) {
+        this.initializeAudioContext();
+      }
+      
+      if (!this.audioContext) {
+        console.error('Failed to initialize AudioContext');
+        return;
+      }
+      
+      console.log('iOS Audio Test - AudioContext state:', this.audioContext.state);
+      
+      // Resume context
+      this.audioContext.resume().then(() => {
+        console.log('AudioContext resumed, state:', this.audioContext.state);
+        
+        // Create a test tone
+        const oscillator = this.audioContext!.createOscillator();
+        const gainNode = this.audioContext!.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext!.destination);
+        
+        oscillator.frequency.value = 440; // A4 note
+        gainNode.gain.value = 0.1; // Low volume
+        
+        oscillator.start();
+        
+        // Stop after 1 second
+        setTimeout(() => {
+          oscillator.stop();
+          console.log('iOS Audio Test completed');
+        }, 1000);
+        
+      }).catch(error => {
+        console.error('iOS Audio Test failed:', error);
+      });
+      
+    } catch (error) {
+      console.error('iOS Audio Test error:', error);
     }
   }
 
@@ -194,6 +316,16 @@ export class AudioPlayer {
             15000, // 15 second timeout for decoding
             `Timeout decoding audio for track ${track.name}`
           );
+
+          // iOS-specific: Log audio buffer details for debugging
+          if (this.isIOSDevice()) {
+            console.log(`iOS Audio Debug - ${track.name}:`, {
+              duration: audioBuffer.duration,
+              sampleRate: audioBuffer.sampleRate,
+              numberOfChannels: audioBuffer.numberOfChannels,
+              length: audioBuffer.length
+            });
+          }
 
           if (!audioBuffer || audioBuffer.length === 0) {
             throw new Error(`Invalid audio data for track ${track.name}`);
@@ -278,6 +410,7 @@ export class AudioPlayer {
       return; // Already playing
     }
 
+    // iOS requires audio context to be resumed in user gesture
     this.resumeAudioContext().then(() => {
       this.isPlaying = true;
       this.startTime = this.audioContext!.currentTime;
@@ -303,6 +436,17 @@ export class AudioPlayer {
           source.buffer = audioTrack.buffer;
           source.connect(audioTrack.gainNode);
           
+          // iOS-specific: Log audio start details
+          if (this.isIOSDevice()) {
+            console.log(`iOS Audio Start - ${audioTrack.track.name}:`, {
+              contextState: this.audioContext!.state,
+              currentTime: this.audioContext!.currentTime,
+              startPosition: this.currentPosition,
+              gainValue: audioTrack.gainNode.gain.value,
+              panValue: audioTrack.panNode.pan.value
+            });
+          }
+          
           // Start from current position
           source.start(0, this.currentPosition);
           audioTrack.source = source;
@@ -321,6 +465,13 @@ export class AudioPlayer {
 
       // Start position updates
       this.startPositionUpdates();
+      
+      // iOS-specific: Check if audio is actually playing after a short delay
+      if (this.isIOSDevice()) {
+        setTimeout(() => {
+          this.checkIOSAudioPlayback();
+        }, 500);
+      }
     });
   }
 
@@ -400,6 +551,11 @@ export class AudioPlayer {
     // If not playing, update the last play start position so stop will revert to this new position
     if (!wasPlaying) {
       this.lastPlayStartPosition = this.currentPosition;
+    }
+
+    // Update UI immediately with new position
+    if (this.positionUpdateCallback) {
+      this.positionUpdateCallback(this.currentPosition);
     }
 
     if (wasPlaying) {
