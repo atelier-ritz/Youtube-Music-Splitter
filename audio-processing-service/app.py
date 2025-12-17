@@ -125,12 +125,15 @@ def separate_audio(job_id, input_file):
         
         update_progress(job_id, 15, "Preparing separation...")
         
-        # Run Demucs separation with 6-stem model for guitar separation
+        # Run Demucs separation with optimized settings for Railway
         cmd = [
             'python', '-m', 'demucs.separate',
             '--mp3',  # Output as MP3
-            '--mp3-bitrate', '192',  # Good quality, reasonable file size
-            '-n', 'htdemucs_6s',  # Use 6-stem model (vocals, drums, bass, guitar, piano, other)
+            '--mp3-bitrate', '128',  # Lower bitrate to reduce processing time
+            '-n', 'htdemucs',  # Use 4-stem model (faster than 6-stem)
+            '--segment', '10',  # Process in smaller segments to reduce memory usage
+            '--overlap', '0.1',  # Reduce overlap for faster processing
+            '--jobs', '1',  # Use single job to avoid memory issues
             '-o', str(job_output_dir),
             str(input_file)
         ]
@@ -186,9 +189,9 @@ def separate_audio(job_id, input_file):
         update_progress(job_id, 85, "Processing completed, organizing files...")
         
         # Find the separated files
-        # Demucs creates: job_output_dir/htdemucs_6s/{filename_without_ext}/{track}.mp3
+        # Demucs creates: job_output_dir/htdemucs/{filename_without_ext}/{track}.mp3
         input_name = Path(input_file).stem
-        separated_dir = job_output_dir / 'htdemucs_6s' / input_name
+        separated_dir = job_output_dir / 'htdemucs' / input_name
         
         # Debug: Check what Demucs actually created
         print(f"Looking for separated files in: {separated_dir}")
@@ -199,7 +202,7 @@ def separate_audio(job_id, input_file):
         
         # If the expected directory doesn't exist, try to find the actual directory
         if not separated_dir.exists():
-            htdemucs_dir = job_output_dir / 'htdemucs_6s'
+            htdemucs_dir = job_output_dir / 'htdemucs'
             if htdemucs_dir.exists():
                 # Find the first subdirectory (should be the separated tracks)
                 subdirs = [d for d in htdemucs_dir.iterdir() if d.is_dir()]
@@ -209,19 +212,17 @@ def separate_audio(job_id, input_file):
                 else:
                     print(f"No subdirectories found in {htdemucs_dir}")
             else:
-                print(f"htdemucs_6s directory not found in {job_output_dir}")
+                print(f"htdemucs directory not found in {job_output_dir}")
         
         if not separated_dir.exists():
             raise Exception(f"Separated files not found at {separated_dir}")
         
-        # Map Demucs output to our expected format (6-stem model)
+        # Map Demucs output to our expected format (4-stem model)
         track_mapping = {
             'vocals.mp3': 'vocals',
             'drums.mp3': 'drums', 
             'bass.mp3': 'bass',
-            'guitar.mp3': 'guitar',
-            'piano.mp3': 'piano',
-            'other.mp3': 'other'
+            'other.mp3': 'other'  # Contains guitar, piano, and other instruments
         }
         
         tracks = {}
@@ -373,7 +374,7 @@ def serve_track(job_id, filename):
         filename = secure_filename(filename)
         
         # Try to find the track file even without job metadata
-        htdemucs_dir = OUTPUT_FOLDER / job_id / 'htdemucs_6s'
+        htdemucs_dir = OUTPUT_FOLDER / job_id / 'htdemucs'
         
         # Look for the file in any subdirectory of htdemucs_6s
         track_file = None
