@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b tsconfig.app.json && vite build",
+    "build:prod": "tsc -b tsconfig.app.json --skipLibCheck && vite build",
     "lint": "eslint .",
     "preview": "vite preview --host 0.0.0.0 --port $PORT",
     "start": "npm run preview",
