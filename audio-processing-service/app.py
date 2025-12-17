@@ -212,9 +212,9 @@ def separate_audio(job_id, input_file):
         update_progress(job_id, 85, "Processing completed, organizing files...")
         
         # Find the separated files
-        # Demucs creates: job_output_dir/mdx_extra/{filename_without_ext}/{track}.mp3
+        # Demucs creates: job_output_dir/htdemucs_6s/{filename_without_ext}/{track}.mp3
         input_name = Path(input_file).stem
-        separated_dir = job_output_dir / 'mdx_extra' / input_name
+        separated_dir = job_output_dir / 'htdemucs_6s' / input_name
         
         # Debug: Check what Demucs actually created
         print(f"Looking for separated files in: {separated_dir}")
@@ -225,27 +225,39 @@ def separate_audio(job_id, input_file):
         
         # If the expected directory doesn't exist, try to find the actual directory
         if not separated_dir.exists():
-            mdx_dir = job_output_dir / 'mdx_extra'
-            if mdx_dir.exists():
+            htdemucs_dir = job_output_dir / 'htdemucs_6s'
+            if htdemucs_dir.exists():
                 # Find the first subdirectory (should be the separated tracks)
-                subdirs = [d for d in mdx_dir.iterdir() if d.is_dir()]
+                subdirs = [d for d in htdemucs_dir.iterdir() if d.is_dir()]
                 if subdirs:
                     separated_dir = subdirs[0]
                     print(f"Using actual separated directory: {separated_dir}")
                 else:
-                    print(f"No subdirectories found in {mdx_dir}")
+                    print(f"No subdirectories found in {htdemucs_dir}")
             else:
-                print(f"mdx_extra directory not found in {job_output_dir}")
+                print(f"htdemucs_6s directory not found in {job_output_dir}")
+                # Try to find any model directory that exists
+                for possible_dir in ['htdemucs_6s', 'htdemucs', 'mdx_extra', 'demucs']:
+                    test_dir = job_output_dir / possible_dir
+                    if test_dir.exists():
+                        print(f"Found alternative directory: {test_dir}")
+                        subdirs = [d for d in test_dir.iterdir() if d.is_dir()]
+                        if subdirs:
+                            separated_dir = subdirs[0]
+                            print(f"Using alternative separated directory: {separated_dir}")
+                            break
         
         if not separated_dir.exists():
             raise Exception(f"Separated files not found at {separated_dir}")
         
-        # Map Demucs output to our expected format (4-stem model)
+        # Map Demucs output to our expected format (6-stem model)
         track_mapping = {
             'vocals.mp3': 'vocals',
             'drums.mp3': 'drums', 
             'bass.mp3': 'bass',
-            'other.mp3': 'other'  # Contains guitar, piano, and other instruments
+            'guitar.mp3': 'guitar',
+            'piano.mp3': 'piano',
+            'other.mp3': 'other'
         }
         
         tracks = {}
@@ -397,27 +409,30 @@ def serve_track(job_id, filename):
         filename = secure_filename(filename)
         
         # Try to find the track file even without job metadata
-        mdx_dir = OUTPUT_FOLDER / job_id / 'mdx_extra'
-        
-        # Look for the file in any subdirectory of mdx_extra
+        # Check multiple possible model directories
         track_file = None
-        if mdx_dir.exists():
-            # Search recursively for the filename
-            for file_path in mdx_dir.rglob(filename):
-                if file_path.is_file():
-                    track_file = file_path
+        for model_dir in ['htdemucs_6s', 'htdemucs', 'mdx_extra', 'demucs']:
+            model_path = OUTPUT_FOLDER / job_id / model_dir
+            if model_path.exists():
+                # Search recursively for the filename
+                for file_path in model_path.rglob(filename):
+                    if file_path.is_file():
+                        track_file = file_path
+                        break
+                if track_file:
                     break
         
         if not track_file:
             print(f"Track file '{filename}' not found for job '{job_id}'")
             
             # List what actually exists for debugging
-            if mdx_dir.exists():
-                print(f"Contents of {mdx_dir}:")
-                for item in mdx_dir.rglob('*'):
+            job_dir = OUTPUT_FOLDER / job_id
+            if job_dir.exists():
+                print(f"Contents of {job_dir}:")
+                for item in job_dir.rglob('*'):
                     print(f"  {item}")
             else:
-                print(f"Directory {mdx_dir} does not exist")
+                print(f"Job directory {job_dir} does not exist")
             
             return jsonify({'error': 'Track file not found'}), 404
         
