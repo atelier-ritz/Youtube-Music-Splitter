@@ -24,7 +24,7 @@
    - Railway will auto-detect your Node.js app
    - In Settings → Service:
      - **Root Directory**: `backend`
-     - **Build Command**: `npm ci && npm run build`
+     - **Build Command**: `npm install`
      - **Start Command**: `npm start`
    - Set Environment Variables:
      ```

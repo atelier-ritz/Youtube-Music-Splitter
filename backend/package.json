@@ -3,11 +3,10 @@
   "version": "1.0.0",
   "main": "dist/index.js",
   "scripts": {
-    "build": "rm -rf dist && tsc",
+    "build": "tsc",
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
-    "railway:build": "npm ci && npm run build",
-    "railway:start": "npm start",
+    "postinstall": "npm run build",
     "test": "jest",
     "test:watch": "jest --watch",
     "clear-audio-files": "curl -X POST http://localhost:3001/api/cache/clear",
