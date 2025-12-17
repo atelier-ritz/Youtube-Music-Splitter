@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import rateLimit from 'express-rate-limit';
 import downloadRoutes from './routes/download';
 import processRoutes from './routes/process';
@@ -59,6 +60,21 @@ app.use('/api/download', downloadRoutes);
 app.use('/api/process', processRoutes);
 app.use('/api/cache', cacheRoutes);
 app.use('/api/tracks', trackServingLimiter, tracksRoutes);
+
+// Serve static frontend files in production
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '../../frontend/dist');
+  app.use(express.static(frontendPath));
+  
+  // Serve index.html for all non-API routes (SPA routing)
+  app.get('*', (req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+}
 
 // Health check endpoint with error handling
 app.get('/api/health', (req, res, next) => {

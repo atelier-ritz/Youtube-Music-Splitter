@@ -1,25 +1,22 @@
 {
   "name": "band-practice-webapp",
   "version": "1.0.0",
-  "description": "A web application for band practice with YouTube audio separation",
+  "description": "Band Practice - Music Track Splitter",
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && npm run dev",
-    "build": "npm run build:backend && npm run build:frontend",
-    "build:frontend": "cd frontend && npm run build",
-    "build:backend": "cd backend && npm run build",
-    "start": "cd backend && npm start",
-    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
-    "clear-audio-files": "curl -X POST http://localhost:3001/api/cache/clear",
-    "clear-temp-files": "curl -X POST http://localhost:3001/api/cache/clear-temp",
-    "cache-status": "curl -X GET http://localhost:3001/api/cache/status",
-    "cache": "./scripts/cache-management.sh"
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "build:backend": "cd backend && npm install && npm run build",
+    "start": "npm run start:services",
+    "start:services": "concurrently \"npm run start:backend\" \"npm run start:audio\"",
+    "start:backend": "cd backend && npm start",
+    "start:audio": "cd audio-processing-service && python app.py",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ../audio-processing-service && pip install -r requirements.txt"
   },
-  "devDependencies": {
-    "concurrently": "^9.1.0"
+  "dependencies": {
+    "concurrently": "^8.2.2"
   },
-  "keywords": ["music", "band", "practice", "audio", "separation"],
-  "author": "",
-  "license": "ISC"
+  "engines": {
+    "node": ">=18.0.0",
+    "python": ">=3.12.0"
+  }
 }
