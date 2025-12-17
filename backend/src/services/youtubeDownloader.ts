@@ -1,9 +1,12 @@
 /**
  * YouTube audio downloader service
- * Handles downloading audio from YouTube URLs using node-ytdl-core
+ * Handles downloading audio from YouTube URLs using youtube-dl-exec
  */
 
-import ytdl from 'node-ytdl-core';
+import youtubeDl from 'youtube-dl-exec';
+
+// Use default youtube-dl-exec (will find yt-dlp automatically)
+const ytDlp = youtubeDl;
 import { randomUUID } from 'crypto';
 import path from 'path';
 import fs from 'fs/promises';
