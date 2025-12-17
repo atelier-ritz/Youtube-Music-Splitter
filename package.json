@@ -13,7 +13,7 @@
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ../audio-processing-service && pip install -r requirements.txt"
   },
   "dependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^9.2.1"
   },
   "engines": {
     "node": ">=18.0.0",
