@@ -52,10 +52,22 @@
      BACKEND_URL=https://your-backend-service-url.railway.app
      ```
 
-3. **If Build Still Times Out**:
-   - Try deploying with a simpler requirements.txt first
-   - Then update to include Demucs after initial deployment
-   - Or use Railway's Docker deployment with pre-built image
+3. **If Build Still Times Out or Image Too Large (8GB+)**:
+   
+   **Solution A: Use Minimal Requirements**
+   - Rename `requirements-minimal.txt` to `requirements.txt`
+   - Uses CPU-only PyTorch (much smaller)
+   - Deploy with this lighter version
+   
+   **Solution B: Multi-stage Docker Build**
+   - Rename `Dockerfile.multistage` to `Dockerfile`
+   - Uses multi-stage build to reduce final image size
+   - Should be under 4GB instead of 8GB+
+   
+   **Solution C: Alternative Deployment**
+   - Deploy audio service to Render.com or Heroku
+   - These platforms handle ML dependencies better
+   - Connect via environment variables
 
 #### Step 3: Update Backend Environment
 
@@ -140,24 +152,51 @@ The frontend is automatically built and served by the backend service in product
    - Ensure PORT environment variable is used
    - Check service communication URLs
 
-### Audio Service Deployment Strategies
+### Audio Service Image Size Issue (8GB+)
 
-**Strategy 1: Light First, Then Heavy**
-1. Deploy with `requirements-light.txt`
-2. Once deployed, update to full `requirements.txt`
-3. Redeploy with Demucs
+**Why so large?**
+- PyTorch: ~2-3GB (machine learning framework)
+- Demucs models: ~1-2GB (AI models for audio separation)
+- Scientific libraries: ~1-2GB (NumPy, SciPy, librosa)
+- Build cache: ~1-2GB (temporary files)
 
-**Strategy 2: Docker Deployment**
-1. Use the provided Dockerfile
-2. Railway will build the Docker image
-3. Better caching and optimization
+**Solutions:**
 
-**Strategy 3: Alternative Platform**
-- If Railway keeps timing out, deploy audio service to:
-  - Render.com (good for Python apps)
-  - Heroku (with larger dynos)
-  - Google Cloud Run
-  - Then connect to Railway backend via environment variables
+### Strategy 1: Minimal Requirements ⭐ (Recommended)
+```bash
+# Use requirements-minimal.txt instead of requirements.txt
+# This uses CPU-only PyTorch and minimal dependencies
+# Final image: ~3-4GB instead of 8GB+
+```
+
+### Strategy 2: Multi-stage Docker Build
+```bash
+# Use Dockerfile.multistage
+# Builds dependencies in one stage, copies only needed files to final stage
+# Final image: ~4-5GB
+```
+
+### Strategy 3: Light First Deployment
+1. Deploy with `requirements-light.txt` (Flask only)
+2. Once running, gradually add dependencies
+3. Update to minimal requirements
+
+### Strategy 4: Alternative Platform
+- **Render.com**: Better for ML apps, handles large images
+- **Heroku**: With performance dynos
+- **Google Cloud Run**: Supports larger container images
+- **Hugging Face Spaces**: Specifically designed for ML apps
+
+### Quick Fix Commands:
+```bash
+# Option A: Use minimal requirements
+cp requirements-minimal.txt requirements.txt
+
+# Option B: Use multi-stage Docker
+cp Dockerfile.multistage Dockerfile
+
+# Then redeploy
+```
 
 ### Monitoring
 

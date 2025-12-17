@@ -1,0 +1,17 @@
+# Minimal requirements for Railway deployment
+flask==3.0.0
+flask-cors==4.0.0
+werkzeug==3.0.1
+python-dotenv==1.0.0
+
+# CPU-only PyTorch (much smaller)
+--index-url https://download.pytorch.org/whl/cpu
+torch==2.1.0+cpu
+torchaudio==2.1.0+cpu
+
+# Demucs with minimal dependencies
+demucs==4.0.1
+
+# Essential audio processing (lightweight)
+librosa==0.10.1
+soundfile==0.12.1
