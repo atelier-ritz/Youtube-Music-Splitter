@@ -125,12 +125,15 @@ def separate_audio(job_id, input_file):
         
         update_progress(job_id, 15, "Preparing separation...")
         
-        # Run Demucs separation with 6-stem model for guitar separation
+        # Run Demucs separation with optimizations for Railway
         cmd = [
             'python', '-m', 'demucs.separate',
             '--mp3',  # Output as MP3
-            '--mp3-bitrate', '192',  # Good quality, reasonable file size
+            '--mp3-bitrate', '128',  # Lower bitrate to save memory
             '-n', 'htdemucs_6s',  # Use 6-stem model (vocals, drums, bass, guitar, piano, other)
+            '--device', 'cpu',  # Force CPU mode (no GPU on Railway)
+            '--jobs', '1',  # Single thread to save memory
+            '--segment', '10',  # Process in 10-second segments to reduce memory usage
             '-o', str(job_output_dir),
             str(input_file)
         ]
@@ -138,8 +141,24 @@ def separate_audio(job_id, input_file):
         print(f"Running Demucs command: {' '.join(cmd)}")
         update_progress(job_id, 20, "Starting audio separation...")
         
-        # Start the process and monitor it
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        # Set memory limits for the process
+        import resource
+        def set_memory_limit():
+            # Limit memory to 3GB (3 * 1024 * 1024 * 1024 bytes)
+            resource.setrlimit(resource.RLIMIT_AS, (3 * 1024 * 1024 * 1024, 3 * 1024 * 1024 * 1024))
+        
+        # Start the process with memory limits and timeout
+        try:
+            process = subprocess.Popen(
+                cmd, 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE, 
+                text=True,
+                preexec_fn=set_memory_limit
+            )
+        except Exception as e:
+            print(f"Failed to start Demucs process: {e}")
+            raise Exception(f"Demucs initialization failed: {e}")
         
         # Monitor progress with time-based estimation
         start_time = time.time()
