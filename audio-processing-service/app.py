@@ -143,7 +143,7 @@ def separate_audio(job_id, input_file):
             '-n', 'htdemucs_6s',  # REQUIRED: 6-stem model (vocals, drums, bass, guitar, piano, other)
             '--device', 'cpu',  # Force CPU mode (Railway doesn't have GPU)
             '--jobs', '1',  # Single thread for stability on Railway
-            '--segment', '10',  # 10-second segments (balanced for 8GB RAM)
+            '--segment', '7',  # 10-second segments (balanced for 8GB RAM)
             '--shifts', '1',  # Single shift for faster processing
             '--overlap', '0.1',  # Minimal overlap for speed while maintaining quality
             '-o', str(job_output_dir),
