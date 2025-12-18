@@ -142,8 +142,6 @@ def separate_audio(job_id, input_file):
             '--mp3-bitrate', '128',  # Balanced quality/speed for 6-stem model
             '-n', 'htdemucs_6s',  # REQUIRED: 6-stem model (vocals, drums, bass, guitar, piano, other)
             '--device', 'cpu',  # Force CPU mode (Railway doesn't have GPU)
-            '--jobs', '4',  # Single thread for stability on Railway
-            '--segment', '4',  # 10-second segments (balanced for 8GB RAM)
             '-o', str(job_output_dir),
             str(input_file)
         ]
