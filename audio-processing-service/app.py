@@ -2,6 +2,12 @@
 """
 Local Audio Processing Service using Demucs
 Provides audio separation API compatible with the band-practice-webapp backend
+
+IMPORTANT CONFIGURATION NOTES:
+- ALWAYS use htdemucs_6s model (NEVER change to demucs, mdx_extra, or other models)
+- User specifically requires 6-track separation: vocals, drums, bass, guitar, piano, other
+- This model provides superior quality for band practice purposes
+- Optimized for Railway 8GB CPU environment
 """
 
 import os
@@ -125,14 +131,21 @@ def separate_audio(job_id, input_file):
         
         update_progress(job_id, 15, "Preparing separation...")
         
-        # Run Demucs separation optimized for Railway CPU environment
-        # Use the lightweight mdx_extra model instead of htdemucs_6s
+        # IMPORTANT: NEVER CHANGE THE MODEL FROM htdemucs_6s
+        # User specifically wants 6-track separation (vocals, drums, bass, guitar, piano, other)
+        # This model provides superior quality for band practice purposes
+        # 
+        # Run Demucs separation with htdemucs_6s model optimized for Railway 8GB environment
         cmd = [
             'python', '-m', 'demucs.separate',
             '--mp3',  # Output as MP3
-            '--mp3-bitrate', '196',  # Conservative bitrate for stability
-            '-n', 'htdemucs_6s',  # Use lighter 4-stem model (vocals, drums, bass, other)
-            '--device', 'cpu',  # Force CPU mode
+            '--mp3-bitrate', '128',  # Balanced quality/speed for 6-stem model
+            '-n', 'htdemucs_6s',  # REQUIRED: 6-stem model (vocals, drums, bass, guitar, piano, other)
+            '--device', 'cpu',  # Force CPU mode (Railway doesn't have GPU)
+            '--jobs', '1',  # Single thread for stability on Railway
+            '--segment', '10',  # 10-second segments (balanced for 8GB RAM)
+            '--shifts', '1',  # Single shift for faster processing
+            '--overlap', '0.1',  # Minimal overlap for speed while maintaining quality
             '-o', str(job_output_dir),
             str(input_file)
         ]
@@ -204,7 +217,18 @@ def separate_audio(job_id, input_file):
         progress_thread.start()
         
         # Wait for the process to complete
-        stdout, stderr = process.communicate(timeout=600)  # 10 minute timeout
+        # htdemucs_6s model takes longer but provides superior 6-track separation
+        # Timeout based on audio duration: ~2-3 minutes per minute of audio
+        timeout_seconds = max(duration * 180, 600)  # 3 minutes per audio minute, minimum 10 minutes
+        print(f"DEBUG: Setting timeout to {timeout_seconds} seconds for {duration:.1f} minute audio with htdemucs_6s")
+        
+        try:
+            stdout, stderr = process.communicate(timeout=timeout_seconds)
+        except subprocess.TimeoutExpired:
+            print(f"ERROR: htdemucs_6s processing timed out after {timeout_seconds} seconds")
+            process.kill()
+            stdout, stderr = process.communicate()
+            raise Exception(f"Audio separation timed out after {timeout_seconds} seconds. The htdemucs_6s model requires significant processing time for high-quality 6-track separation.")
         
         if process.returncode != 0:
             raise Exception(f"Demucs failed: {stderr}")
@@ -212,7 +236,7 @@ def separate_audio(job_id, input_file):
         update_progress(job_id, 85, "Processing completed, organizing files...")
         
         # Find the separated files
-        # Demucs creates: job_output_dir/htdemucs_6s/{filename_without_ext}/{track}.mp3
+        # IMPORTANT: htdemucs_6s model creates: job_output_dir/htdemucs_6s/{filename_without_ext}/{track}.mp3
         input_name = Path(input_file).stem
         separated_dir = job_output_dir / 'htdemucs_6s' / input_name
         
@@ -250,14 +274,16 @@ def separate_audio(job_id, input_file):
         if not separated_dir.exists():
             raise Exception(f"Separated files not found at {separated_dir}")
         
-        # Map Demucs output to our expected format (6-stem model)
+        # IMPORTANT: Map Demucs htdemucs_6s output to our expected format
+        # NEVER CHANGE: User specifically wants all 6 tracks for band practice
+        # htdemucs_6s provides: vocals, drums, bass, guitar, piano, other
         track_mapping = {
-            'vocals.mp3': 'vocals',
-            'drums.mp3': 'drums', 
-            'bass.mp3': 'bass',
-            'guitar.mp3': 'guitar',
-            'piano.mp3': 'piano',
-            'other.mp3': 'other'
+            'vocals.mp3': 'vocals',    # Lead and backing vocals
+            'drums.mp3': 'drums',      # Full drum kit
+            'bass.mp3': 'bass',        # Bass guitar/synth bass
+            'guitar.mp3': 'guitar',    # Electric/acoustic guitars
+            'piano.mp3': 'piano',      # Piano/keyboard parts
+            'other.mp3': 'other'       # Strings, horns, synths, etc.
         }
         
         tracks = {}
