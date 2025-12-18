@@ -42,7 +42,8 @@
    - In Settings → Service:
      - **Root Directory**: `audio-processing-service`
      - **Build Command**: `pip install --no-cache-dir -r requirements.txt`
-     - **Start Command**: `python app.py`
+     - **Start Command**: `./start.sh` (Production with Gunicorn)
+     - **Alternative Start Command**: `gunicorn --config gunicorn.conf.py app:app`
    - **IMPORTANT**: Increase build timeout in Railway settings:
      - Go to Settings → General
      - Set **Build Timeout** to 20-30 minutes (Demucs installation is heavy)

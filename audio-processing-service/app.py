@@ -660,13 +660,21 @@ def schedule_cleanup():
     cleanup_old_files()
     threading.Timer(3600, schedule_cleanup).start()  # Run every hour
 
-if __name__ == '__main__':
+def create_app():
+    """Application factory for production deployment"""
     print("Starting Audio Processing Service with Demucs...")
-    print("Make sure you have Demucs installed: pip install demucs")
+    print("htdemucs_6s model configured for 6-track separation")
     
     # Start cleanup scheduler
     schedule_cleanup()
     
-    # Run the Flask app
+    return app
+
+if __name__ == '__main__':
+    # Development server (only used locally)
+    print("WARNING: Running development server. Use Gunicorn for production.")
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+else:
+    # Production: Initialize when imported by Gunicorn
+    create_app()
