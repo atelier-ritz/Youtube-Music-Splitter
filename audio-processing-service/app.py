@@ -125,18 +125,14 @@ def separate_audio(job_id, input_file):
         
         update_progress(job_id, 15, "Preparing separation...")
         
-        # Run Demucs separation optimized for Railway reliability
-        # Use mdx_extra model - much more reliable than htdemucs_6s on CPU
+        # Run Demucs separation optimized for Railway CPU environment
+        # Use the lightweight mdx_extra model instead of htdemucs_6s
         cmd = [
             'python', '-m', 'demucs.separate',
             '--mp3',  # Output as MP3
-            '--mp3-bitrate', '128',  # Lower bitrate for faster processing
-            '-n', 'mdx_extra',  # Use mdx_extra model (more reliable on CPU)
+            '--mp3-bitrate', '196',  # Conservative bitrate for stability
+            '-n', 'htdemucs_6s',  # Use lighter 4-stem model (vocals, drums, bass, other)
             '--device', 'cpu',  # Force CPU mode
-            '--jobs', '1',  # Single thread for stability
-            '--segment', '8',  # Small segments to avoid memory issues
-            '--shifts', '1',  # Minimal shifts for speed
-            '--overlap', '0.1',  # Minimal overlap for speed
             '-o', str(job_output_dir),
             str(input_file)
         ]
@@ -207,18 +203,8 @@ def separate_audio(job_id, input_file):
         progress_thread.daemon = True
         progress_thread.start()
         
-        # Wait for the process to complete with adaptive timeout
-        # mdx_extra model is much faster: ~30-60 seconds for 2-3 minute songs
-        timeout_seconds = max(duration * 30, 120)  # 30 seconds per minute of audio, minimum 2 minutes
-        print(f"DEBUG: Setting timeout to {timeout_seconds} seconds for {duration:.1f} minute audio")
-        
-        try:
-            stdout, stderr = process.communicate(timeout=timeout_seconds)
-        except subprocess.TimeoutExpired:
-            print(f"ERROR: Demucs process timed out after {timeout_seconds} seconds")
-            process.kill()
-            stdout, stderr = process.communicate()
-            raise Exception(f"Audio separation timed out after {timeout_seconds} seconds. Try a shorter song.")
+        # Wait for the process to complete
+        stdout, stderr = process.communicate(timeout=600)  # 10 minute timeout
         
         if process.returncode != 0:
             raise Exception(f"Demucs failed: {stderr}")
@@ -226,9 +212,9 @@ def separate_audio(job_id, input_file):
         update_progress(job_id, 85, "Processing completed, organizing files...")
         
         # Find the separated files
-        # Demucs creates: job_output_dir/mdx_extra/{filename_without_ext}/{track}.mp3
+        # Demucs creates: job_output_dir/htdemucs_6s/{filename_without_ext}/{track}.mp3
         input_name = Path(input_file).stem
-        separated_dir = job_output_dir / 'mdx_extra' / input_name
+        separated_dir = job_output_dir / 'htdemucs_6s' / input_name
         
         # Debug: Check what Demucs actually created
         print(f"Looking for separated files in: {separated_dir}")
@@ -239,19 +225,19 @@ def separate_audio(job_id, input_file):
         
         # If the expected directory doesn't exist, try to find the actual directory
         if not separated_dir.exists():
-            mdx_dir = job_output_dir / 'mdx_extra'
-            if mdx_dir.exists():
+            htdemucs_dir = job_output_dir / 'htdemucs_6s'
+            if htdemucs_dir.exists():
                 # Find the first subdirectory (should be the separated tracks)
-                subdirs = [d for d in mdx_dir.iterdir() if d.is_dir()]
+                subdirs = [d for d in htdemucs_dir.iterdir() if d.is_dir()]
                 if subdirs:
                     separated_dir = subdirs[0]
                     print(f"Using actual separated directory: {separated_dir}")
                 else:
-                    print(f"No subdirectories found in {mdx_dir}")
+                    print(f"No subdirectories found in {htdemucs_dir}")
             else:
-                print(f"mdx_extra directory not found in {job_output_dir}")
+                print(f"htdemucs_6s directory not found in {job_output_dir}")
                 # Try to find any model directory that exists
-                for possible_dir in ['mdx_extra', 'htdemucs_6s', 'htdemucs', 'demucs']:
+                for possible_dir in ['htdemucs_6s', 'htdemucs', 'mdx_extra', 'demucs']:
                     test_dir = job_output_dir / possible_dir
                     if test_dir.exists():
                         print(f"Found alternative directory: {test_dir}")
@@ -264,12 +250,14 @@ def separate_audio(job_id, input_file):
         if not separated_dir.exists():
             raise Exception(f"Separated files not found at {separated_dir}")
         
-        # Map Demucs output to our expected format (4-stem model - mdx_extra)
+        # Map Demucs output to our expected format (6-stem model)
         track_mapping = {
             'vocals.mp3': 'vocals',
             'drums.mp3': 'drums', 
             'bass.mp3': 'bass',
-            'other.mp3': 'other'  # Contains guitar, piano, and other instruments
+            'guitar.mp3': 'guitar',
+            'piano.mp3': 'piano',
+            'other.mp3': 'other'
         }
         
         tracks = {}
