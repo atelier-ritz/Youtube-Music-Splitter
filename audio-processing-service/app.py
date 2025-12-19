@@ -47,9 +47,54 @@ ALLOWED_EXTENSIONS = {'mp3', 'wav', 'flac', 'm4a', 'aac', 'ogg'}
 for folder in [UPLOAD_FOLDER, OUTPUT_FOLDER, TEMP_FOLDER]:
     folder.mkdir(exist_ok=True)
 
-# Job storage (in production, use a database)
+# Persistent job storage to survive service restarts
+JOBS_FOLDER = Path('./jobs')
+JOBS_FOLDER.mkdir(exist_ok=True)
+
+# In-memory cache for performance
 jobs = {}
 jobs_lock = threading.Lock()
+
+def save_job_to_disk(job_id, job_data):
+    """Save job data to disk for persistence"""
+    try:
+        job_file = JOBS_FOLDER / f"{job_id}.json"
+        with open(job_file, 'w') as f:
+            json.dump(job_data, f)
+        print(f"💾 Saved job {job_id} to disk")
+    except Exception as e:
+        print(f"❌ Failed to save job {job_id} to disk: {e}")
+
+def load_job_from_disk(job_id):
+    """Load job data from disk"""
+    try:
+        job_file = JOBS_FOLDER / f"{job_id}.json"
+        if job_file.exists():
+            with open(job_file, 'r') as f:
+                job_data = json.load(f)
+            print(f"📂 Loaded job {job_id} from disk")
+            return job_data
+    except Exception as e:
+        print(f"❌ Failed to load job {job_id} from disk: {e}")
+    return None
+
+def load_all_jobs_from_disk():
+    """Load all jobs from disk on startup"""
+    try:
+        loaded_count = 0
+        for job_file in JOBS_FOLDER.glob("*.json"):
+            job_id = job_file.stem
+            job_data = load_job_from_disk(job_id)
+            if job_data:
+                with jobs_lock:
+                    jobs[job_id] = job_data
+                loaded_count += 1
+        print(f"🔄 Loaded {loaded_count} jobs from disk on startup")
+    except Exception as e:
+        print(f"❌ Failed to load jobs from disk: {e}")
+
+# Load existing jobs on startup
+load_all_jobs_from_disk()
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -104,11 +149,16 @@ def detect_bpm(file_path):
     return None
 
 def update_progress(job_id, progress, message=None):
-    """Helper function to update job progress"""
+    """Helper function to update job progress with persistence"""
     with jobs_lock:
-        jobs[job_id]['progress'] = progress
-        if message:
-            jobs[job_id]['message'] = message
+        if job_id in jobs:
+            jobs[job_id]['progress'] = progress
+            if message:
+                jobs[job_id]['message'] = message
+            # Save updated progress to disk
+            save_job_to_disk(job_id, jobs[job_id])
+        else:
+            print(f"⚠️ Tried to update progress for non-existent job: {job_id}")
 
 def separate_audio(job_id, input_file):
     """Separate audio using Demucs in a background thread"""
@@ -307,39 +357,47 @@ def separate_audio(job_id, input_file):
         
         update_progress(job_id, 95, "Finalizing...")
         
-        # Complete the job
-        with jobs_lock:
-            jobs[job_id].update({
-                'status': 'completed',
-                'progress': 100,
-                'tracks': tracks,
-                'bpm': bpm,
-                'duration': duration,
-                'completed_at': time.time(),
-                'message': 'Separation completed successfully!'
-            })
+        # Complete the job with persistent storage
+        job_update = {
+            'status': 'completed',
+            'progress': 100,
+            'tracks': tracks,
+            'bpm': bpm,
+            'duration': duration,
+            'completed_at': time.time(),
+            'message': 'Separation completed successfully!'
+        }
         
-        print(f"Job {job_id} completed successfully")
+        with jobs_lock:
+            jobs[job_id].update(job_update)
+            # Save completed job to disk
+            save_job_to_disk(job_id, jobs[job_id])
+        
+        print(f"✅ Job {job_id} completed successfully and saved to disk")
         
     except subprocess.TimeoutExpired:
+        job_update = {
+            'status': 'failed',
+            'error': 'Processing timeout - file may be too large or complex',
+            'message': 'Processing timed out',
+            'completed_at': time.time()
+        }
         with jobs_lock:
-            jobs[job_id].update({
-                'status': 'failed',
-                'error': 'Processing timeout - file may be too large or complex',
-                'message': 'Processing timed out',
-                'completed_at': time.time()
-            })
-        print(f"Job {job_id} timed out")
+            jobs[job_id].update(job_update)
+            save_job_to_disk(job_id, jobs[job_id])
+        print(f"❌ Job {job_id} timed out and saved to disk")
         
     except Exception as e:
+        job_update = {
+            'status': 'failed',
+            'error': str(e),
+            'message': f'Processing failed: {str(e)}',
+            'completed_at': time.time()
+        }
         with jobs_lock:
-            jobs[job_id].update({
-                'status': 'failed',
-                'error': str(e),
-                'message': f'Processing failed: {str(e)}',
-                'completed_at': time.time()
-            })
-        print(f"Job {job_id} failed: {e}")
+            jobs[job_id].update(job_update)
+            save_job_to_disk(job_id, jobs[job_id])
+        print(f"❌ Job {job_id} failed: {e} and saved to disk")
 
 @app.route('/api/process', methods=['POST'])
 def process_audio():
@@ -364,31 +422,41 @@ def process_audio():
         
         # Generate job ID
         job_id = str(uuid.uuid4())
+        print(f"🆔 Generated job ID: {job_id}")
         
         # Save uploaded file
         filename = secure_filename(file.filename)
         file_path = UPLOAD_FOLDER / f"{job_id}_{filename}"
         file.save(file_path)
+        print(f"💾 Saved file: {file_path} ({file_path.stat().st_size} bytes)")
         
         # Check file size
         if file_path.stat().st_size > MAX_FILE_SIZE:
             file_path.unlink()  # Delete the file
             return jsonify({'error': 'File too large. Maximum size: 50MB'}), 400
         
-        # Create job entry
+        # Create job entry with persistent storage
+        job_data = {
+            'jobId': job_id,
+            'status': 'pending',
+            'progress': 0,
+            'created_at': time.time(),
+            'filename': filename
+        }
+        
         with jobs_lock:
-            jobs[job_id] = {
-                'jobId': job_id,
-                'status': 'pending',
-                'progress': 0,
-                'created_at': time.time(),
-                'filename': filename
-            }
+            jobs[job_id] = job_data
+            print(f"✅ Job created in memory: {job_id}")
+            print(f"📊 Total jobs in memory: {len(jobs)}")
+        
+        # Save to disk for persistence
+        save_job_to_disk(job_id, job_data)
         
         # Start processing in background thread
         thread = threading.Thread(target=separate_audio, args=(job_id, file_path))
         thread.daemon = True
         thread.start()
+        print(f"🚀 Started background processing thread for job {job_id}")
         
         return jsonify({'jobId': job_id}), 200
         
@@ -400,11 +468,34 @@ def process_audio():
 def get_job_status(job_id):
     """Get job status and results"""
     try:
+        print(f"🔍 JOB STATUS REQUEST: job_id={job_id}")
+        
         with jobs_lock:
             job = jobs.get(job_id)
+            total_jobs = len(jobs)
+            all_job_ids = list(jobs.keys())
         
+        print(f"📊 Current jobs in memory: {total_jobs}")
+        print(f"📋 All job IDs: {all_job_ids}")
+        
+        # If not in memory, try loading from disk
         if not job:
-            return jsonify({'error': 'Job not found'}), 404
+            print(f"⚠️ Job {job_id} not found in memory, checking disk...")
+            job = load_job_from_disk(job_id)
+            if job:
+                # Add back to memory cache
+                with jobs_lock:
+                    jobs[job_id] = job
+                print(f"✅ Job {job_id} recovered from disk")
+            else:
+                print(f"❌ Job {job_id} not found on disk either")
+                return jsonify({
+                    'error': 'Job not found',
+                    'jobId': job_id,
+                    'availableJobs': all_job_ids,
+                    'totalJobs': total_jobs,
+                    'message': 'Job not found in memory or disk storage'
+                }), 404
         
         # Return job status in the format expected by the backend
         response = {
@@ -477,18 +568,132 @@ def serve_track(job_id, filename):
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
+    with jobs_lock:
+        total_jobs = len(jobs)
+        job_statuses = {}
+        for job_id, job in jobs.items():
+            job_statuses[job_id] = {
+                'status': job.get('status', 'unknown'),
+                'progress': job.get('progress', 0),
+                'created_at': job.get('created_at', 0)
+            }
+    
     return jsonify({
         'status': 'healthy',
         'service': 'audio-processing-service',
         'version': '1.0.0',
-        'demucs_available': True
+        'demucs_available': True,
+        'model': 'htdemucs_6s',
+        'total_jobs': total_jobs,
+        'jobs': job_statuses,
+        'uptime': time.time()
     }), 200
 
 @app.route('/api/jobs', methods=['GET'])
 def list_jobs():
     """List all jobs (for debugging)"""
     with jobs_lock:
-        return jsonify(list(jobs.values())), 200
+        memory_jobs = dict(jobs)
+    
+    # Also check disk storage
+    disk_jobs = {}
+    try:
+        for job_file in JOBS_FOLDER.glob("*.json"):
+            job_id = job_file.stem
+            job_data = load_job_from_disk(job_id)
+            if job_data:
+                disk_jobs[job_id] = job_data
+    except Exception as e:
+        print(f"Error reading disk jobs: {e}")
+    
+    return jsonify({
+        'memory_jobs': list(memory_jobs.values()),
+        'disk_jobs': list(disk_jobs.values()),
+        'memory_count': len(memory_jobs),
+        'disk_count': len(disk_jobs),
+        'jobs_folder': str(JOBS_FOLDER),
+        'jobs_folder_exists': JOBS_FOLDER.exists()
+    }), 200
+
+@app.route('/api/debug/storage', methods=['GET'])
+def debug_storage():
+    """Debug endpoint to check storage status"""
+    try:
+        # Check folders
+        folders_status = {
+            'jobs_folder': {
+                'path': str(JOBS_FOLDER),
+                'exists': JOBS_FOLDER.exists(),
+                'files': []
+            },
+            'upload_folder': {
+                'path': str(UPLOAD_FOLDER),
+                'exists': UPLOAD_FOLDER.exists(),
+                'files': []
+            },
+            'output_folder': {
+                'path': str(OUTPUT_FOLDER),
+                'exists': OUTPUT_FOLDER.exists(),
+                'files': []
+            }
+        }
+        
+        # List files in each folder
+        for folder_name, folder_info in folders_status.items():
+            if folder_info['exists']:
+                folder_path = Path(folder_info['path'])
+                try:
+                    folder_info['files'] = [f.name for f in folder_path.iterdir()]
+                except Exception as e:
+                    folder_info['error'] = str(e)
+        
+        with jobs_lock:
+            memory_jobs_count = len(jobs)
+            memory_job_ids = list(jobs.keys())
+        
+        return jsonify({
+            'folders': folders_status,
+            'memory_jobs': {
+                'count': memory_jobs_count,
+                'job_ids': memory_job_ids
+            },
+            'timestamp': time.time()
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/debug/job/<job_id>', methods=['GET'])
+def debug_single_job(job_id):
+    """Debug endpoint to check a specific job in both memory and disk"""
+    try:
+        # Check memory
+        with jobs_lock:
+            memory_job = jobs.get(job_id)
+        
+        # Check disk
+        disk_job = load_job_from_disk(job_id)
+        
+        # Check if job files exist
+        job_file_path = JOBS_FOLDER / f"{job_id}.json"
+        
+        return jsonify({
+            'job_id': job_id,
+            'memory': {
+                'exists': memory_job is not None,
+                'data': memory_job
+            },
+            'disk': {
+                'exists': disk_job is not None,
+                'data': disk_job,
+                'file_path': str(job_file_path),
+                'file_exists': job_file_path.exists()
+            },
+            'timestamp': time.time()
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/cache/clear', methods=['POST'])
 def clear_cache():
