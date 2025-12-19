@@ -198,4 +198,35 @@ router.get('/stats', (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /api/process/debug/jobs
+ * Debug endpoint to list all jobs in backend memory
+ */
+router.get('/debug/jobs', (req: Request, res: Response) => {
+  try {
+    const allJobs = audioProcessingService.getAllJobs();
+    
+    res.json({
+      totalJobs: allJobs.length,
+      jobs: allJobs.map(job => ({
+        id: job.id,
+        status: job.status,
+        progress: job.progress,
+        originalAudioUrl: job.originalAudioUrl,
+        createdAt: job.createdAt,
+        completedAt: job.completedAt,
+        error: job.error,
+        tracks: job.tracks ? Object.keys(job.tracks) : []
+      })),
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error getting debug jobs:', error);
+    res.status(500).json({ 
+      error: 'Failed to get debug information',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 export default router;
