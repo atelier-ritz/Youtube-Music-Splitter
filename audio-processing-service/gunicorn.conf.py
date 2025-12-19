@@ -13,8 +13,9 @@ timeout = 1800  # 30 minutes timeout for long Demucs processing
 keepalive = 2
 
 # Restart workers after this many requests, to help control memory usage
-max_requests = 10
-max_requests_jitter = 5
+# IMPORTANT: Set very high values to avoid killing long-running audio processing jobs
+max_requests = 0  # Disable automatic worker restarts (0 = never restart)
+max_requests_jitter = 0  # No jitter needed since restarts are disabled
 
 # Logging
 accesslog = "-"
@@ -39,3 +40,13 @@ certfile = None
 
 # Memory and performance
 worker_tmp_dir = "/dev/shm"  # Use shared memory for better performance
+
+# Worker lifecycle hooks (defined in app.py)
+on_starting = "app:on_starting"
+on_reload = "app:on_reload" 
+worker_int = "app:worker_int"
+post_worker_init = "app:post_worker_init"
+
+# Graceful worker shutdown - extended for long audio processing
+graceful_timeout = 300  # Give workers 5 minutes to finish current requests
+worker_abort_timeout = 600  # Force kill workers after 10 minutes (for very long jobs)

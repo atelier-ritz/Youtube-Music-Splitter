@@ -82,18 +82,72 @@ def load_all_jobs_from_disk():
     """Load all jobs from disk on startup"""
     try:
         loaded_count = 0
-        for job_file in JOBS_FOLDER.glob("*.json"):
+        processing_jobs = 0
+        
+        print(f"🔄 Loading jobs from disk at startup...")
+        print(f"📁 Jobs folder: {JOBS_FOLDER}")
+        print(f"📁 Jobs folder exists: {JOBS_FOLDER.exists()}")
+        
+        if not JOBS_FOLDER.exists():
+            print(f"⚠️ Jobs folder doesn't exist, creating it...")
+            JOBS_FOLDER.mkdir(exist_ok=True)
+            return
+            
+        job_files = list(JOBS_FOLDER.glob("*.json"))
+        print(f"📄 Found {len(job_files)} job files on disk")
+        
+        for job_file in job_files:
             job_id = job_file.stem
+            print(f"📂 Loading job file: {job_file}")
             job_data = load_job_from_disk(job_id)
             if job_data:
                 with jobs_lock:
                     jobs[job_id] = job_data
                 loaded_count += 1
-        print(f"🔄 Loaded {loaded_count} jobs from disk on startup")
+                
+                # Check if job was processing when service stopped
+                if job_data.get('status') == 'processing':
+                    processing_jobs += 1
+                    job_age_minutes = (time.time() - job_data.get('created_at', 0)) / 60
+                    print(f"⚠️ Job {job_id} was processing when service restarted (progress: {job_data.get('progress', 0)}%, age: {job_age_minutes:.1f} minutes)")
+                    
+                    # Mark interrupted jobs as failed to avoid confusion
+                    # Jobs older than 30 minutes that are still "processing" are likely stuck
+                    if job_age_minutes > 30:
+                        job_data['status'] = 'failed'
+                        job_data['error'] = 'Processing interrupted by service restart (job was stuck)'
+                        job_data['message'] = f'Job was stuck at {job_data.get("progress", 0)}% and interrupted by service restart'
+                        job_data['completed_at'] = time.time()
+                        
+                        # Save the updated status back to disk
+                        save_job_to_disk(job_id, job_data)
+                        print(f"❌ Marked stuck job {job_id} as failed (was stuck for {job_age_minutes:.1f} minutes)")
+                    else:
+                        # Recent jobs might still be valid, mark as failed but with different message
+                        job_data['status'] = 'failed'
+                        job_data['error'] = 'Processing interrupted by service restart'
+                        job_data['message'] = 'Job was interrupted when the service restarted'
+                        job_data['completed_at'] = time.time()
+                        
+                        # Save the updated status back to disk
+                        save_job_to_disk(job_id, job_data)
+                        print(f"❌ Marked interrupted job {job_id} as failed")
+                    
+                print(f"✅ Loaded job {job_id}: {job_data.get('status', 'unknown')} ({job_data.get('progress', 0)}%)")
+            else:
+                print(f"❌ Failed to load job from {job_file}")
+                
+        print(f"🔄 Startup complete: Loaded {loaded_count} jobs from disk")
+        if processing_jobs > 0:
+            print(f"⚠️ Warning: {processing_jobs} jobs were interrupted by service restart")
+            
     except Exception as e:
         print(f"❌ Failed to load jobs from disk: {e}")
+        import traceback
+        traceback.print_exc()
 
 # Load existing jobs on startup
+print(f"🚀 Starting audio processing service...")
 load_all_jobs_from_disk()
 
 def allowed_file(filename):
@@ -486,13 +540,29 @@ def get_job_status(job_id):
                 # Add back to memory cache
                 with jobs_lock:
                     jobs[job_id] = job
-                print(f"✅ Job {job_id} recovered from disk")
+                print(f"✅ Job {job_id} recovered from disk and added to memory")
+                
+                # If job was processing, it might have been interrupted by restart
+                # Check if we need to resume or mark as failed
+                if job.get('status') == 'processing':
+                    print(f"⚠️ Job {job_id} was processing when service restarted")
+                    # For now, let's return the job as-is, but we could implement resume logic
+                    
             else:
                 print(f"❌ Job {job_id} not found on disk either")
+                # List available jobs on disk for debugging
+                disk_jobs = []
+                try:
+                    for job_file in JOBS_FOLDER.glob("*.json"):
+                        disk_jobs.append(job_file.stem)
+                except Exception as e:
+                    print(f"Error listing disk jobs: {e}")
+                
                 return jsonify({
                     'error': 'Job not found',
                     'jobId': job_id,
                     'availableJobs': all_job_ids,
+                    'availableDiskJobs': disk_jobs,
                     'totalJobs': total_jobs,
                     'message': 'Job not found in memory or disk storage'
                 }), 404
@@ -695,6 +765,31 @@ def debug_single_job(job_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/recovery/reload-jobs', methods=['POST'])
+def reload_jobs_from_disk():
+    """Manually reload all jobs from disk (recovery endpoint)"""
+    try:
+        # Clear current memory
+        with jobs_lock:
+            old_count = len(jobs)
+            jobs.clear()
+        
+        # Reload from disk
+        load_all_jobs_from_disk()
+        
+        with jobs_lock:
+            new_count = len(jobs)
+        
+        return jsonify({
+            'message': 'Jobs reloaded from disk',
+            'old_memory_count': old_count,
+            'new_memory_count': new_count,
+            'timestamp': time.time()
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/cache/clear', methods=['POST'])
 def clear_cache():
     """Clear all cached audio files and jobs"""
@@ -768,6 +863,50 @@ def clear_temp_cache():
         print(f"Error clearing temp cache: {e}")
         return jsonify({'error': 'Failed to clear temp cache'}), 500
 
+@app.route('/api/cache/clear-disk-jobs', methods=['POST'])
+def clear_disk_jobs():
+    """Clear only the disk job files (JSON files in jobs folder)"""
+    try:
+        print("🗑️ Clearing disk job files...")
+        
+        cleared_jobs = 0
+        
+        # Clear jobs from memory first
+        with jobs_lock:
+            memory_jobs = len(jobs)
+            jobs.clear()
+        
+        # Clear job persistence files
+        if JOBS_FOLDER.exists():
+            job_files = list(JOBS_FOLDER.glob("*.json"))
+            print(f"📄 Found {len(job_files)} job files to delete")
+            
+            for job_file in job_files:
+                try:
+                    print(f"🗑️ Deleting: {job_file}")
+                    job_file.unlink()
+                    cleared_jobs += 1
+                except Exception as e:
+                    print(f"❌ Error removing job file {job_file}: {e}")
+        else:
+            print(f"📁 Jobs folder {JOBS_FOLDER} does not exist")
+        
+        print(f"✅ Cleared {cleared_jobs} disk job files, {memory_jobs} memory jobs")
+        
+        return jsonify({
+            'message': 'Disk job files cleared successfully',
+            'cleared_disk_jobs': cleared_jobs,
+            'cleared_memory_jobs': memory_jobs,
+            'jobs_folder': str(JOBS_FOLDER),
+            'timestamp': time.time()
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error clearing disk jobs: {e}")
+        return jsonify({
+            'error': 'Failed to clear disk jobs',
+            'details': str(e)
+        }), 500
 
 @app.route('/api/cache/status', methods=['GET'])
 def cache_status():
@@ -867,17 +1006,41 @@ def schedule_cleanup():
 
 def create_app():
     """Application factory for production deployment"""
-    print("Starting Audio Processing Service with Demucs...")
-    print("htdemucs_6s model configured for 6-track separation")
+    print("🚀 Starting Audio Processing Service with Demucs...")
+    print("🔧 htdemucs_6s model configured for 6-track separation")
+    print("⚡ Running in production mode with Gunicorn")
+    
+    # Load jobs from disk on worker startup
+    print("📂 Loading existing jobs from disk...")
+    load_all_jobs_from_disk()
     
     # Start cleanup scheduler
     schedule_cleanup()
     
     return app
 
+# Gunicorn worker lifecycle hooks
+def on_starting(server):
+    """Called just before the master process is initialized."""
+    print("🔄 Gunicorn master process starting...")
+
+def on_reload(server):
+    """Called to recycle workers during a reload via SIGHUP."""
+    print("🔄 Gunicorn reloading workers...")
+
+def worker_int(worker):
+    """Called just after a worker exited on SIGINT or SIGQUIT."""
+    print(f"⚠️ Gunicorn worker {worker.pid} interrupted - jobs may be affected")
+
+def post_worker_init(worker):
+    """Called just after a worker has been forked."""
+    print(f"👷 Gunicorn worker {worker.pid} initialized")
+    # Reload jobs from disk when worker starts
+    load_all_jobs_from_disk()
+
 if __name__ == '__main__':
     # Development server (only used locally)
-    print("WARNING: Running development server. Use Gunicorn for production.")
+    print("⚠️ WARNING: Running development server. Use Gunicorn for production.")
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
 else:
