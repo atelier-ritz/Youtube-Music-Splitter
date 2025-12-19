@@ -344,7 +344,7 @@ def separate_audio(job_id, input_file):
                     message = "Finalizing separation..."
                 
                 update_progress(job_id, int(current_progress), message)
-                time.sleep(2)  # Update every 2 seconds
+                time.sleep(5)  # Update every 5 seconds
         
         # Start progress monitoring in a separate thread
         progress_thread = threading.Thread(target=simulate_progress)
