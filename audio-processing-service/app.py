@@ -154,13 +154,48 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_audio_duration(file_path):
-    """Get audio duration in seconds using librosa"""
+    """Get audio duration in seconds using librosa with fallback methods"""
     try:
+        # Method 1: Use librosa.get_duration (fastest)
         duration = librosa.get_duration(path=file_path)
+        print(f"DEBUG: librosa.get_duration returned {duration} seconds ({duration/60:.2f} minutes)")
+        
+        # Sanity check: if duration seems unreasonable (>30 minutes), try alternative method
+        if duration > 1800:  # More than 30 minutes
+            print(f"WARNING: Duration {duration/60:.1f} minutes seems too long, trying alternative method...")
+            
+            # Method 2: Load audio and calculate duration from samples
+            y, sr = librosa.load(file_path, sr=None)
+            calculated_duration = len(y) / sr
+            print(f"DEBUG: Calculated duration from samples: {calculated_duration} seconds ({calculated_duration/60:.2f} minutes)")
+            
+            # Use the shorter duration (more likely to be correct)
+            if calculated_duration < duration:
+                print(f"Using calculated duration {calculated_duration} instead of metadata duration {duration}")
+                return calculated_duration
+        
         return duration
     except Exception as e:
-        print(f"Error getting duration: {e}")
-        return 0
+        print(f"Error getting duration with librosa: {e}")
+        
+        # Fallback: Try using ffprobe if available
+        try:
+            import subprocess
+            result = subprocess.run([
+                'ffprobe', '-v', 'quiet', '-show_entries', 'format=duration',
+                '-of', 'csv=p=0', str(file_path)
+            ], capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                duration = float(result.stdout.strip())
+                print(f"DEBUG: ffprobe returned duration: {duration} seconds ({duration/60:.2f} minutes)")
+                return duration
+        except Exception as ffprobe_error:
+            print(f"ffprobe fallback failed: {ffprobe_error}")
+        
+        # Last resort: return a default duration
+        print("WARNING: Could not determine audio duration, using default 180 seconds")
+        return 180  # 3 minutes default
 
 def detect_bpm(file_path):
     """Detect BPM using librosa with fallback methods"""
@@ -319,8 +354,16 @@ def separate_audio(job_id, input_file):
         # Wait for the process to complete
         # htdemucs_6s model takes longer but provides superior 6-track separation
         # Timeout based on audio duration: ~2-3 minutes per minute of audio
+        duration_minutes = duration / 60
         timeout_seconds = max(duration * 180, 600)  # 3 minutes per audio minute, minimum 10 minutes
-        print(f"DEBUG: Setting timeout to {timeout_seconds} seconds for {duration:.1f} minute audio with htdemucs_6s")
+        timeout_minutes = timeout_seconds / 60
+        print(f"DEBUG: Audio duration: {duration:.1f} seconds ({duration_minutes:.2f} minutes)")
+        print(f"DEBUG: Setting timeout to {timeout_seconds:.1f} seconds ({timeout_minutes:.1f} minutes) for htdemucs_6s")
+        
+        # Safety check: if timeout is unreasonably long, cap it
+        if timeout_seconds > 3600:  # More than 1 hour
+            print(f"WARNING: Timeout {timeout_minutes:.1f} minutes seems too long, capping at 30 minutes")
+            timeout_seconds = 1800  # 30 minutes max
         
         try:
             stdout, stderr = process.communicate(timeout=timeout_seconds)
