@@ -1019,24 +1019,7 @@ def create_app():
     
     return app
 
-# Gunicorn worker lifecycle hooks
-def on_starting(server):
-    """Called just before the master process is initialized."""
-    print("🔄 Gunicorn master process starting...")
-
-def on_reload(server):
-    """Called to recycle workers during a reload via SIGHUP."""
-    print("🔄 Gunicorn reloading workers...")
-
-def worker_int(worker):
-    """Called just after a worker exited on SIGINT or SIGQUIT."""
-    print(f"⚠️ Gunicorn worker {worker.pid} interrupted - jobs may be affected")
-
-def post_worker_init(worker):
-    """Called just after a worker has been forked."""
-    print(f"👷 Gunicorn worker {worker.pid} initialized")
-    # Reload jobs from disk when worker starts
-    load_all_jobs_from_disk()
+# Gunicorn worker lifecycle hooks are now defined in gunicorn.conf.py
 
 if __name__ == '__main__':
     # Development server (only used locally)

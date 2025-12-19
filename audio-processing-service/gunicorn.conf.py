@@ -41,12 +41,23 @@ certfile = None
 # Memory and performance
 worker_tmp_dir = "/dev/shm"  # Use shared memory for better performance
 
-# Worker lifecycle hooks (defined in app.py)
-on_starting = "app:on_starting"
-on_reload = "app:on_reload" 
-worker_int = "app:worker_int"
-post_worker_init = "app:post_worker_init"
-
 # Graceful worker shutdown - extended for long audio processing
 graceful_timeout = 300  # Give workers 5 minutes to finish current requests
 worker_abort_timeout = 600  # Force kill workers after 10 minutes (for very long jobs)
+
+# Worker lifecycle logging (inline functions)
+def on_starting(server):
+    """Called just before the master process is initialized."""
+    print("🔄 Gunicorn master process starting...")
+
+def on_reload(server):
+    """Called to recycle workers during a reload via SIGHUP."""
+    print("🔄 Gunicorn reloading workers...")
+
+def worker_int(worker):
+    """Called just after a worker exited on SIGINT or SIGQUIT."""
+    print(f"⚠️ Gunicorn worker {worker.pid} interrupted - jobs may be affected")
+
+def post_worker_init(worker):
+    """Called just after a worker has been forked."""
+    print(f"👷 Gunicorn worker {worker.pid} initialized")
