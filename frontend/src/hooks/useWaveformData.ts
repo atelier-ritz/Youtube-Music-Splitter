@@ -86,7 +86,7 @@ export function useWaveformData(
       
       // Check if we have valid amplitude data
       if (!amplitudes || amplitudes.length === 0) {
-        console.warn(`No amplitude data for track ${trackName}, generating fallback`);
+        // No amplitude data - generating fallback pattern
         // Generate unique fallback pattern for each track
         const trackSeed = trackName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         
@@ -116,7 +116,7 @@ export function useWaveformData(
         const isLowVariance = maxAmp < 0.01 || (maxAmp - avgAmp) < 0.005;
         
         if (isLowVariance) {
-          console.warn(`Track ${trackName} has low amplitude variance, generating enhanced pattern`);
+          // Track has low amplitude variance - generating enhanced pattern
           // Generate track-specific pattern for better visual distinction
           const trackSeed = trackName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
           

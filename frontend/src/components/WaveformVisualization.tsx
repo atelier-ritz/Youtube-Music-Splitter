@@ -348,9 +348,7 @@ const WaveformVisualization: React.FC<WaveformVisualizationProps> = ({
       if (import.meta.env.DEV) {
         const monitor = WaveformPerformanceMonitor.getInstance();
         const efficiency = monitor.getCacheEfficiency(trackName);
-        if (efficiency > 0) {
-          console.log(`🎵 ${trackName} waveform cache efficiency: ${efficiency.toFixed(1)}%`);
-        }
+        // Cache efficiency tracking (removed debug log for cleaner console)
       }
     };
   }, [trackName]);

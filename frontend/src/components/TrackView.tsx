@@ -820,12 +820,9 @@ const TrackView: React.FC<TrackViewProps> = ({
                       );
                     }
                     
-                    // Debug: Log duration mismatch
+                    // Check for duration mismatch (removed debug logs for cleaner console)
                     if (Math.abs(trackWaveformData.duration - duration) > 1) {
-                      console.warn(`⚠️ Duration mismatch for ${track.name}:`);
-                      console.warn(`  AudioPlayer duration: ${duration.toFixed(2)}s`);
-                      console.warn(`  Waveform duration: ${trackWaveformData.duration.toFixed(2)}s`);
-                      console.warn(`  Track URL: ${track.audioUrl}`);
+                      // Duration mismatch detected but not logged to keep console clean
                     }
                     
                     return (

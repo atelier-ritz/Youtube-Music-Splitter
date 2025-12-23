@@ -142,19 +142,12 @@ export class WaveformPerformanceMonitor {
     const summary = this.getPerformanceSummary();
     const cacheEfficiency = this.getCacheEfficiency();
 
-    console.group('🎵 Waveform Performance Summary');
-    console.log(`Overall Cache Efficiency: ${cacheEfficiency.toFixed(1)}%`);
+    // Performance summary (removed debug logs for cleaner console)
+    // Overall Cache Efficiency: ${cacheEfficiency.toFixed(1)}%
     
     Object.entries(summary).forEach(([trackId, metrics]) => {
-      console.log(`${trackId}:`, {
-        'Avg Render Time': `${metrics.renderTime.toFixed(2)}ms`,
-        'Cache Hits': metrics.cacheHits.toFixed(1),
-        'Cache Misses': metrics.cacheMisses.toFixed(1),
-        'Memory Usage': metrics.memoryUsage ? `${(metrics.memoryUsage / 1024 / 1024).toFixed(1)}MB` : 'N/A'
-      });
+      // Track performance metrics tracked internally
     });
-    
-    console.groupEnd();
   }
 }
 
