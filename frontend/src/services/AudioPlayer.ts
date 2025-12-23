@@ -10,6 +10,7 @@
  * Requirements: 2.4, 7.4
  */
 
+import { error } from 'console';
 import { retryWithBackoff, withTimeout } from '../utils/retryUtils';
 import { AudioAnalysisService } from './AudioAnalysisService';
 import type { WaveformData } from './AudioAnalysisService';
@@ -412,8 +413,25 @@ export class AudioPlayer {
       return; // Already playing
     }
 
-    // iOS requires audio context to be resumed in user gesture
-    this.resumeAudioContext().then(() => {
+    // CRITICAL: Resume AudioContext synchronously in user gesture context
+    // This prevents "user agent denied" errors from browser autoplay policies
+    if (this.audioContext.state === 'suspended') {
+      this.audioContext.resume().then(() => {
+        this.startPlaybackInternal();
+      }).catch(error => {
+        console.error('Failed to resume AudioContext:', error);
+        throw new Error('AudioContext resume failed - user interaction may be required');
+      });
+    } else {
+      // AudioContext is already running, start playback immediately
+      this.startPlaybackInternal();
+    }
+  }
+
+  /**
+   * Internal method to start playback (called after AudioContext is confirmed running)
+   */
+  private startPlaybackInternal(): void {
       this.isPlaying = true;
       this.startTime = this.audioContext!.currentTime;
       // Remember where we started playing from
@@ -474,6 +492,10 @@ export class AudioPlayer {
           this.checkIOSAudioPlayback();
         }, 500);
       }
+    }).catch(error => {
+      console.error('🎵 Failed to start playback:', error);
+      this.isPlaying = false;
+      throw error;
     });
   }
 

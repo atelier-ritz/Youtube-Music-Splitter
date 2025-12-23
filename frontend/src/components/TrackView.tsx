@@ -166,14 +166,14 @@ const TrackView: React.FC<TrackViewProps> = ({
   // Handle play/pause
   const handlePlayPause = async () => {
     try {
-      // Ensure AudioContext is initialized on user interaction
+      // CRITICAL: Handle AudioContext resume synchronously in user gesture context
+      // This prevents browser autoplay policy blocks
       if (loadError && loadError.includes('AudioContext')) {
         // Try to reload tracks if there was an AudioContext error
         setLoadError(null);
         setIsLoading(true);
         await audioPlayer.loadTracks(trackStates);
         setDuration(audioPlayer.getDuration());
-        // Ensure position is synced after reloading
         setCurrentPosition(audioPlayer.getCurrentPosition());
         setIsLoading(false);
       }
@@ -182,12 +182,26 @@ const TrackView: React.FC<TrackViewProps> = ({
         audioPlayer.pause();
         setIsPlaying(false);
       } else {
+        // Call play() directly in the user gesture context - no await here!
         audioPlayer.play();
         setIsPlaying(true);
       }
     } catch (error) {
       console.error('Playback error:', error);
-      setLoadError(error instanceof Error ? error.message : 'Playback failed');
+      
+      // Check if it's an autoplay policy error
+      if (error instanceof Error && error.message.includes('user agent')) {
+        setLoadError('Browser blocked audio playback. Please try clicking the play button again.');
+        onShowToast?.showError(
+          'Audio Blocked', 
+          'Browser autoplay policy blocked audio. Try clicking play again.'
+        );
+      } else {
+        setLoadError(error instanceof Error ? error.message : 'Playback failed');
+        onShowToast?.showError('Playback Failed', error instanceof Error ? error.message : 'Unknown error');
+      }
+      
+      setIsPlaying(false);
     }
   };
 
@@ -680,7 +694,7 @@ const TrackView: React.FC<TrackViewProps> = ({
               disabled={trackStates.length === 0}
               title="Stop and return to last play start position (Enter)"
             >
-              ◻
+              ■
             </button>
           </div>
         </div>
