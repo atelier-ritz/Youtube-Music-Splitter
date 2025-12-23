@@ -10,7 +10,6 @@
  * Requirements: 2.4, 7.4
  */
 
-import { error } from 'console';
 import { retryWithBackoff, withTimeout } from '../utils/retryUtils';
 import { AudioAnalysisService } from './AudioAnalysisService';
 import type { WaveformData } from './AudioAnalysisService';
@@ -432,71 +431,66 @@ export class AudioPlayer {
    * Internal method to start playback (called after AudioContext is confirmed running)
    */
   private startPlaybackInternal(): void {
-      this.isPlaying = true;
-      this.startTime = this.audioContext!.currentTime;
-      // Remember where we started playing from
-      this.lastPlayStartPosition = this.currentPosition;
+    this.isPlaying = true;
+    this.startTime = this.audioContext!.currentTime;
+    // Remember where we started playing from
+    this.lastPlayStartPosition = this.currentPosition;
 
-      // Set up timing for the playback method being used
+    // Set up timing for the playback method being used
+    if (this.playbackRate === 1.0) {
+      this.usingSoundTouch = false;
+    } else {
+      this.usingSoundTouch = true;
+      this.soundTouchStartTime = this.audioContext!.currentTime;
+      this.soundTouchStartPosition = this.currentPosition;
+      this.lastSoundTouchPosition = 0; // Reset for new playback
+      this.lastSoundTouchUpdateTime = 0; // Reset update time
+    }
+
+    // Create and start source nodes for all tracks
+    this.audioTracks.forEach((audioTrack) => {
       if (this.playbackRate === 1.0) {
-        this.usingSoundTouch = false;
-      } else {
-        this.usingSoundTouch = true;
-        this.soundTouchStartTime = this.audioContext!.currentTime;
-        this.soundTouchStartPosition = this.currentPosition;
-        this.lastSoundTouchPosition = 0; // Reset for new playback
-        this.lastSoundTouchUpdateTime = 0; // Reset update time
-      }
-
-      // Create and start source nodes for all tracks
-      this.audioTracks.forEach((audioTrack) => {
-        if (this.playbackRate === 1.0) {
-          // Use direct Web Audio API for normal speed (no processing needed)
-          const source = this.audioContext!.createBufferSource();
-          source.buffer = audioTrack.buffer;
-          source.connect(audioTrack.gainNode);
-          
-          // iOS-specific: Log audio start details
-          if (this.isIOSDevice()) {
-            console.log(`iOS Audio Start - ${audioTrack.track.name}:`, {
-              contextState: this.audioContext!.state,
-              currentTime: this.audioContext!.currentTime,
-              startPosition: this.currentPosition,
-              gainValue: audioTrack.gainNode.gain.value,
-              panValue: audioTrack.panNode.pan.value
-            });
-          }
-          
-          // Start from current position
-          source.start(0, this.currentPosition);
-          audioTrack.source = source;
-
-          // Handle track end
-          source.onended = () => {
-            if (this.isPlaying) {
-              this.handleTrackEnd();
-            }
-          };
-        } else {
-          // Use SoundTouchJS for pitch-preserving speed control
-          this.setupSoundTouchPlayback(audioTrack);
+        // Use direct Web Audio API for normal speed (no processing needed)
+        const source = this.audioContext!.createBufferSource();
+        source.buffer = audioTrack.buffer;
+        source.connect(audioTrack.gainNode);
+        
+        // iOS-specific: Log audio start details
+        if (this.isIOSDevice()) {
+          console.log(`iOS Audio Start - ${audioTrack.track.name}:`, {
+            contextState: this.audioContext!.state,
+            currentTime: this.audioContext!.currentTime,
+            startPosition: this.currentPosition,
+            gainValue: audioTrack.gainNode.gain.value,
+            panValue: audioTrack.panNode.pan.value
+          });
         }
-      });
+        
+        // Start from current position
+        source.start(0, this.currentPosition);
+        audioTrack.source = source;
 
-      // Start position updates
-      this.startPositionUpdates();
-      
-      // iOS-specific: Check if audio is actually playing after a short delay
-      if (this.isIOSDevice()) {
-        setTimeout(() => {
-          this.checkIOSAudioPlayback();
-        }, 500);
+        // Handle track end
+        source.onended = () => {
+          if (this.isPlaying) {
+            this.handleTrackEnd();
+          }
+        };
+      } else {
+        // Use SoundTouchJS for pitch-preserving speed control
+        this.setupSoundTouchPlayback(audioTrack);
       }
-    }).catch(error => {
-      console.error('🎵 Failed to start playback:', error);
-      this.isPlaying = false;
-      throw error;
     });
+
+    // Start position updates
+    this.startPositionUpdates();
+    
+    // iOS-specific: Check if audio is actually playing after a short delay
+    if (this.isIOSDevice()) {
+      setTimeout(() => {
+        this.checkIOSAudioPlayback();
+      }, 500);
+    }
   }
 
   /**
