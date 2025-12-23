@@ -207,7 +207,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
   };
 
   const pollProcessingStatus = async (jobId: string) => {
-    const maxAttempts = 60; // 10 minutes with 10-second intervals
+    const maxAttempts = 120; // 20 minutes with 10-second intervals
     let attempts = 0;
 
     const poll = async () => {
@@ -281,7 +281,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
   };
 
   const pollDownloadStatus = async (jobId: string) => {
-    const maxAttempts = 30; // 5 minutes with 10-second intervals
+    const maxAttempts = 60; // 10 minutes with 10-second intervals
     let attempts = 0;
 
     const poll = async () => {
