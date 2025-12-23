@@ -20,7 +20,7 @@ class AudioProcessingService {
   private readonly EXTERNAL_SERVICE_URL = process.env.AUDIO_PROCESSING_SERVICE_URL || 'http://localhost:8000';
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY = 2000; // 2 seconds
-  private readonly POLLING_INTERVAL = 5000; // 5 seconds
+  private readonly POLLING_INTERVAL = 10000; // 10 seconds
   private readonly TEMP_DIR = path.join(process.cwd(), 'temp');
   private readonly JOB_PERSISTENCE_FILE = path.join(this.TEMP_DIR, 'processing-jobs.json');
   private readonly MAX_JOB_AGE_HOURS = 24;
