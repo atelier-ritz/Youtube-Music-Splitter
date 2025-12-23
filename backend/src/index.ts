@@ -1,6 +1,10 @@
+import dotenv from 'dotenv';
+
+// Load environment variables FIRST, before any other imports
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
 import rateLimit from 'express-rate-limit';
 import downloadRoutes from './routes/download';
@@ -23,8 +27,6 @@ const trackServingLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-
-dotenv.config();
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);

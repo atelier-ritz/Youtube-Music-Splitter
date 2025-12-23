@@ -27,6 +27,7 @@ class AudioProcessingService {
   private cleanupInterval?: NodeJS.Timeout;
 
   constructor() {
+    console.log('🔧 AudioProcessingService initialized with URL:', this.EXTERNAL_SERVICE_URL);
     // Only initialize in non-test environment
     if (process.env.NODE_ENV !== 'test') {
       this.ensureTempDirectory();

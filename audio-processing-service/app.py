@@ -291,8 +291,13 @@ def separate_audio(job_id, input_file):
         # Set memory limits for the process (conservative for Railway)
         import resource
         def set_memory_limit():
-            # Limit memory to 4GB to leave plenty of headroom
-            resource.setrlimit(resource.RLIMIT_AS, (4 * 1024 * 1024 * 1024, 4 * 1024 * 1024 * 1024))
+            try:
+                # Limit memory to 4GB to leave plenty of headroom
+                resource.setrlimit(resource.RLIMIT_AS, (4 * 1024 * 1024 * 1024, 4 * 1024 * 1024 * 1024))
+            except (OSError, ValueError) as e:
+                # Skip memory limits on systems where it's not supported (like macOS in some cases)
+                print(f"⚠️ Could not set memory limits: {e}")
+                pass
         
         # Set environment variables for minimal CPU usage
         import os
@@ -307,14 +312,28 @@ def separate_audio(job_id, input_file):
         
         # Start the process with optimized settings
         try:
-            process = subprocess.Popen(
-                cmd, 
-                stdout=subprocess.PIPE, 
-                stderr=subprocess.PIPE, 
-                text=True,
-                preexec_fn=set_memory_limit,
-                env=env
-            )
+            # Skip preexec_fn on macOS development to avoid "Exception occurred in preexec_fn" error
+            import platform
+            use_preexec_fn = platform.system() != 'Darwin' or os.environ.get('NODE_ENV') == 'production'
+            
+            if use_preexec_fn:
+                process = subprocess.Popen(
+                    cmd, 
+                    stdout=subprocess.PIPE, 
+                    stderr=subprocess.PIPE, 
+                    text=True,
+                    preexec_fn=set_memory_limit,
+                    env=env
+                )
+            else:
+                print("⚠️ Skipping memory limits on macOS development environment")
+                process = subprocess.Popen(
+                    cmd, 
+                    stdout=subprocess.PIPE, 
+                    stderr=subprocess.PIPE, 
+                    text=True,
+                    env=env
+                )
         except Exception as e:
             print(f"Failed to start Demucs process: {e}")
             raise Exception(f"Demucs initialization failed: {e}")
