@@ -11,7 +11,6 @@ import axios from 'axios';
 import { 
   ProcessingJob, 
   Track, 
-  ExternalProcessingServiceRequest,
   ExternalProcessingServiceResponse 
 } from '../types/processingTypes';
 
@@ -27,7 +26,6 @@ class AudioProcessingService {
   private cleanupInterval?: NodeJS.Timeout;
 
   constructor() {
-    console.log('🔧 AudioProcessingService initialized with URL:', this.EXTERNAL_SERVICE_URL);
     // Only initialize in non-test environment
     if (process.env.NODE_ENV !== 'test') {
       this.ensureTempDirectory();
@@ -117,8 +115,6 @@ class AudioProcessingService {
 
     for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
       try {
-        console.log(`Upload attempt ${attempt}/${this.MAX_RETRIES}: Uploading ${filename} to ${this.EXTERNAL_SERVICE_URL}/api/process`);
-        
         // Create FormData with the audio buffer
         const formData = new FormData();
         formData.append('audio_file', audioBuffer, {
@@ -136,10 +132,8 @@ class AudioProcessingService {
         });
 
         const result = response.data as { jobId?: string };
-        console.log(`Upload successful, response:`, result);
 
         if (result.jobId) {
-          console.log(`Upload successful, got job ID: ${result.jobId}`);
           return result.jobId;
         } else {
           throw new Error(`Invalid response format: ${JSON.stringify(result)}`);
@@ -150,7 +144,6 @@ class AudioProcessingService {
         console.error(`Upload attempt ${attempt} failed:`, lastError.message);
 
         if (attempt < this.MAX_RETRIES) {
-          console.log(`Retrying in ${this.RETRY_DELAY * attempt}ms...`);
           await this.delay(this.RETRY_DELAY * attempt); // Exponential backoff
         }
       }

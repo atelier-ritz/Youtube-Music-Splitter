@@ -108,9 +108,7 @@ export class AudioPlayer {
     
     if (this.audioContext.state === 'suspended') {
       try {
-        console.log('AudioContext is suspended, attempting to resume...');
         await this.audioContext.resume();
-        console.log('AudioContext resumed successfully, state:', this.audioContext.state);
         
         // iOS-specific: Create a silent buffer and play it to "unlock" audio
         if (this.isIOSDevice()) {
@@ -152,7 +150,7 @@ export class AudioPlayer {
       // Play the silent buffer
       source.start(0);
       
-      console.log('iOS audio unlocked');
+
     } catch (error) {
       console.warn('Failed to unlock iOS audio:', error);
     }
@@ -164,25 +162,11 @@ export class AudioPlayer {
   private checkIOSAudioPlayback(): void {
     if (!this.audioContext || !this.isPlaying) return;
     
-    console.log('iOS Audio Playback Check:', {
-      contextState: this.audioContext.state,
-      isPlaying: this.isPlaying,
-      currentPosition: this.currentPosition,
-      tracksCount: this.audioTracks.size,
-      contextCurrentTime: this.audioContext.currentTime
-    });
-    
     // Check if any tracks have gain > 0 (not muted)
     let hasAudibleTracks = false;
     this.audioTracks.forEach((audioTrack) => {
       if (audioTrack.gainNode.gain.value > 0) {
         hasAudibleTracks = true;
-        console.log(`iOS Track ${audioTrack.track.name}:`, {
-          gain: audioTrack.gainNode.gain.value,
-          pan: audioTrack.panNode.pan.value,
-          muted: audioTrack.track.muted,
-          soloed: audioTrack.track.soloed
-        });
       }
     });
     
@@ -197,7 +181,6 @@ export class AudioPlayer {
    */
   public testIOSAudio(): void {
     if (!this.isIOSDevice()) {
-      console.log('Not an iOS device');
       return;
     }
     
@@ -212,13 +195,9 @@ export class AudioPlayer {
         return;
       }
       
-      console.log('iOS Audio Test - AudioContext state:', this.audioContext.state);
-      
       // Resume context
       this.audioContext.resume().then(() => {
         if (!this.audioContext) return;
-        
-        console.log('AudioContext resumed, state:', this.audioContext.state);
         
         // Create a test tone
         const oscillator = this.audioContext.createOscillator();
@@ -235,7 +214,6 @@ export class AudioPlayer {
         // Stop after 1 second
         setTimeout(() => {
           oscillator.stop();
-          console.log('iOS Audio Test completed');
         }, 1000);
         
       }).catch(error => {
@@ -321,12 +299,7 @@ export class AudioPlayer {
 
           // iOS-specific: Log audio buffer details for debugging
           if (this.isIOSDevice()) {
-            console.log(`iOS Audio Debug - ${track.name}:`, {
-              duration: audioBuffer.duration,
-              sampleRate: audioBuffer.sampleRate,
-              numberOfChannels: audioBuffer.numberOfChannels,
-              length: audioBuffer.length
-            });
+            // Audio buffer loaded successfully for iOS
           }
 
           if (!audioBuffer || audioBuffer.length === 0) {
@@ -404,34 +377,24 @@ export class AudioPlayer {
    * Start playback from current position
    */
   play(): void {
-    console.log('🎵 AudioPlayer.play() called');
-    
     if (!this.audioContext || this.audioTracks.size === 0) {
-      console.error('🎵 Cannot play: no AudioContext or no tracks loaded');
       throw new Error('No tracks loaded');
     }
 
     if (this.isPlaying) {
-      console.log('🎵 Already playing, ignoring play request');
       return; // Already playing
     }
-
-    console.log('🎵 AudioContext state:', this.audioContext.state);
-    console.log('🎵 Number of tracks loaded:', this.audioTracks.size);
 
     // CRITICAL: Resume AudioContext synchronously in user gesture context
     // This prevents "user agent denied" errors from browser autoplay policies
     if (this.audioContext.state === 'suspended') {
-      console.log('🎵 AudioContext suspended, resuming...');
       this.audioContext.resume().then(() => {
-        console.log('🎵 AudioContext resumed successfully, starting playback');
         this.startPlaybackInternal();
       }).catch(error => {
-        console.error('🎵 Failed to resume AudioContext:', error);
+        console.error('Failed to resume AudioContext:', error);
         throw new Error('AudioContext resume failed - user interaction may be required');
       });
     } else {
-      console.log('🎵 AudioContext already running, starting playback immediately');
       // AudioContext is already running, start playback immediately
       this.startPlaybackInternal();
     }
@@ -441,14 +404,10 @@ export class AudioPlayer {
    * Internal method to start playback (called after AudioContext is confirmed running)
    */
   private startPlaybackInternal(): void {
-    console.log('🎵 startPlaybackInternal() called');
-    
     this.isPlaying = true;
     this.startTime = this.audioContext!.currentTime;
     // Remember where we started playing from
     this.lastPlayStartPosition = this.currentPosition;
-
-    console.log('🎵 Playback state set, checking tracks...');
 
     // Set up timing for the playback method being used
     if (this.playbackRate === 1.0) {
@@ -462,32 +421,17 @@ export class AudioPlayer {
     }
 
     // Create and start source nodes for all tracks
-    let audibleTrackCount = 0;
-    this.audioTracks.forEach((audioTrack, trackId) => {
-      console.log(`🎵 Setting up track "${audioTrack.track.name}":`, {
-        muted: audioTrack.track.muted,
-        soloed: audioTrack.track.soloed,
-        volume: audioTrack.track.volume,
-        gainValue: audioTrack.gainNode.gain.value,
-        panValue: audioTrack.panNode.pan.value,
-        hasBuffer: !!audioTrack.buffer,
-        bufferDuration: audioTrack.buffer?.duration
-      });
-
-      if (audioTrack.gainNode.gain.value > 0) {
-        audibleTrackCount++;
-        console.log(`✅ Track "${audioTrack.track.name}" is audible (gain: ${audioTrack.gainNode.gain.value})`);
-      } else {
-        console.warn(`❌ Track "${audioTrack.track.name}" is silent (gain: ${audioTrack.gainNode.gain.value})`);
-      }
-
+    this.audioTracks.forEach((audioTrack) => {
       if (this.playbackRate === 1.0) {
         // Use direct Web Audio API for normal speed (no processing needed)
         const source = this.audioContext!.createBufferSource();
         source.buffer = audioTrack.buffer;
         source.connect(audioTrack.gainNode);
         
-        console.log(`🎵 Starting source for track "${audioTrack.track.name}" from position ${this.currentPosition}`);
+        // iOS-specific: Log audio start details
+        if (this.isIOSDevice()) {
+          // Audio starting for iOS device
+        }
         
         // Start from current position
         source.start(0, this.currentPosition);
@@ -504,14 +448,6 @@ export class AudioPlayer {
         this.setupSoundTouchPlayback(audioTrack);
       }
     });
-
-    console.log(`🎵 Playback started with ${audibleTrackCount} audible tracks out of ${this.audioTracks.size} total`);
-
-    if (audibleTrackCount === 0) {
-      console.error('⚠️ NO AUDIBLE TRACKS! All tracks have zero gain - this is why you can\'t hear audio');
-    } else {
-      console.log(`✅ ${audibleTrackCount} tracks should be audible`);
-    }
 
     // Start position updates
     this.startPositionUpdates();

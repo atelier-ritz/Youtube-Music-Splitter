@@ -67,7 +67,6 @@ const TrackView: React.FC<TrackViewProps> = ({
     
     // Debug: Check track URLs when tracks change
     if (tracks.length > 0) {
-      console.log('🎵 TrackView: Tracks loaded, checking URLs...');
       checkTrackUrls(tracks);
     }
   }, [tracks]);
@@ -165,16 +164,10 @@ const TrackView: React.FC<TrackViewProps> = ({
 
   // Handle play/pause
   const handlePlayPause = async () => {
-    console.log('🎵 Play/Pause button clicked! Current state - isPlaying:', isPlaying);
-    console.log('🎵 trackStates.length:', trackStates.length);
-    console.log('🎵 isLoading:', isLoading);
-    console.log('🎵 loadError:', loadError);
-    
     try {
       // CRITICAL: Handle AudioContext resume synchronously in user gesture context
       // This prevents browser autoplay policy blocks
       if (loadError && loadError.includes('AudioContext')) {
-        console.log('🎵 Reloading tracks due to AudioContext error...');
         // Try to reload tracks if there was an AudioContext error
         setLoadError(null);
         setIsLoading(true);
@@ -185,17 +178,15 @@ const TrackView: React.FC<TrackViewProps> = ({
       }
       
       if (isPlaying) {
-        console.log('🎵 Pausing...');
         audioPlayer.pause();
         setIsPlaying(false);
       } else {
-        console.log('🎵 Starting playback...');
         // Call play() directly in the user gesture context - no await here!
         audioPlayer.play();
         setIsPlaying(true);
       }
     } catch (error) {
-      console.error('🎵 Playback error:', error);
+      console.error('Playback error:', error);
       
       // Check if it's an autoplay policy error
       if (error instanceof Error && error.message.includes('user agent')) {
@@ -216,11 +207,9 @@ const TrackView: React.FC<TrackViewProps> = ({
   // Handle go to beginning
   const handleGoToBeginning = () => {
     try {
-      console.log('Go to beginning clicked - current position:', currentPosition);
       audioPlayer.seek(0);
       // Force update the UI position immediately
       setCurrentPosition(0);
-      console.log('Seek to 0 completed - position set to 0');
     } catch (error) {
       console.error('Seek to beginning error:', error);
     }
@@ -506,23 +495,17 @@ const TrackView: React.FC<TrackViewProps> = ({
 
   if (isLoading) {
     const handleInitializeAudioFromLoading = async () => {
-      console.log('🎵 Initialize Audio button clicked');
       try {
         // Force AudioContext initialization with user interaction
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-        console.log('🎵 Creating temporary AudioContext...');
         const tempContext = new AudioContextClass();
         
-        console.log('🎵 AudioContext state:', tempContext.state);
         if (tempContext.state === 'suspended') {
-          console.log('🎵 Resuming suspended AudioContext...');
           await tempContext.resume();
-          console.log('🎵 AudioContext resumed, new state:', tempContext.state);
         }
         
         // Close temp context
         await tempContext.close();
-        console.log('🎵 Temporary AudioContext closed');
         
         // Clear the prompt and timeout
         setShowAudioInitPrompt(false);
@@ -530,7 +513,6 @@ const TrackView: React.FC<TrackViewProps> = ({
           clearTimeout(loadingTimeoutRef.current);
         }
         
-        console.log('🎵 Triggering audio player re-initialization...');
         // Force re-initialization by incrementing forceReload
         setForceReload(prev => prev + 1);
       } catch (error) {
@@ -690,11 +672,7 @@ const TrackView: React.FC<TrackViewProps> = ({
             </button>
             <button 
               className={`daw-transport-btn daw-transport-btn--play ${isPlaying ? 'daw-transport-btn--playing' : ''}`}
-              onClick={(e) => {
-                console.log('🎵 Play button clicked! Event:', e);
-                console.log('🎵 Button disabled?', e.currentTarget.disabled);
-                handlePlayPause();
-              }}
+              onClick={handlePlayPause}
               disabled={trackStates.length === 0}
               title={isPlaying ? 'Pause (Spacebar)' : 'Play (Spacebar)'}
             >

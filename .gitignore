@@ -62,3 +62,11 @@ Thumbs.db
 *.m4a
 *.flac
 *.ogg
+
+# Audio processing service runtime data
+audio-processing-service/jobs/
+audio-processing-service/uploads/
+audio-processing-service/outputs/
+
+# Backend temporary files
+backend/temp/
