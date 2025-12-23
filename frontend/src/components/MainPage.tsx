@@ -207,7 +207,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
   };
 
   const pollProcessingStatus = async (jobId: string) => {
-    const maxAttempts = 120; // 10 minutes with 5-second intervals
+    const maxAttempts = 60; // 10 minutes with 10-second intervals
     let attempts = 0;
 
     const poll = async () => {
@@ -257,7 +257,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
         if (status === 'processing') {
           attempts++;
           if (attempts < maxAttempts) {
-            setTimeout(poll, 2000); // Poll every 2 seconds for more responsive updates
+            setTimeout(poll, 10000); // Poll every 10 seconds
           } else {
             setDownloadStatus({
               status: 'error',
@@ -281,7 +281,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
   };
 
   const pollDownloadStatus = async (jobId: string) => {
-    const maxAttempts = 60; // 5 minutes with 5-second intervals
+    const maxAttempts = 30; // 5 minutes with 10-second intervals
     let attempts = 0;
 
     const poll = async () => {
@@ -337,7 +337,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
         if (status === 'downloading' || status === 'processing') {
           attempts++;
           if (attempts < maxAttempts) {
-            setTimeout(poll, 5000); // Poll every 5 seconds to avoid rate limiting
+            setTimeout(poll, 10000); // Poll every 10 seconds
           } else {
             setDownloadStatus({
               status: 'error',
