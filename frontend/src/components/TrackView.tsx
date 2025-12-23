@@ -165,10 +165,16 @@ const TrackView: React.FC<TrackViewProps> = ({
 
   // Handle play/pause
   const handlePlayPause = async () => {
+    console.log('🎵 Play/Pause button clicked! Current state - isPlaying:', isPlaying);
+    console.log('🎵 trackStates.length:', trackStates.length);
+    console.log('🎵 isLoading:', isLoading);
+    console.log('🎵 loadError:', loadError);
+    
     try {
       // CRITICAL: Handle AudioContext resume synchronously in user gesture context
       // This prevents browser autoplay policy blocks
       if (loadError && loadError.includes('AudioContext')) {
+        console.log('🎵 Reloading tracks due to AudioContext error...');
         // Try to reload tracks if there was an AudioContext error
         setLoadError(null);
         setIsLoading(true);
@@ -179,15 +185,17 @@ const TrackView: React.FC<TrackViewProps> = ({
       }
       
       if (isPlaying) {
+        console.log('🎵 Pausing...');
         audioPlayer.pause();
         setIsPlaying(false);
       } else {
+        console.log('🎵 Starting playback...');
         // Call play() directly in the user gesture context - no await here!
         audioPlayer.play();
         setIsPlaying(true);
       }
     } catch (error) {
-      console.error('Playback error:', error);
+      console.error('🎵 Playback error:', error);
       
       // Check if it's an autoplay policy error
       if (error instanceof Error && error.message.includes('user agent')) {
@@ -682,7 +690,11 @@ const TrackView: React.FC<TrackViewProps> = ({
             </button>
             <button 
               className={`daw-transport-btn daw-transport-btn--play ${isPlaying ? 'daw-transport-btn--playing' : ''}`}
-              onClick={handlePlayPause}
+              onClick={(e) => {
+                console.log('🎵 Play button clicked! Event:', e);
+                console.log('🎵 Button disabled?', e.currentTarget.disabled);
+                handlePlayPause();
+              }}
               disabled={trackStates.length === 0}
               title={isPlaying ? 'Pause (Spacebar)' : 'Play (Spacebar)'}
             >

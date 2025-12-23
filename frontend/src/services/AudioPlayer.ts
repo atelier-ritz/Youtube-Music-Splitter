@@ -404,24 +404,34 @@ export class AudioPlayer {
    * Start playback from current position
    */
   play(): void {
+    console.log('🎵 AudioPlayer.play() called');
+    
     if (!this.audioContext || this.audioTracks.size === 0) {
+      console.error('🎵 Cannot play: no AudioContext or no tracks loaded');
       throw new Error('No tracks loaded');
     }
 
     if (this.isPlaying) {
+      console.log('🎵 Already playing, ignoring play request');
       return; // Already playing
     }
+
+    console.log('🎵 AudioContext state:', this.audioContext.state);
+    console.log('🎵 Number of tracks loaded:', this.audioTracks.size);
 
     // CRITICAL: Resume AudioContext synchronously in user gesture context
     // This prevents "user agent denied" errors from browser autoplay policies
     if (this.audioContext.state === 'suspended') {
+      console.log('🎵 AudioContext suspended, resuming...');
       this.audioContext.resume().then(() => {
+        console.log('🎵 AudioContext resumed successfully, starting playback');
         this.startPlaybackInternal();
       }).catch(error => {
-        console.error('Failed to resume AudioContext:', error);
+        console.error('🎵 Failed to resume AudioContext:', error);
         throw new Error('AudioContext resume failed - user interaction may be required');
       });
     } else {
+      console.log('🎵 AudioContext already running, starting playback immediately');
       // AudioContext is already running, start playback immediately
       this.startPlaybackInternal();
     }
@@ -431,10 +441,14 @@ export class AudioPlayer {
    * Internal method to start playback (called after AudioContext is confirmed running)
    */
   private startPlaybackInternal(): void {
+    console.log('🎵 startPlaybackInternal() called');
+    
     this.isPlaying = true;
     this.startTime = this.audioContext!.currentTime;
     // Remember where we started playing from
     this.lastPlayStartPosition = this.currentPosition;
+
+    console.log('🎵 Playback state set, checking tracks...');
 
     // Set up timing for the playback method being used
     if (this.playbackRate === 1.0) {
@@ -448,23 +462,32 @@ export class AudioPlayer {
     }
 
     // Create and start source nodes for all tracks
-    this.audioTracks.forEach((audioTrack) => {
+    let audibleTrackCount = 0;
+    this.audioTracks.forEach((audioTrack, trackId) => {
+      console.log(`🎵 Setting up track "${audioTrack.track.name}":`, {
+        muted: audioTrack.track.muted,
+        soloed: audioTrack.track.soloed,
+        volume: audioTrack.track.volume,
+        gainValue: audioTrack.gainNode.gain.value,
+        panValue: audioTrack.panNode.pan.value,
+        hasBuffer: !!audioTrack.buffer,
+        bufferDuration: audioTrack.buffer?.duration
+      });
+
+      if (audioTrack.gainNode.gain.value > 0) {
+        audibleTrackCount++;
+        console.log(`✅ Track "${audioTrack.track.name}" is audible (gain: ${audioTrack.gainNode.gain.value})`);
+      } else {
+        console.warn(`❌ Track "${audioTrack.track.name}" is silent (gain: ${audioTrack.gainNode.gain.value})`);
+      }
+
       if (this.playbackRate === 1.0) {
         // Use direct Web Audio API for normal speed (no processing needed)
         const source = this.audioContext!.createBufferSource();
         source.buffer = audioTrack.buffer;
         source.connect(audioTrack.gainNode);
         
-        // iOS-specific: Log audio start details
-        if (this.isIOSDevice()) {
-          console.log(`iOS Audio Start - ${audioTrack.track.name}:`, {
-            contextState: this.audioContext!.state,
-            currentTime: this.audioContext!.currentTime,
-            startPosition: this.currentPosition,
-            gainValue: audioTrack.gainNode.gain.value,
-            panValue: audioTrack.panNode.pan.value
-          });
-        }
+        console.log(`🎵 Starting source for track "${audioTrack.track.name}" from position ${this.currentPosition}`);
         
         // Start from current position
         source.start(0, this.currentPosition);
@@ -481,6 +504,14 @@ export class AudioPlayer {
         this.setupSoundTouchPlayback(audioTrack);
       }
     });
+
+    console.log(`🎵 Playback started with ${audibleTrackCount} audible tracks out of ${this.audioTracks.size} total`);
+
+    if (audibleTrackCount === 0) {
+      console.error('⚠️ NO AUDIBLE TRACKS! All tracks have zero gain - this is why you can\'t hear audio');
+    } else {
+      console.log(`✅ ${audibleTrackCount} tracks should be audible`);
+    }
 
     // Start position updates
     this.startPositionUpdates();
