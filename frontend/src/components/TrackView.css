@@ -48,7 +48,49 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+}
+
+/* Mobile landscape optimizations */
+@media screen and (max-width: 1024px) and (orientation: landscape) {
+  .daw-interface {
+    /* Optimize for mobile landscape */
+    --daw-toolbar-height: 50px;
+    --daw-ruler-height: 35px;
+    --daw-track-height: 55px;
+    --daw-track-header-width: 140px;
+    --daw-transport-btn-size: 32px;
+    --daw-track-btn-size: 18px;
+  }
+  
+  /* Smaller fonts for mobile */
+  .daw-toolbar {
+    font-size: 0.9rem;
+  }
+  
+  .daw-track-name {
+    font-size: 0.85rem;
+  }
+  
+  /* Adjust spacing for mobile */
+  .daw-transport-controls {
+    gap: 8px;
+  }
+  
+  .daw-track-controls {
+    gap: 4px;
+  }
+}
+
+/* Very small mobile devices in landscape */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .daw-interface {
+    --daw-toolbar-height: 45px;
+    --daw-ruler-height: 30px;
+    --daw-track-height: 45px;
+    --daw-track-header-width: 120px;
+    --daw-transport-btn-size: 28px;
+    --daw-track-btn-size: 16px;
+  }
 }
 
 /* DAW Toolbar */

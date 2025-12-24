@@ -1,0 +1,83 @@
+.orientation-prompt {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  color: white;
+}
+
+.orientation-prompt__content {
+  text-align: center;
+  padding: 2rem;
+  max-width: 90%;
+}
+
+.orientation-prompt__icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: rotate-hint 2s ease-in-out infinite;
+}
+
+@keyframes rotate-hint {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(90deg); }
+}
+
+.orientation-prompt h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  color: #ffffff;
+}
+
+.orientation-prompt p {
+  font-size: 1.1rem;
+  line-height: 1.5;
+  margin-bottom: 2rem;
+  color: #cccccc;
+}
+
+.orientation-prompt__button {
+  background: linear-gradient(135deg, #646cff 0%, #535bf2 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.orientation-prompt__button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.3);
+}
+
+.orientation-prompt__instruction {
+  margin-top: 1rem;
+}
+
+.orientation-prompt__instruction small {
+  color: #999999;
+  font-size: 0.9rem;
+}
+
+/* Hide the prompt in landscape mode */
+@media (orientation: landscape) {
+  .orientation-prompt {
+    display: none;
+  }
+}
+
+/* Also hide on desktop/large screens */
+@media (min-width: 1025px) {
+  .orientation-prompt {
+    display: none;
+  }
+}

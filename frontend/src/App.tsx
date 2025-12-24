@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import MainPage from './components/MainPage'
 import TrackView from './components/TrackView'
+import OrientationPrompt from './components/OrientationPrompt'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { AudioErrorBoundary } from './components/AudioErrorBoundary'
 import ToastContainer from './components/ToastContainer'
@@ -58,36 +59,40 @@ function App() {
 
   if (appState.currentView === 'tracks') {
     return (
-      <ErrorBoundary>
-        <AudioErrorBoundary 
-          onReset={handleBackToMain}
-          onRetry={() => {
-            // Clear tracks and retry loading
-            setAppState(prev => ({ ...prev, tracks: [] }));
-            showInfo('Retrying...', 'Attempting to reload audio tracks');
-          }}
-        >
-          <TrackView
-            tracks={appState.tracks}
-            bpm={appState.bpm}
-            title={appState.title}
-            onBack={handleBackToMain}
-            onShowToast={{ showSuccess, showError, showInfo }}
-          />
-        </AudioErrorBoundary>
-        <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
-      </ErrorBoundary>
+      <OrientationPrompt>
+        <ErrorBoundary>
+          <AudioErrorBoundary 
+            onReset={handleBackToMain}
+            onRetry={() => {
+              // Clear tracks and retry loading
+              setAppState(prev => ({ ...prev, tracks: [] }));
+              showInfo('Retrying...', 'Attempting to reload audio tracks');
+            }}
+          >
+            <TrackView
+              tracks={appState.tracks}
+              bpm={appState.bpm}
+              title={appState.title}
+              onBack={handleBackToMain}
+              onShowToast={{ showSuccess, showError, showInfo }}
+            />
+          </AudioErrorBoundary>
+          <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+        </ErrorBoundary>
+      </OrientationPrompt>
     );
   }
 
   return (
-    <ErrorBoundary>
-      <MainPage 
-        onProcessingComplete={handleProcessingComplete}
-        onShowToast={{ showSuccess, showError, showInfo }}
-      />
-      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
-    </ErrorBoundary>
+    <OrientationPrompt>
+      <ErrorBoundary>
+        <MainPage 
+          onProcessingComplete={handleProcessingComplete}
+          onShowToast={{ showSuccess, showError, showInfo }}
+        />
+        <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+      </ErrorBoundary>
+    </OrientationPrompt>
   );
 }
 
