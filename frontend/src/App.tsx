@@ -84,15 +84,13 @@ function App() {
   }
 
   return (
-    <OrientationPrompt>
-      <ErrorBoundary>
-        <MainPage 
-          onProcessingComplete={handleProcessingComplete}
-          onShowToast={{ showSuccess, showError, showInfo }}
-        />
-        <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
-      </ErrorBoundary>
-    </OrientationPrompt>
+    <ErrorBoundary>
+      <MainPage 
+        onProcessingComplete={handleProcessingComplete}
+        onShowToast={{ showSuccess, showError, showInfo }}
+      />
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+    </ErrorBoundary>
   );
 }
 

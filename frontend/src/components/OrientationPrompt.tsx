@@ -52,16 +52,16 @@ const OrientationPrompt: React.FC<OrientationPromptProps> = ({ children }) => {
           <div className="orientation-prompt__icon">
             📱 ↻
           </div>
-          <h2>Rotate Your Device</h2>
+          <h2>Rotate for DAW View</h2>
           <p>
-            This app works best in landscape mode.<br />
-            Please rotate your device horizontally for the optimal experience.
+            The track mixer works best in landscape mode.<br />
+            Please rotate your device horizontally for the optimal DAW experience.
           </p>
           <button 
             className="orientation-prompt__button"
             onClick={handleRotateClick}
           >
-            Lock Landscape Mode
+            Lock DAW in Landscape
           </button>
           <div className="orientation-prompt__instruction">
             <small>
