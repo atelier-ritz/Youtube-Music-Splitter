@@ -114,6 +114,11 @@ export class AudioPlayer {
         if (this.isIOSDevice()) {
           await this.unlockIOSAudio();
         }
+        
+        // Safari desktop-specific: Additional unlock for strict autoplay policies
+        if (this.isSafariDesktop()) {
+          await this.unlockSafariDesktopAudio();
+        }
       } catch (error) {
         console.error('Failed to resume AudioContext:', error);
         throw new Error('AudioContext is suspended and requires user interaction to resume. Please click to initialize audio.');
@@ -135,6 +140,20 @@ export class AudioPlayer {
   }
 
   /**
+   * Check if running on Safari browser
+   */
+  private isSafari(): boolean {
+    return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  }
+
+  /**
+   * Check if running on Safari desktop (macOS)
+   */
+  private isSafariDesktop(): boolean {
+    return this.isSafari() && !this.isIOSDevice();
+  }
+
+  /**
    * iOS-specific audio unlock - play a silent buffer to enable audio
    */
   private async unlockIOSAudio(): Promise<void> {
@@ -153,6 +172,42 @@ export class AudioPlayer {
 
     } catch (error) {
       console.warn('Failed to unlock iOS audio:', error);
+    }
+  }
+
+  /**
+   * Safari desktop-specific audio unlock - more aggressive unlock for strict policies
+   */
+  private async unlockSafariDesktopAudio(): Promise<void> {
+    if (!this.audioContext) return;
+    
+    try {
+      // Create a longer silent buffer for Safari desktop
+      const buffer = this.audioContext.createBuffer(2, 44100, 44100); // 1 second stereo
+      const source = this.audioContext.createBufferSource();
+      source.buffer = buffer;
+      
+      // Add gain node for Safari compatibility
+      const gainNode = this.audioContext.createGain();
+      gainNode.gain.value = 0.01; // Very quiet but not silent
+      
+      source.connect(gainNode);
+      gainNode.connect(this.audioContext.destination);
+      
+      // Play the buffer
+      source.start(0);
+      
+      // Stop after a short time
+      setTimeout(() => {
+        try {
+          source.stop();
+        } catch (e) {
+          // Ignore stop errors
+        }
+      }, 100);
+      
+    } catch (error) {
+      console.warn('Failed to unlock Safari desktop audio:', error);
     }
   }
 
@@ -388,12 +443,23 @@ export class AudioPlayer {
     // CRITICAL: Resume AudioContext synchronously in user gesture context
     // This prevents "user agent denied" errors from browser autoplay policies
     if (this.audioContext.state === 'suspended') {
-      this.audioContext.resume().then(() => {
+      // Safari desktop requires synchronous resume call in user gesture context
+      try {
+        // Call resume synchronously - don't use .then() as it breaks user gesture context
+        const resumePromise = this.audioContext.resume();
+        
+        // Start playback immediately for Safari compatibility
         this.startPlaybackInternal();
-      }).catch(error => {
+        
+        // Handle any resume errors asynchronously (but playback already started)
+        resumePromise.catch(error => {
+          console.error('AudioContext resume warning:', error);
+          // Don't throw here as playback might still work
+        });
+      } catch (error) {
         console.error('Failed to resume AudioContext:', error);
         throw new Error('AudioContext resume failed - user interaction may be required');
-      });
+      }
     } else {
       // AudioContext is already running, start playback immediately
       this.startPlaybackInternal();
@@ -427,6 +493,11 @@ export class AudioPlayer {
         const source = this.audioContext!.createBufferSource();
         source.buffer = audioTrack.buffer;
         source.connect(audioTrack.gainNode);
+        
+        // Safari desktop-specific: Additional audio start logging
+        if (this.isSafariDesktop()) {
+          // Safari desktop audio starting
+        }
         
         // iOS-specific: Log audio start details
         if (this.isIOSDevice()) {
