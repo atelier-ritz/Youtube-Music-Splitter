@@ -14,9 +14,9 @@
   --daw-toolbar-height: 50px;
   --daw-ruler-height: 35px;
   --daw-track-height: 55px;
-  --daw-track-header-width: 120px;
-  --daw-transport-btn-size: 36px;
-  --daw-track-btn-size: 18px;
+  --daw-track-header-width: 140px; /* Increased for full track names */
+  --daw-transport-btn-size: 32px;
+  --daw-track-btn-size: 18px; /* Smaller buttons */
 
   --daw-waveform-height: calc(var(--daw-track-height) - 8px);
   
@@ -98,7 +98,7 @@
     --daw-ruler-height: 30px;
     --daw-track-height: 45px;
     --daw-track-header-width: 120px;
-    --daw-transport-btn-size: 28px;
+    --daw-transport-btn-size: 32px;
     --daw-track-btn-size: 16px;
   }
 }
@@ -156,7 +156,7 @@
   font-size: 14px;
   font-weight: bold;
   width: 124px;
-  height: 44px;
+  height: 32px;
   text-align: center;
   transition: all 0.2s ease;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
@@ -188,7 +188,7 @@
   font-size: 14px;
   font-weight: bold;
   width: 124px;
-  height: 44px;
+  height: 32px;
   text-align: center;
   outline: none;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 255, 0, 0.5);
@@ -216,7 +216,7 @@
   padding: 8px 12px;
   border-radius: 6px;
   min-width: 60px;
-  height: 28px;
+  height: 32px;
 }
 
 .daw-speed-value {
@@ -256,7 +256,7 @@
   font-size: 14px;
   font-weight: bold;
   width: 60px;
-  height: 28px;
+  height: 32px;
   text-align: center;
   outline: none;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 255, 0, 0.5);
@@ -288,7 +288,7 @@
   font-size: 14px;
   font-weight: bold;
   width: 70px;
-  height: 28px;
+  height: 32px;
   text-align: center;
   outline: none;
   text-shadow: 0 0 4px rgba(0, 255, 0, 0.3);
@@ -316,7 +316,7 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
-  height: 28px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -433,7 +433,7 @@
   border-radius: 6px;
   min-width: 60px;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
-  height: 28px;
+  height: 32px;
   position: relative; /* For positioning the indicator dot */
 }
 
@@ -495,7 +495,7 @@
   border-radius: 6px;
   min-width: 40px;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
-  height: 28px;
+  height: 32px;
 }
 
 .daw-signature-value {
@@ -759,8 +759,8 @@
   color: white;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible; /* Show full text */
+  text-overflow: clip; /* Don't truncate */
   text-align: left;
   flex: 1;
   margin-right: 8px;
@@ -774,26 +774,26 @@
 
 /* Enhanced mobile-first track controls */
 .daw-track-btn {
-  width: var(--daw-track-btn-size);
-  height: var(--daw-track-btn-size);
+  width: 18px; /* Smaller buttons */
+  height: 18px; /* Smaller buttons */
   border: none;
   border-radius: var(--border-radius-sm);
   background: #4a4d5a;
   color: white;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 9px; /* Smaller font */
   font-weight: bold;
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* Smaller shadow */
   display: flex;
   align-items: center;
   justify-content: center;
   
-  /* Touch-friendly sizing */
-  min-width: var(--touch-target-min);
-  min-height: var(--touch-target-min);
+  /* Touch-friendly sizing - but smaller for desktop */
+  min-width: 18px;
+  min-height: 18px;
   
   /* Improve touch interaction */
   touch-action: manipulation;
@@ -1318,8 +1318,8 @@
     --daw-toolbar-height: 55px;
     --daw-ruler-height: 38px;
     --daw-track-height: 60px;
-    --daw-track-header-width: 140px;
-    --daw-transport-btn-size: 38px;
+    --daw-track-header-width: 160px; /* Wider for full names */
+    --daw-transport-btn-size: 32px;
     --daw-track-btn-size: 20px;
   }
   
@@ -1340,6 +1340,12 @@
   .daw-track-name {
     font-size: 13px;
   }
+  
+  .daw-track-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
 }
 
 /* Medium devices (768px and up) - Tablets */
@@ -1348,8 +1354,8 @@
     --daw-toolbar-height: 60px;
     --daw-ruler-height: 40px;
     --daw-track-height: 66px;
-    --daw-track-header-width: 160px;
-    --daw-transport-btn-size: 40px;
+    --daw-track-header-width: 180px; /* Even wider for desktop */
+    --daw-transport-btn-size: 32px;
     --daw-track-btn-size: 22px;
   }
   
@@ -1392,6 +1398,12 @@
   .daw-track-controls {
     gap: var(--spacing-sm);
   }
+  
+  .daw-track-btn {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
 }
 
 /* Large devices (1024px and up) - Desktops */
@@ -1400,8 +1412,8 @@
     --daw-toolbar-height: 65px;
     --daw-ruler-height: 42px;
     --daw-track-height: 70px;
-    --daw-track-header-width: 180px;
-    --daw-transport-btn-size: 42px;
+    --daw-track-header-width: 200px; /* Widest for desktop */
+    --daw-transport-btn-size: 32px;
     --daw-track-btn-size: 24px;
   }
   
@@ -1442,6 +1454,12 @@
   .daw-track-name {
     font-size: 15px;
   }
+  
+  .daw-track-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
 }
 
 /* Extra large devices (1200px and up) */
@@ -1449,13 +1467,19 @@
   .daw-interface {
     --daw-toolbar-height: 70px;
     --daw-track-height: 75px;
-    --daw-track-header-width: 200px;
-    --daw-transport-btn-size: 44px;
+    --daw-track-header-width: 220px; /* Maximum width for full names */
+    --daw-transport-btn-size: 32px;
     --daw-track-btn-size: 26px;
   }
   
   .daw-track-name {
     font-size: 16px;
+  }
+  
+  .daw-track-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
   }
 }
 
@@ -1463,7 +1487,20 @@
 @media (pointer: coarse) {
   .daw-interface {
     --daw-transport-btn-size: var(--touch-target-comfortable);
-    --daw-track-btn-size: var(--touch-target-min);
+    --daw-track-btn-size: var(--touch-target-min); /* Keep minimum touch size */
+  }
+  
+  /* Adjust other toolbar elements for better alignment with larger transport buttons on touch */
+  .daw-time-display,
+  .daw-timestamp-input {
+    height: 44px;
+  }
+  
+  .daw-speed-window,
+  .daw-bpm-window,
+  .daw-signature-window,
+  .daw-back-button {
+    height: 40px; /* Slightly larger but not as big as transport buttons */
   }
   
   .daw-transport-btn {
@@ -1472,8 +1509,11 @@
   }
   
   .daw-track-btn {
-    min-width: var(--touch-target-min);
+    min-width: var(--touch-target-min); /* 44px minimum for touch */
     min-height: var(--touch-target-min);
+    width: var(--touch-target-min);
+    height: var(--touch-target-min);
+    font-size: 14px; /* Larger font for touch */
   }
   
   .daw-time-display--clickable {
@@ -1529,7 +1569,7 @@
     --daw-ruler-height: 30px;
     --daw-track-height: 50px;
     --daw-track-header-width: 120px;
-    --daw-transport-btn-size: 36px;
+    --daw-transport-btn-size: 32px;
     --daw-track-btn-size: 18px;
   }
   
@@ -1550,7 +1590,7 @@
     --daw-ruler-height: 30px;
     --daw-track-height: 50px;
     --daw-track-header-width: 100px;
-    --daw-transport-btn-size: 34px;
+    --daw-transport-btn-size: 32px;
     --daw-track-btn-size: 16px;
     font-size: 12px;
   }
