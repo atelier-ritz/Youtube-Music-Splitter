@@ -1,3 +1,7 @@
+/* Import responsive utilities */
+@import './styles/responsive.css';
+@import './styles/mixins.css';
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -11,6 +15,11 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Enhanced mobile-first responsive base */
+  --base-font-size: 16px;
+  --base-line-height: 1.5;
+  --base-letter-spacing: 0.01em;
 }
 
 a {
@@ -22,12 +31,24 @@ a:hover {
   color: #535bf2;
 }
 
+/* Enhanced mobile-first body styles */
 body {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100vh;
   overflow: hidden;
+  font-size: var(--base-font-size);
+  line-height: var(--base-line-height);
+  letter-spacing: var(--base-letter-spacing);
+  
+  /* Improve text rendering on mobile */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  
+  /* Prevent horizontal scrolling on mobile */
+  overflow-x: hidden;
 }
 
 html {
@@ -35,6 +56,10 @@ html {
   padding: 0;
   width: 100%;
   height: 100%;
+  
+  /* Improve scrolling on mobile */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
 h1 {
@@ -42,8 +67,9 @@ h1 {
   line-height: 1.1;
 }
 
+/* Enhanced mobile-first button styles */
 button {
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
   font-size: 1em;
@@ -52,13 +78,39 @@ button {
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
+  
+  /* Touch-friendly sizing */
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  
+  /* Improve touch interaction */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Better focus for accessibility */
+  outline-offset: 2px;
 }
+
 button:hover {
   border-color: #646cff;
 }
+
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid #646cff;
+  outline-offset: 2px;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+/* Touch device optimizations */
+@media (pointer: coarse) {
+  button {
+    min-height: var(--touch-target-comfortable);
+    padding: 0.8em 1.4em;
+  }
 }
 
 @media (prefers-color-scheme: light) {

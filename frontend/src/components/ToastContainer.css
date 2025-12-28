@@ -1,11 +1,11 @@
-/* Toast Container Styles */
+/* Enhanced mobile-first toast container positioning */
 .toast-container {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
   z-index: 9999;
   pointer-events: none; /* Allow clicks to pass through container */
-  max-height: calc(100vh - 40px);
+  max-height: calc(100vh - calc(var(--spacing-md) * 2));
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -15,20 +15,42 @@
   pointer-events: auto; /* Re-enable pointer events for toast items */
 }
 
-/* Responsive positioning */
-@media (max-width: 768px) {
+/* Enhanced mobile-first responsive positioning */
+
+/* Small devices (480px and up) */
+@media (min-width: 480px) {
   .toast-container {
-    top: 10px;
-    right: 10px;
-    left: 10px;
-    max-height: calc(100vh - 20px);
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    max-height: calc(100vh - calc(var(--spacing-lg) * 2));
   }
 }
 
-@media (max-width: 480px) {
+/* Medium devices (768px and up) - Tablets */
+@media (min-width: 768px) {
   .toast-container {
-    top: 5px;
-    right: 5px;
-    left: 5px;
+    top: var(--spacing-xl);
+    right: var(--spacing-xl);
+    left: auto;
+    max-height: calc(100vh - calc(var(--spacing-xl) * 2));
+  }
+}
+
+/* Large devices (1024px and up) - Desktops */
+@media (min-width: 1024px) {
+  .toast-container {
+    top: var(--spacing-xxl);
+    right: var(--spacing-xxl);
+    max-height: calc(100vh - calc(var(--spacing-xxl) * 2));
+  }
+}
+
+/* Very small mobile devices */
+@media (max-width: 320px) {
+  .toast-container {
+    top: var(--spacing-xs);
+    right: var(--spacing-xs);
+    left: var(--spacing-xs);
+    max-height: calc(100vh - calc(var(--spacing-xs) * 2));
   }
 }

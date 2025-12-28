@@ -136,18 +136,61 @@
   pointer-events: none;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+/* Enhanced mobile-first responsive adjustments */
+@media (min-width: 480px) {
   .waveform-visualization {
-    height: 60px;
+    height: 65px;
   }
   
   .waveform-bar {
-    min-height: 1px;
+    min-height: 2px;
   }
   
   .waveform-empty {
-    font-size: 10px;
+    font-size: 11px;
+  }
+}
+
+@media (min-width: 768px) {
+  .waveform-visualization {
+    height: 70px;
+  }
+  
+  .waveform-bar {
+    min-height: 2px;
+  }
+  
+  .waveform-empty {
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .waveform-visualization {
+    height: 75px;
+  }
+  
+  .waveform-empty {
+    font-size: 13px;
+  }
+}
+
+/* Touch device optimizations */
+@media (pointer: coarse) {
+  .waveform-visualization {
+    /* Increase touch target area */
+    min-height: var(--touch-target-min);
+    cursor: pointer;
+  }
+  
+  .waveform-visualization:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Improve visual feedback for touch */
+  .waveform-visualization:active {
+    background: rgba(0, 0, 0, 0.25);
+    transform: scale(0.99);
   }
 }
 

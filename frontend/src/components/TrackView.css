@@ -1,4 +1,4 @@
-/* DAW Interface - Full Screen Layout */
+/* Enhanced mobile-first DAW Interface */
 .daw-interface {
   /* Override global body and root styles for full-screen */
   position: fixed;
@@ -10,15 +10,15 @@
   margin: 0;
   padding: 0;
   
-  /* CSS Custom Properties for flexible sizing */
-  --daw-toolbar-height: 60px;
-  --daw-ruler-height: 40px;
-  --daw-track-height: 66px;
-  --daw-track-header-width: 180px;
+  /* CSS Custom Properties for flexible sizing - Mobile First */
+  --daw-toolbar-height: 50px;
+  --daw-ruler-height: 35px;
+  --daw-track-height: 55px;
+  --daw-track-header-width: 120px;
   --daw-transport-btn-size: 36px;
-  --daw-track-btn-size: 20px;
+  --daw-track-btn-size: 18px;
 
-  --daw-waveform-height: calc(var(--daw-track-height) - 10px); /* Track height minus small margins */
+  --daw-waveform-height: calc(var(--daw-track-height) - 8px);
   
   /* Colors */
   --daw-bg-primary: #2a2d3a;
@@ -48,6 +48,16 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: flex;
   flex-direction: column;
+  
+  /* Improve mobile performance */
+  -webkit-overflow-scrolling: touch;
+  touch-action: manipulation;
+  
+  /* Prevent text selection on mobile */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 /* Mobile landscape optimizations */
@@ -93,16 +103,27 @@
   }
 }
 
-/* DAW Toolbar */
+/* Enhanced mobile-first toolbar */
 .daw-toolbar {
   background: var(--daw-bg-secondary);
   border-bottom: 1px solid var(--daw-border-color);
-  padding: 8px 16px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  align-items: center;
+  height: auto;
+  min-height: var(--daw-toolbar-height);
+  flex-shrink: 0;
+}
+
+.daw-toolbar__row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: var(--daw-toolbar-height);
-  flex-shrink: 0;
+  width: 100%;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
 .daw-toolbar__left,
@@ -110,7 +131,15 @@
 .daw-toolbar__right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.daw-toolbar__center {
+  order: -1; /* Move transport controls to top on mobile */
+  flex-basis: 100%;
+  justify-content: center;
 }
 
 .daw-timestamp-inspector {
@@ -297,30 +326,38 @@
   background: #5a5d6a;
 }
 
-/* Transport Controls */
+/* Enhanced mobile-first transport controls */
 .daw-transport-controls {
   display: flex;
-  gap: 4px;
+  gap: var(--spacing-xs);
   background: #3a3d4a;
-  padding: 4px;
-  border-radius: 6px;
+  padding: var(--spacing-xs);
+  border-radius: var(--border-radius);
 }
 
 .daw-transport-btn {
-  width: 36px;
-  height: 36px;
+  width: var(--daw-transport-btn-size);
+  height: var(--daw-transport-btn-size);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius-sm);
   background: #4a4d5a;
   color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 12px;
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  
+  /* Touch-friendly sizing */
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  
+  /* Improve touch interaction */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .daw-transport-btn:hover {
@@ -733,15 +770,16 @@
   flex-shrink: 0;
 }
 
+/* Enhanced mobile-first track controls */
 .daw-track-btn {
-  width: 28px;
-  height: 20px;
+  width: var(--daw-track-btn-size);
+  height: var(--daw-track-btn-size);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius-sm);
   background: #4a4d5a;
   color: white;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: bold;
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -750,6 +788,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  /* Touch-friendly sizing */
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  
+  /* Improve touch interaction */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .daw-track-btn:hover {
@@ -997,417 +1043,171 @@
   background: #5a5d6a;
 }
 
-/* Responsive Design */
+/* Enhanced mobile-first responsive design */
 
-/* Large screens (1200px+) */
-@media (min-width: 1200px) {
+/* Small devices (480px and up) */
+@media (min-width: 480px) {
   .daw-interface {
-    --daw-track-header-width: 180px;
-  }
-  
-  .daw-track-name {
-    font-size: 14px;
-  }
-  
-
-}
-
-/* Medium-large screens (1024px - 1199px) */
-@media (max-width: 1199px) and (min-width: 1024px) {
-  .daw-interface {
-    --daw-track-header-width: 180px;
-  }
-}
-
-/* Medium screens (768px - 1023px) */
-@media (max-width: 1023px) and (min-width: 768px) {
-  .daw-interface {
-    --daw-track-header-width: 180px;
+    --daw-toolbar-height: 55px;
+    --daw-ruler-height: 38px;
+    --daw-track-height: 60px;
+    --daw-track-header-width: 140px;
+    --daw-transport-btn-size: 38px;
+    --daw-track-btn-size: 20px;
   }
   
   .daw-toolbar {
-    padding: 6px 12px;
-  }
-  
-  .daw-toolbar__left,
-  .daw-toolbar__center,
-  .daw-toolbar__right {
-    gap: 12px;
-  }
-  
-  .daw-transport-btn {
-    width: 36px;
-    height: 36px;
-  }
-  
-
-}
-
-/* Small-medium screens (640px - 767px) */
-@media (max-width: 767px) and (min-width: 640px) {
-  .daw-interface {
-    font-size: 14px;
-  }
-  
-  .daw-toolbar {
-    flex-wrap: wrap;
-    height: auto;
-    gap: 8px;
-    padding: 8px;
-  }
-  
-  .daw-toolbar__left,
-  .daw-toolbar__center,
-  .daw-toolbar__right {
-    flex: 1;
-    min-width: 200px;
-    justify-content: center;
-    gap: 8px;
+    flex-direction: row;
+    padding: var(--spacing-sm) var(--spacing-md);
   }
   
   .daw-toolbar__center {
-    order: -1;
-    flex-basis: 100%;
+    order: 0;
+    flex-basis: auto;
   }
   
-  .daw-transport-controls {
-    gap: 3px;
-  }
-  
-  .daw-transport-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 12px;
-  }
-  
-  .daw-interface {
-    --daw-track-header-width: 140px;
-  }
-  
-  .daw-track-header {
-    padding: 6px;
-  }
-  
-  .daw-track {
-    height: 70px;
+  .daw-toolbar__row {
+    flex-wrap: nowrap;
   }
   
   .daw-track-name {
-    font-size: 12px;
-  }
-  
-  .daw-track-btn {
-    width: 18px;
-    height: 18px;
-    font-size: 9px;
-  }
-  
-
-  
-  .daw-interface {
-    --daw-waveform-height: calc(var(--daw-track-height) - 8px);
+    font-size: 13px;
   }
 }
 
-/* Small screens (480px - 639px) */
-@media (max-width: 639px) and (min-width: 480px) {
+/* Medium devices (768px and up) - Tablets */
+@media (min-width: 768px) {
   .daw-interface {
-    font-size: 13px;
+    --daw-toolbar-height: 60px;
+    --daw-ruler-height: 40px;
+    --daw-track-height: 66px;
+    --daw-track-header-width: 160px;
+    --daw-transport-btn-size: 40px;
+    --daw-track-btn-size: 22px;
   }
   
   .daw-toolbar {
-    flex-direction: column;
-    height: auto;
-    gap: 6px;
-    padding: 8px;
+    padding: var(--spacing-sm) var(--spacing-lg);
   }
   
   .daw-toolbar__left,
   .daw-toolbar__center,
   .daw-toolbar__right {
-    justify-content: center;
-    gap: 6px;
-  }
-  
-  .daw-time-display {
-    font-size: 12px;
-    padding: 3px 8px;
-    width: 100px;
-  }
-  
-  .daw-timestamp-input {
-    font-size: 12px;
-    padding: 3px 8px;
-    width: 100px;
-  }
-  
-  .daw-speed-window {
-    padding: 4px 8px;
-  }
-  
-  .daw-speed-value {
-    font-size: 12px;
-  }
-  
-  .daw-signature-window {
-    padding: 4px 8px;
-  }
-  
-  .daw-signature-value {
-    font-size: 12px;
+    gap: var(--spacing-md);
   }
   
   .daw-transport-controls {
-    gap: 2px;
-    padding: 3px;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
   }
   
-  .daw-transport-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 11px;
-  }
-  
-  .daw-bpm-window {
-    padding: 4px 8px;
-  }
-  
-  .daw-bpm-value {
+  .daw-track-name {
     font-size: 14px;
   }
   
-  .daw-shortcuts-hint {
-    padding: 4px 6px;
-    min-width: 30px;
-  }
-  
-  .daw-interface {
-    --daw-track-header-width: 120px;
-  }
-  
-  .daw-track-header {
-    padding: 4px;
-    flex-direction: column;
-    gap: 3px;
-  }
-  
-  .daw-track {
-    height: 65px;
-  }
-  
-  .daw-track-number {
-    width: 20px;
-    height: 20px;
-    font-size: 10px;
-  }
-  
-  .daw-track-name {
-    font-size: 11px;
-    margin-bottom: 2px;
-  }
-  
   .daw-track-controls {
-    gap: 2px;
-  }
-  
-  .daw-track-btn {
-    width: 16px;
-    height: 16px;
-    font-size: 8px;
-  }
-  
-
-  
-  .daw-interface {
-    --daw-waveform-height: calc(var(--daw-track-height) - 8px);
-  }
-  
-  .daw-ruler-marker {
-    padding-left: 2px;
-  }
-  
-  .daw-ruler-number {
-    font-size: 9px;
+    gap: var(--spacing-sm);
   }
 }
 
-/* Extra small screens (320px - 479px) */
-@media (max-width: 479px) {
+/* Large devices (1024px and up) - Desktops */
+@media (min-width: 1024px) {
   .daw-interface {
-    font-size: 12px;
+    --daw-toolbar-height: 65px;
+    --daw-ruler-height: 42px;
+    --daw-track-height: 70px;
+    --daw-track-header-width: 180px;
+    --daw-transport-btn-size: 42px;
+    --daw-track-btn-size: 24px;
   }
   
   .daw-toolbar {
-    flex-direction: column;
-    height: auto;
-    gap: 4px;
-    padding: 6px;
+    padding: var(--spacing-md) var(--spacing-lg);
   }
   
   .daw-toolbar__left,
   .daw-toolbar__center,
   .daw-toolbar__right {
-    justify-content: center;
-    gap: 4px;
-    flex-wrap: wrap;
-  }
-  
-  .daw-time-display {
-    font-size: 11px;
-    padding: 2px 6px;
-    width: 85px;
-  }
-  
-  .daw-timestamp-input {
-    font-size: 11px;
-    padding: 2px 6px;
-    width: 85px;
-  }
-  
-  .daw-speed-display {
-    font-size: 11px;
-    padding: 2px 6px;
-    width: 60px;
-  }
-  
-  .daw-speed-input {
-    font-size: 11px;
-    padding: 2px 6px;
-    width: 60px;
-  }
-  
-  .daw-back-button {
-    padding: 0 8px;
-    font-size: 10px;
-    height: 28px;
+    gap: var(--spacing-lg);
   }
   
   .daw-transport-controls {
-    gap: 1px;
-    padding: 2px;
-  }
-  
-  .daw-transport-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 10px;
-  }
-  
-  .daw-bpm-window {
-    padding: 3px 6px;
-  }
-  
-  .daw-bpm-value {
-    font-size: 12px;
-  }
-  
-  .daw-bpm-label {
-    font-size: 8px;
-  }
-  
-  .daw-shortcuts-hint {
-    padding: 3px 6px;
-    min-width: 28px;
-  }
-  
-  .daw-shortcuts-icon {
-    font-size: 12px;
-  }
-  
-  .daw-time-signature {
-    padding: 4px 8px;
-    font-size: 12px;
-  }
-  
-  .daw-timeline-ruler {
-    height: 35px;
-  }
-  
-  .daw-interface {
-    --daw-track-header-width: 100px;
-  }
-  
-  .daw-track-header {
-    padding: 3px;
-    flex-direction: column;
-    gap: 2px;
-  }
-  
-  .daw-track {
-    height: 55px;
-  }
-  
-  .daw-track-number {
-    width: 18px;
-    height: 18px;
-    font-size: 9px;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
   }
   
   .daw-track-name {
-    font-size: 10px;
-    margin-bottom: 1px;
-  }
-  
-  .daw-track-controls {
-    gap: 1px;
-  }
-  
-  .daw-track-btn {
-    width: 14px;
-    height: 14px;
-    font-size: 7px;
-  }
-  
-
-  
-  .daw-interface {
-    --daw-waveform-height: calc(var(--daw-track-height) - 6px);
-  }
-  
-  .daw-waveform-container {
-    padding: 3px 8px;
-  }
-  
-  .daw-ruler-marker {
-    padding-left: 1px;
-  }
-  
-  .daw-ruler-number {
-    font-size: 8px;
-  }
-  
-  .daw-playhead {
-    width: 1px;
+    font-size: 15px;
   }
 }
 
-/* Landscape orientation adjustments for mobile */
-@media (max-height: 500px) and (orientation: landscape) {
-  .daw-toolbar {
-    padding: 4px 8px;
+/* Extra large devices (1200px and up) */
+@media (min-width: 1200px) {
+  .daw-interface {
+    --daw-toolbar-height: 70px;
+    --daw-track-height: 75px;
+    --daw-track-header-width: 200px;
+    --daw-transport-btn-size: 44px;
+    --daw-track-btn-size: 26px;
   }
   
-  .daw-toolbar__left,
-  .daw-toolbar__center,
-  .daw-toolbar__right {
-    gap: 8px;
+  .daw-track-name {
+    font-size: 16px;
+  }
+}
+
+/* Touch device optimizations */
+@media (pointer: coarse) {
+  .daw-interface {
+    --daw-transport-btn-size: var(--touch-target-comfortable);
+    --daw-track-btn-size: var(--touch-target-min);
   }
   
   .daw-transport-btn {
-    width: 36px;
-    height: 36px;
+    min-width: var(--touch-target-comfortable);
+    min-height: var(--touch-target-comfortable);
   }
   
-  .daw-timeline-ruler {
-    height: 30px;
+  .daw-track-btn {
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
   }
   
-  .daw-track {
-    height: 50px;
+  .daw-time-display--clickable {
+    min-height: var(--touch-target-min);
   }
   
+  .daw-timestamp-input {
+    min-height: var(--touch-target-min);
+  }
+  
+  .daw-track-content {
+    min-height: var(--touch-target-min);
+  }
+  
+  /* Increase spacing for touch devices */
+  .daw-transport-controls {
+    gap: var(--touch-spacing);
+  }
+  
+  .daw-track-controls {
+    gap: var(--touch-spacing);
+  }
+}
+
+/* Landscape orientation optimizations for mobile */
+@media (max-height: 500px) and (orientation: landscape) {
   .daw-interface {
-    --daw-waveform-height: calc(var(--daw-track-height) - 4px);
+    --daw-toolbar-height: 45px;
+    --daw-ruler-height: 30px;
+    --daw-track-height: 50px;
+    --daw-track-header-width: 120px;
+    --daw-transport-btn-size: 36px;
+    --daw-track-btn-size: 18px;
+  }
+  
+  .daw-toolbar {
+    padding: var(--spacing-xs) var(--spacing-sm);
   }
   
   .daw-track-area {
@@ -1416,45 +1216,37 @@
   }
 }
 
-/* High DPI displays */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .daw-playhead {
-    width: 1px;
+/* Very small mobile devices */
+@media (max-width: 320px) {
+  .daw-interface {
+    --daw-toolbar-height: 45px;
+    --daw-ruler-height: 30px;
+    --daw-track-height: 50px;
+    --daw-track-header-width: 100px;
+    --daw-transport-btn-size: 34px;
+    --daw-track-btn-size: 16px;
+    font-size: 12px;
   }
   
-  .daw-waveform-bar {
-    border-radius: 0.5px;
+  .daw-toolbar {
+    padding: var(--spacing-xs);
   }
   
-  .daw-ruler-marker {
-    border-left-width: 0.5px;
+  .daw-toolbar__left,
+  .daw-toolbar__center,
+  .daw-toolbar__right {
+    gap: var(--spacing-xs);
   }
-}
-
-/* Touch device optimizations */
-@media (pointer: coarse) {
+  
+  .daw-track-name {
+    font-size: 11px;
+  }
+  
   .daw-transport-btn {
-    min-width: 44px;
-    min-height: 44px;
+    font-size: 10px;
   }
   
   .daw-track-btn {
-    min-width: 24px;
-    min-height: 24px;
-  }
-  
-  .daw-time-display--clickable {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .daw-timestamp-input {
-    min-height: 44px;
-  }
-  
-  .daw-track-content {
-    min-height: 44px;
+    font-size: 8px;
   }
 }

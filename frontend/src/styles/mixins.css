@@ -1,0 +1,270 @@
+/**
+ * CSS Mixins and Utilities for Responsive Design
+ * Common patterns and utilities for consistent responsive behavior
+ */
+
+/* Touch-friendly interactive elements */
+.touch-friendly {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-friendly--comfortable {
+  min-width: var(--touch-target-comfortable);
+  min-height: var(--touch-target-comfortable);
+}
+
+/* Responsive text that scales with viewport */
+.responsive-text {
+  font-size: clamp(var(--font-size-sm), 4vw, var(--font-size-base));
+  line-height: 1.4;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+.responsive-text--large {
+  font-size: clamp(var(--font-size-lg), 5vw, var(--font-size-xl));
+}
+
+.responsive-text--small {
+  font-size: clamp(var(--font-size-xs), 3vw, var(--font-size-sm));
+}
+
+/* Responsive containers */
+.responsive-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 0 var(--container-padding);
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Responsive spacing utilities */
+.responsive-padding {
+  padding: var(--spacing-md);
+}
+
+.responsive-padding--large {
+  padding: var(--spacing-lg);
+}
+
+.responsive-padding--small {
+  padding: var(--spacing-sm);
+}
+
+.responsive-margin {
+  margin: var(--spacing-md);
+}
+
+.responsive-margin--large {
+  margin: var(--spacing-lg);
+}
+
+.responsive-margin--small {
+  margin: var(--spacing-sm);
+}
+
+/* Responsive flex utilities */
+.responsive-flex {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.responsive-flex--row {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+/* Responsive grid utilities */
+.responsive-grid {
+  display: grid;
+  gap: var(--spacing-md);
+  grid-template-columns: 1fr;
+}
+
+/* Responsive button styles */
+.responsive-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  border: none;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  /* Touch-friendly sizing */
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  
+  /* Improve touch interaction */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.responsive-button:hover {
+  transform: translateY(-1px);
+}
+
+.responsive-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive input styles */
+.responsive-input {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid #e1e5e9;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  transition: all 0.2s ease;
+  outline: none;
+  
+  /* Touch-friendly sizing */
+  min-height: var(--touch-target-comfortable);
+  
+  /* Improve mobile input experience */
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: manipulation;
+}
+
+.responsive-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Responsive card styles */
+.responsive-card {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.responsive-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive media queries for common breakpoints */
+
+/* Small devices (480px and up) */
+@media (min-width: 480px) {
+  .responsive-flex {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .responsive-padding {
+    padding: var(--spacing-lg);
+  }
+  
+  .responsive-button {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .responsive-input {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .responsive-card {
+    padding: var(--spacing-lg);
+  }
+}
+
+/* Medium devices (768px and up) - Tablets */
+@media (min-width: 768px) {
+  .responsive-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .responsive-padding {
+    padding: var(--spacing-xl);
+  }
+  
+  .responsive-card {
+    padding: var(--spacing-xl);
+  }
+}
+
+/* Large devices (1024px and up) - Desktops */
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .responsive-flex {
+    flex-wrap: nowrap;
+  }
+}
+
+/* Touch device optimizations */
+@media (pointer: coarse) {
+  .responsive-button {
+    min-width: var(--touch-target-comfortable);
+    min-height: var(--touch-target-comfortable);
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .responsive-input {
+    min-height: var(--touch-target-comfortable);
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .touch-friendly {
+    min-width: var(--touch-target-comfortable);
+    min-height: var(--touch-target-comfortable);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .responsive-button {
+    border: 2px solid transparent;
+  }
+  
+  .responsive-button:focus {
+    border-color: currentColor;
+  }
+  
+  .responsive-input {
+    border-width: 2px;
+  }
+  
+  .responsive-card {
+    border: 1px solid #ccc;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .responsive-button,
+  .responsive-input,
+  .responsive-card {
+    transition: none;
+  }
+  
+  .responsive-button:hover {
+    transform: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .responsive-button {
+    background: white !important;
+    color: black !important;
+    border: 1px solid black !important;
+  }
+  
+  .responsive-card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}

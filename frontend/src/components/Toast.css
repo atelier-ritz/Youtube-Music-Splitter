@@ -149,26 +149,101 @@
   background: rgba(0, 0, 0, 0.1);
 }
 
-/* Responsive Design */
-@media (max-width: 480px) {
+/* Enhanced mobile-first responsive design */
+
+/* Small devices (480px and up) */
+@media (min-width: 480px) {
   .toast {
-    min-width: 280px;
-    max-width: calc(100vw - 32px);
-    margin-left: 16px;
-    margin-right: 16px;
+    min-width: 320px;
+    max-width: 420px;
   }
   
   .toast__title {
-    font-size: 13px;
+    font-size: 15px;
   }
   
   .toast__message {
-    font-size: 12px;
+    font-size: 14px;
   }
   
   .toast__action {
-    padding: 4px 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Medium devices (768px and up) - Tablets */
+@media (min-width: 768px) {
+  .toast {
+    min-width: 360px;
+    max-width: 480px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .toast__title {
+    font-size: 16px;
+  }
+  
+  .toast__message {
+    font-size: 14px;
+  }
+  
+  .toast__action {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+}
+
+/* Large devices (1024px and up) - Desktops */
+@media (min-width: 1024px) {
+  .toast {
+    min-width: 400px;
+    max-width: 520px;
+  }
+}
+
+/* Touch device optimizations */
+@media (pointer: coarse) {
+  .toast__action {
+    min-height: var(--touch-target-min);
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .toast__close {
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+    padding: var(--spacing-sm);
+  }
+}
+
+/* Very small mobile devices */
+@media (max-width: 320px) {
+  .toast {
+    min-width: 260px;
+    max-width: calc(100vw - 16px);
+    margin-left: 8px;
+    margin-right: 8px;
+    padding: var(--spacing-sm);
+  }
+  
+  .toast__title {
+    font-size: 12px;
+  }
+  
+  .toast__message {
     font-size: 11px;
+  }
+  
+  .toast__action {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 10px;
+  }
+  
+  .toast__icon {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
   }
 }
 

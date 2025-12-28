@@ -1,69 +1,81 @@
-/* TrackController Component Styles */
+/* Enhanced mobile-first TrackController Component Styles */
 
 .track-controller {
   background: #f8f9fa;
   border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.2s ease;
+  
+  /* Improve mobile performance */
+  contain: layout style;
 }
 
 .track-controller:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Header section */
+/* Enhanced mobile-first header section */
 .track-controller__header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-xs);
   border-bottom: 1px solid #e9ecef;
 }
 
 .track-controller__name {
   margin: 0;
-  font-size: 18px;
+  font-size: clamp(16px, 4vw, 18px);
   font-weight: 600;
   color: #343a40;
+  word-wrap: break-word;
 }
 
 .track-controller__duration {
-  font-size: 14px;
+  font-size: clamp(12px, 3vw, 14px);
   color: #6c757d;
   font-family: 'Courier New', monospace;
 }
 
-/* Controls section */
+/* Enhanced mobile-first controls section */
 .track-controller__controls {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-md);
 }
 
-/* Mute section */
+/* Enhanced mobile-first mute section */
 .track-controller__mute-section {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
 .track-controller__mute-button {
   background: #007bff;
   border: none;
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 16px;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 44px;
-  height: 44px;
+  
+  /* Touch-friendly sizing */
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  /* Improve touch interaction */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .track-controller__mute-button:hover {
@@ -84,7 +96,7 @@
 }
 
 .track-controller__mute-label {
-  font-size: 14px;
+  font-size: clamp(12px, 3vw, 14px);
   font-weight: 500;
   color: #495057;
   min-width: 60px;
@@ -201,44 +213,133 @@
   transition: width 0.1s ease;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
+/* Enhanced mobile-first responsive design */
+
+/* Small devices (480px and up) */
+@media (min-width: 480px) {
   .track-controller {
-    padding: 12px;
+    padding: var(--spacing-lg);
+  }
+  
+  .track-controller__header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-md);
   }
   
   .track-controller__controls {
-    gap: 12px;
+    gap: var(--spacing-lg);
   }
   
   .track-controller__name {
-    font-size: 16px;
+    font-size: 18px;
   }
   
   .track-controller__mute-button {
-    min-width: 40px;
-    height: 40px;
-    font-size: 14px;
+    min-width: var(--touch-target-comfortable);
+    height: var(--touch-target-comfortable);
+    font-size: 16px;
   }
   
   .track-controller__slider-container {
-    gap: 8px;
+    gap: var(--spacing-md);
   }
 }
 
-@media (max-width: 480px) {
-  .track-controller__header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+/* Medium devices (768px and up) - Tablets */
+@media (min-width: 768px) {
+  .track-controller {
+    padding: var(--spacing-xl);
   }
   
   .track-controller__controls {
-    gap: 10px;
+    gap: var(--spacing-xl);
+  }
+  
+  .track-controller__name {
+    font-size: 20px;
+  }
+  
+  .track-controller__duration {
+    font-size: 16px;
+  }
+  
+  .track-controller__mute-label {
+    font-size: 16px;
+  }
+  
+  .track-controller__slider-container {
+    gap: var(--spacing-lg);
+  }
+}
+
+/* Large devices (1024px and up) - Desktops */
+@media (min-width: 1024px) {
+  .track-controller__controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
   }
   
   .track-controller__mute-section {
-    justify-content: space-between;
-    width: 100%;
+    flex: 0 0 auto;
+  }
+  
+  .track-controller__slider-container {
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+/* Touch device optimizations */
+@media (pointer: coarse) {
+  .track-controller__mute-button {
+    min-width: var(--touch-target-comfortable);
+    min-height: var(--touch-target-comfortable);
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .track-controller__pan-slider::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .track-controller__pan-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+  }
+  
+  /* Increase spacing for touch devices */
+  .track-controller__controls {
+    gap: var(--touch-spacing-lg);
+  }
+  
+  .track-controller__mute-section {
+    gap: var(--touch-spacing);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .track-controller {
+    border-width: 2px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .track-controller__mute-button {
+    border: 2px solid transparent;
+  }
+  
+  .track-controller__mute-button:focus {
+    border-color: #000;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .track-controller,
+  .track-controller__mute-button {
+    transition: none;
   }
 }
