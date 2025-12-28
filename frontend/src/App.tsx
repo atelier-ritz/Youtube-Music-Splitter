@@ -59,27 +59,25 @@ function App() {
 
   if (appState.currentView === 'tracks') {
     return (
-      <OrientationPrompt>
-        <ErrorBoundary>
-          <AudioErrorBoundary 
-            onReset={handleBackToMain}
-            onRetry={() => {
-              // Clear tracks and retry loading
-              setAppState(prev => ({ ...prev, tracks: [] }));
-              showInfo('Retrying...', 'Attempting to reload audio tracks');
-            }}
-          >
-            <TrackView
-              tracks={appState.tracks}
-              bpm={appState.bpm}
-              title={appState.title}
-              onBack={handleBackToMain}
-              onShowToast={{ showSuccess, showError, showInfo }}
-            />
-          </AudioErrorBoundary>
-          <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
-        </ErrorBoundary>
-      </OrientationPrompt>
+      <ErrorBoundary>
+        <AudioErrorBoundary 
+          onReset={handleBackToMain}
+          onRetry={() => {
+            // Clear tracks and retry loading
+            setAppState(prev => ({ ...prev, tracks: [] }));
+            showInfo('Retrying...', 'Attempting to reload audio tracks');
+          }}
+        >
+          <TrackView
+            tracks={appState.tracks}
+            bpm={appState.bpm}
+            title={appState.title}
+            onBack={handleBackToMain}
+            onShowToast={{ showSuccess, showError, showInfo }}
+          />
+        </AudioErrorBoundary>
+        <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+      </ErrorBoundary>
     );
   }
 

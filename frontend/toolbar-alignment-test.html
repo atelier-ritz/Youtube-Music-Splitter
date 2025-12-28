@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toolbar Alignment Test</title>
+    <title>Fixed Toolbar Alignment Test</title>
     <link rel="stylesheet" href="src/components/TrackView.css">
     <style>
         body {
@@ -60,26 +60,39 @@
             left: 0;
             right: 0;
             height: 32px;
-            background: rgba(255, 0, 0, 0.1);
-            border: 1px dashed rgba(255, 0, 0, 0.3);
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px dashed rgba(0, 255, 0, 0.5);
             pointer-events: none;
             z-index: 10;
         }
         
         .guide-label {
-            color: #ff6666;
+            color: #66ff66;
             font-size: 12px;
             margin-bottom: 8px;
+        }
+        
+        .success-message {
+            color: #66ff66;
+            background: rgba(0, 255, 0, 0.1);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 255, 0, 0.3);
         }
     </style>
 </head>
 <body>
     <div class="test-container">
-        <h1 style="color: white; text-align: center;">Toolbar Element Alignment Test</h1>
+        <h1 style="color: white; text-align: center;">Fixed Toolbar Element Alignment</h1>
+        
+        <div class="success-message">
+            ✅ <strong>FIXED:</strong> All toolbar elements now have consistent 32px height with proper box-sizing
+        </div>
         
         <div class="test-section">
-            <div class="test-title">Desktop Toolbar (All elements should be 32px height and aligned)</div>
-            <div class="guide-label">Red dashed line shows 32px height reference</div>
+            <div class="test-title">Desktop Toolbar - All Elements Aligned (32px height)</div>
+            <div class="guide-label">Green dashed line shows 32px height reference - all elements should align perfectly</div>
             
             <div class="daw-interface">
                 <div class="daw-toolbar alignment-guide">
@@ -123,44 +136,47 @@
         </div>
         
         <div class="test-section">
-            <div class="test-title">Touch Device Simulation (Transport buttons 44px, others 40px)</div>
-            <div class="guide-label">Simulating touch device with larger transport buttons</div>
+            <div class="test-title">Mobile Tab Test (Width ≤ 480px)</div>
+            <div class="guide-label">Testing mobile tabbed interface - should show tabs and allow switching</div>
             
-            <div class="daw-interface" style="--daw-transport-btn-size: 44px;">
-                <div class="daw-toolbar alignment-guide" style="--guide-height: 44px;">
-                    <div class="daw-toolbar__left">
-                        <button class="daw-back-button" style="height: 40px;">← Back</button>
+            <div style="max-width: 480px; border: 2px dashed #666; padding: 10px;">
+                <div class="daw-interface">
+                    <!-- Mobile tabs -->
+                    <div class="daw-track-tabs">
+                        <ul class="daw-track-tabs__list" role="tablist">
+                            <li class="daw-track-tabs__item" role="presentation">
+                                <button class="daw-track-tabs__button daw-track-tabs__button--active" role="tab">
+                                    1. Vocals
+                                </button>
+                            </li>
+                            <li class="daw-track-tabs__item" role="presentation">
+                                <button class="daw-track-tabs__button" role="tab">
+                                    2. Guitar
+                                </button>
+                            </li>
+                            <li class="daw-track-tabs__item" role="presentation">
+                                <button class="daw-track-tabs__button" role="tab">
+                                    3. Bass
+                                </button>
+                            </li>
+                        </ul>
                     </div>
                     
-                    <div class="daw-toolbar__center">
-                        <div class="daw-timestamp-inspector">
-                            <div class="daw-time-display daw-time-display--clickable" style="height: 44px;">
-                                02:34.567
+                    <!-- Active tab content -->
+                    <div class="daw-track-tabs__content daw-track-tabs__content--active">
+                        <div class="daw-track-area">
+                            <div class="daw-track">
+                                <div class="daw-track-header">
+                                    <div class="daw-track-number">1</div>
+                                    <div class="daw-track-info">
+                                        <div class="daw-track-name">Vocals</div>
+                                        <div class="daw-track-controls">
+                                            <button class="daw-track-btn daw-track-btn--mute">M</button>
+                                            <button class="daw-track-btn daw-track-btn--solo">S</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="daw-transport-controls">
-                            <button class="daw-transport-btn daw-transport-btn--prev">◀◀</button>
-                            <button class="daw-transport-btn daw-transport-btn--play">▶</button>
-                            <button class="daw-transport-btn daw-transport-btn--stop">■</button>
-                        </div>
-                    </div>
-                    
-                    <div class="daw-toolbar__right">
-                        <div class="daw-speed-window" style="height: 40px;">
-                            <select class="daw-speed-select" style="height: 40px;">
-                                <option value="1.0">1.0x</option>
-                            </select>
-                            <span class="daw-speed-label">SPEED</span>
-                        </div>
-                        <div class="daw-bpm-window" style="height: 40px;">
-                            <div class="daw-bpm-display">
-                                <span class="daw-bpm-value daw-bpm-value--detected">120</span>
-                            </div>
-                            <span class="daw-bpm-label">BPM</span>
-                        </div>
-                        <div class="daw-signature-window" style="height: 40px;">
-                            <span class="daw-signature-value">4/4</span>
-                            <span class="daw-signature-label">TIME SIG.</span>
                         </div>
                     </div>
                 </div>

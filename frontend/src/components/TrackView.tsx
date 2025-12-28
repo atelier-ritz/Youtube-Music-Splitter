@@ -4,6 +4,7 @@ import { useWaveformData } from '../hooks/useWaveformData';
 import WaveformVisualization from './WaveformVisualization';
 import LoadingSpinner from './LoadingSpinner';
 import InteractiveButton from './InteractiveButton';
+import OrientationPrompt from './OrientationPrompt';
 
 import { checkTrackUrls } from '../debug/trackUrlChecker';
 
@@ -58,17 +59,19 @@ const TrackView: React.FC<TrackViewProps> = ({
       const width = window.innerWidth;
       setIsMobileView(width <= 480);
       setIsTabletView(width > 480 && width <= 767);
-      
-      // Set default active tab for mobile view
-      if (width <= 480 && trackStates.length > 0 && !activeTabTrackId) {
-        setActiveTabTrackId(trackStates[0].id);
-      }
     };
 
     checkScreenSize();
     window.addEventListener('resize', checkScreenSize);
     return () => window.removeEventListener('resize', checkScreenSize);
-  }, [trackStates, activeTabTrackId]);
+  }, []); // Remove trackStates from dependency to prevent resets
+
+  // Initialize active tab for mobile view when tracks are loaded
+  useEffect(() => {
+    if (isMobileView && trackStates.length > 0 && !activeTabTrackId) {
+      setActiveTabTrackId(trackStates[0].id);
+    }
+  }, [isMobileView, trackStates.length, activeTabTrackId]);
 
   // Use waveform data hook for real audio visualization with performance optimizations
   // Only pass audioPlayer when tracks are loaded (not loading and no error)
@@ -737,14 +740,15 @@ const TrackView: React.FC<TrackViewProps> = ({
   }
 
   return (
-    <div className="daw-interface">
-      {/* Top toolbar */}
-      <div className="daw-toolbar">
-        <div className="daw-toolbar__left">
-          {onBack && (
-            <button className="daw-back-button" onClick={onBack}>
-              ← Back
-            </button>
+    <OrientationPrompt>
+      <div className="daw-interface">
+        {/* Top toolbar */}
+        <div className="daw-toolbar">
+          <div className="daw-toolbar__left">
+            {onBack && (
+              <button className="daw-back-button" onClick={onBack}>
+                ← Back
+              </button>
           )}
         </div>
         
@@ -1167,6 +1171,7 @@ const TrackView: React.FC<TrackViewProps> = ({
         )}
       </div>
     </div>
+    </OrientationPrompt>
   );
 };
 
