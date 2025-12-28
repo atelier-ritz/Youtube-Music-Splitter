@@ -1,11 +1,11 @@
-/* GitHub Banner - Simple button style matching donation banner */
-.github-banner {
+/* Donation Button - Simple button style matching GitHub banner */
+.donation-button {
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.github-banner__button {
+.donation-button__btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
@@ -18,14 +18,20 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.github-banner__button:hover {
+.donation-button__btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
   background: linear-gradient(135deg, #7c8ef0 0%, #8a5fb8 100%);
 }
 
+.donation-button__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Focus states for accessibility */
-.github-banner__button:focus {
+.donation-button__btn:focus {
   outline: 2px solid rgba(255, 255, 255, 0.5);
   outline-offset: 2px;
 }

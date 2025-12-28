@@ -4,7 +4,7 @@ import { categorizeError, createRetryableAxios } from '../utils/retryUtils';
 import { useErrorHandler } from './ErrorBoundary';
 import LoadingSpinner from './LoadingSpinner';
 import InteractiveButton from './InteractiveButton';
-import DonationBanner from './DonationBanner';
+import DonationButton from './DonationButton';
 import GitHubBanner from './GitHubBanner';
 import './MainPage.css';
 
@@ -38,8 +38,6 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
     message: ''
   });
   const [validationError, setValidationError] = useState('');
-  const [showDonationBanner, setShowDonationBanner] = useState(true);
-  const [showGitHubBanner, setShowGitHubBanner] = useState(true);
   const handleError = useErrorHandler();
   
   // Create retry-enabled axios client
@@ -463,22 +461,14 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
           </div>
         )}
 
-        {/* Banners - Show when not processing */}
+        {/* Action Buttons - Show when not processing */}
         {downloadStatus.status === 'idle' && (
-          <div className="main-page__banners">
-            {showDonationBanner && (
-              <DonationBanner 
-                onClose={() => setShowDonationBanner(false)}
-                className="main-page__donation-banner"
-              />
-            )}
-            {showGitHubBanner && (
-              <GitHubBanner 
-                onClose={() => setShowGitHubBanner(false)}
-                className="main-page__github-banner"
-                repoUrl="https://github.com/your-username/Youtube-Music-Splitter" // Replace with your actual repo URL
-              />
-            )}
+          <div className="main-page__action-buttons">
+            <DonationButton className="main-page__donation-button" />
+            <GitHubBanner 
+              className="main-page__github-banner"
+              repoUrl="https://github.com/atelier-ritz/Youtube-Music-Splitter"
+            />
           </div>
         )}
       </div>
