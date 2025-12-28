@@ -688,6 +688,7 @@
   color: white;
   position: relative;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 /* Track number color variations - Unified with Waveform Colors */
@@ -726,7 +727,7 @@
 }
 
 .daw-track-info {
-  width: var(--daw-track-header-width);
+  flex: 1; /* Take remaining space */
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -734,6 +735,7 @@
   padding: 8px 16px;
   background: #3a3d4a;
   position: relative;
+  min-width: 0; /* Allow shrinking */
 }
 
 .daw-track-name-section {
@@ -1261,8 +1263,8 @@
   }
   
   .daw-track-number {
-    width: 30px;
-    font-size: 14px;
+    width: 40px; /* Keep consistent width */
+    font-size: 16px; /* Slightly smaller font for mobile */
   }
   
   .daw-track-info {
@@ -1353,12 +1355,29 @@
   
   .daw-toolbar {
     padding: var(--spacing-sm) var(--spacing-lg);
+    flex-direction: row;
+    justify-content: space-between;
   }
   
   .daw-toolbar__left,
   .daw-toolbar__center,
   .daw-toolbar__right {
     gap: var(--spacing-md);
+    flex-wrap: nowrap;
+  }
+  
+  .daw-toolbar__center {
+    order: 0;
+    flex-basis: auto;
+    justify-content: center;
+  }
+  
+  .daw-toolbar__left {
+    justify-content: flex-start;
+  }
+  
+  .daw-toolbar__right {
+    justify-content: flex-end;
   }
   
   .daw-transport-controls {
@@ -1388,12 +1407,31 @@
   
   .daw-toolbar {
     padding: var(--spacing-md) var(--spacing-lg);
+    flex-direction: row;
+    justify-content: space-between;
   }
   
   .daw-toolbar__left,
   .daw-toolbar__center,
   .daw-toolbar__right {
     gap: var(--spacing-lg);
+    flex-wrap: nowrap;
+  }
+  
+  .daw-toolbar__center {
+    order: 0;
+    flex-basis: auto;
+    justify-content: center;
+  }
+  
+  .daw-toolbar__left {
+    justify-content: flex-start;
+    flex: 1;
+  }
+  
+  .daw-toolbar__right {
+    justify-content: flex-end;
+    flex: 1;
   }
   
   .daw-transport-controls {

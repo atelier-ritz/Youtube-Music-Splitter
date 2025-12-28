@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desktop Layout Test</title>
+    <style>
+        /* Import the responsive utilities and TrackView styles */
+        @import url('./styles/responsive.css');
+        @import url('./components/TrackView.css');
+        
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #2a2d3a;
+            color: white;
+        }
+        
+        .test-container {
+            padding: 20px;
+        }
+        
+        .test-title {
+            color: #ff6b35;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .viewport-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #ff6b35;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        
+        /* Mock DAW interface for testing */
+        .mock-daw {
+            width: 100%;
+            height: 600px;
+            background: #2a2d3a;
+            border: 1px solid #3a3d4a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .layout-info {
+            background: #1e2028;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            border: 1px solid #3a3d4a;
+        }
+        
+        .layout-info h3 {
+            color: #ff6b35;
+            margin-top: 0;
+        }
+        
+        .layout-info ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .layout-info li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="viewport-indicator" id="viewport-info"></div>
+    
+    <div class="test-container">
+        <h1 class="test-title">Desktop Layout Test</h1>
+        
+        <div class="layout-info">
+            <h3>Expected Desktop Layout (≥768px)</h3>
+            <ul>
+                <li><strong>Toolbar:</strong> Horizontal layout with left/center/right sections</li>
+                <li><strong>Play Button:</strong> Centered in the middle section</li>
+                <li><strong>Track Numbers:</strong> Consistent 40px width with proper colors</li>
+                <li><strong>Track Headers:</strong> Proper spacing and alignment</li>
+                <li><strong>No Mobile Features:</strong> No tabs or collapsible controls</li>
+            </ul>
+        </div>
+        
+        <div class="mock-daw">
+            <div class="daw-interface">
+                <!-- Top toolbar -->
+                <div class="daw-toolbar">
+                    <div class="daw-toolbar__left">
+                        <button class="daw-back-button">← Back</button>
+                    </div>
+                    
+                    <div class="daw-toolbar__center">
+                        <div class="daw-timestamp-inspector">
+                            <div class="daw-time-display daw-time-display--clickable">
+                                00:00.000
+                            </div>
+                        </div>
+                        <div class="daw-transport-controls">
+                            <button class="daw-transport-btn daw-transport-btn--prev">◀◀</button>
+                            <button class="daw-transport-btn daw-transport-btn--play">▶</button>
+                            <button class="daw-transport-btn daw-transport-btn--stop">■</button>
+                        </div>
+                    </div>
+                    
+                    <div class="daw-toolbar__right">
+                        <div class="daw-speed-window">
+                            <select class="daw-speed-select">
+                                <option value="1.0">1.0x</option>
+                            </select>
+                            <span class="daw-speed-label">SPEED</span>
+                        </div>
+                        <div class="daw-bpm-window">
+                            <div class="daw-bpm-display">
+                                <span class="daw-bpm-value daw-bpm-value--detected">120</span>
+                            </div>
+                            <span class="daw-bpm-label">BPM</span>
+                        </div>
+                        <div class="daw-signature-window">
+                            <span class="daw-signature-value">4/4</span>
+                            <span class="daw-signature-label">TIME SIG.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main DAW area -->
+                <div class="daw-main">
+                    <!-- Timeline ruler -->
+                    <div class="daw-timeline-ruler">
+                        <div class="daw-ruler-track-header"></div>
+                        <div class="daw-ruler-content">
+                            <div class="daw-ruler-marker" style="left: 0%">
+                                <span class="daw-ruler-number">0:00</span>
+                            </div>
+                            <div class="daw-ruler-marker" style="left: 25%">
+                                <span class="daw-ruler-number">0:10</span>
+                            </div>
+                            <div class="daw-ruler-marker" style="left: 50%">
+                                <span class="daw-ruler-number">0:20</span>
+                            </div>
+                            <div class="daw-ruler-marker" style="left: 75%">
+                                <span class="daw-ruler-number">0:30</span>
+                            </div>
+                            <div class="daw-playhead" style="left: 25%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Track area -->
+                    <div class="daw-track-area">
+                        <!-- Track 1 - Vocals -->
+                        <div class="daw-track">
+                            <div class="daw-track-header">
+                                <div class="daw-track-number">1</div>
+                                <div class="daw-track-info">
+                                    <div class="daw-track-name">Vocals</div>
+                                    <div class="daw-track-controls">
+                                        <button class="daw-track-btn daw-track-btn--mute">M</button>
+                                        <button class="daw-track-btn daw-track-btn--solo daw-track-btn--active">S</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="daw-track-content">
+                                <div class="daw-waveform-container">
+                                    <div style="background: #ff6b6b; height: 30px; width: 100%; border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">
+                                        Vocals Waveform
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Track 2 - Drums -->
+                        <div class="daw-track">
+                            <div class="daw-track-header">
+                                <div class="daw-track-number">2</div>
+                                <div class="daw-track-info">
+                                    <div class="daw-track-name">Drums</div>
+                                    <div class="daw-track-controls">
+                                        <button class="daw-track-btn daw-track-btn--mute daw-track-btn--active">M</button>
+                                        <button class="daw-track-btn daw-track-btn--solo">S</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="daw-track-content">
+                                <div class="daw-waveform-container">
+                                    <div style="background: #8a8a8a; height: 30px; width: 100%; border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">
+                                        Drums Waveform
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Track 3 - Bass -->
+                        <div class="daw-track">
+                            <div class="daw-track-header">
+                                <div class="daw-track-number">3</div>
+                                <div class="daw-track-info">
+                                    <div class="daw-track-name">Bass</div>
+                                    <div class="daw-track-controls">
+                                        <button class="daw-track-btn daw-track-btn--mute">M</button>
+                                        <button class="daw-track-btn daw-track-btn--solo">S</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="daw-track-content">
+                                <div class="daw-waveform-container">
+                                    <div style="background: #45b7d1; height: 30px; width: 100%; border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">
+                                        Bass Waveform
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="layout-info">
+            <h3>Layout Validation</h3>
+            <ul id="validation-results">
+                <li>Loading validation results...</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        function updateViewportInfo() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const viewportType = width >= 1200 ? 'XL' : width >= 1024 ? 'LG' : width >= 768 ? 'MD' : width >= 480 ? 'SM' : 'XS';
+            
+            document.getElementById('viewport-info').textContent = `${width}x${height} (${viewportType})`;
+        }
+        
+        function validateLayout() {
+            const results = [];
+            const width = window.innerWidth;
+            
+            // Check toolbar layout
+            const toolbar = document.querySelector('.daw-toolbar');
+            const toolbarStyle = window.getComputedStyle(toolbar);
+            const isHorizontal = toolbarStyle.flexDirection === 'row';
+            
+            if (width >= 768) {
+                results.push({
+                    test: 'Toolbar Layout (Desktop)',
+                    passed: isHorizontal,
+                    message: isHorizontal ? '✅ Horizontal layout' : '❌ Should be horizontal'
+                });
+            }
+            
+            // Check track number widths
+            const trackNumbers = document.querySelectorAll('.daw-track-number');
+            let consistentWidth = true;
+            let firstWidth = null;
+            
+            trackNumbers.forEach((element, index) => {
+                const style = window.getComputedStyle(element);
+                const width = style.width;
+                
+                if (firstWidth === null) {
+                    firstWidth = width;
+                } else if (width !== firstWidth) {
+                    consistentWidth = false;
+                }
+            });
+            
+            results.push({
+                test: 'Track Number Width Consistency',
+                passed: consistentWidth,
+                message: consistentWidth ? `✅ All track numbers are ${firstWidth} wide` : '❌ Inconsistent track number widths'
+            });
+            
+            // Check center alignment of transport controls
+            const center = document.querySelector('.daw-toolbar__center');
+            const centerStyle = window.getComputedStyle(center);
+            const isCentered = centerStyle.justifyContent === 'center';
+            
+            results.push({
+                test: 'Transport Controls Centering',
+                passed: isCentered,
+                message: isCentered ? '✅ Transport controls are centered' : '❌ Transport controls not centered'
+            });
+            
+            // Update results display
+            const resultsList = document.getElementById('validation-results');
+            resultsList.innerHTML = results.map(result => 
+                `<li style="color: ${result.passed ? '#4CAF50' : '#f44336'}">${result.message}</li>`
+            ).join('');
+        }
+        
+        updateViewportInfo();
+        window.addEventListener('resize', () => {
+            updateViewportInfo();
+            setTimeout(validateLayout, 100); // Delay to allow CSS to update
+        });
+        
+        // Initial validation
+        setTimeout(validateLayout, 500);
+    </script>
+</body>
+</html>
