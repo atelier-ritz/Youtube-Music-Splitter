@@ -1244,7 +1244,7 @@
 @media (max-width: 480px) {
   .daw-interface {
     --daw-track-height: 45px;
-    --daw-track-header-width: 100px;
+    --daw-track-header-width: 140px; /* Increased from 100px to accommodate buttons */
   }
   
   /* Show tabbed interface on very small screens */
@@ -1267,26 +1267,40 @@
   }
   
   .daw-track-number {
-    width: 40px; /* Keep consistent width */
-    font-size: 16px; /* Slightly smaller font for mobile */
+    width: 30px; /* Reduced from 40px to save space */
+    font-size: 14px; /* Slightly smaller font for mobile */
+    flex-shrink: 0; /* Don't shrink the number */
   }
   
   .daw-track-info {
-    padding: 4px 8px;
+    padding: 4px 6px; /* Reduced padding */
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Space between name and buttons */
+    flex: 1;
+    min-width: 0; /* Allow shrinking */
   }
   
   .daw-track-name {
     font-size: 11px;
+    flex: 1;
+    min-width: 0; /* Allow shrinking */
+    margin-right: 4px; /* Space before buttons */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
   .daw-track-controls {
     gap: 2px;
+    flex-shrink: 0; /* Don't shrink the buttons */
   }
   
   .daw-track-btn {
     width: 16px;
     height: 16px;
     font-size: 8px;
+    flex-shrink: 0; /* Ensure buttons don't shrink */
   }
 }
 
@@ -1593,7 +1607,7 @@
     --daw-toolbar-height: 45px;
     --daw-ruler-height: 30px;
     --daw-track-height: 50px;
-    --daw-track-header-width: 100px;
+    --daw-track-header-width: 120px; /* Increased from 100px */
     --daw-transport-btn-size: 32px;
     --daw-track-btn-size: 16px;
     font-size: 12px;
@@ -1611,6 +1625,21 @@
   
   .daw-track-name {
     font-size: 11px;
+  }
+  
+  .daw-track-number {
+    width: 28px; /* Even smaller for very small screens */
+    font-size: 12px;
+  }
+  
+  .daw-track-info {
+    padding: 3px 5px; /* Very compact padding */
+  }
+  
+  .daw-track-btn {
+    width: 14px;
+    height: 14px;
+    font-size: 7px;
   }
   
   .daw-transport-btn {

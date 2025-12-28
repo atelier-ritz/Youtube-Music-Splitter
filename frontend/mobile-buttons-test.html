@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Buttons Test</title>
+    <link rel="stylesheet" href="src/components/TrackView.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #2a2d3a;
+            font-family: Arial, sans-serif;
+        }
+        
+        .test-container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #3a3d4a;
+            border-radius: 8px;
+        }
+        
+        .test-title {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        /* Include the CSS custom properties */
+        .daw-interface {
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 12px;
+            --spacing-lg: 16px;
+            --border-radius: 6px;
+            --border-radius-sm: 4px;
+            --daw-bg-secondary: #3a3d4a;
+            --daw-border-color: #4a4d5a;
+            --touch-target-min: 44px;
+            --touch-target-comfortable: 44px;
+            --daw-toolbar-height: 60px;
+            --daw-transport-btn-size: 32px;
+            --daw-track-height: 45px;
+            --daw-track-header-width: 140px;
+        }
+        
+        .device-frame {
+            border: 2px solid #666;
+            border-radius: 8px;
+            padding: 10px;
+            background: #1e2028;
+        }
+        
+        .width-indicator {
+            color: #888;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 style="color: white; text-align: center;">Mobile Mute/Solo Button Test</h1>
+        
+        <div class="test-section">
+            <div class="test-title">Mobile View (≤480px) - Fixed Layout</div>
+            <div class="width-indicator">Width: 320px (iPhone SE)</div>
+            
+            <div class="device-frame" style="width: 320px;">
+                <div class="daw-interface">
+                    <!-- Mobile tabbed interface -->
+                    <div class="daw-track-tabs">
+                        <ul class="daw-track-tabs__list" role="tablist">
+                            <li class="daw-track-tabs__item" role="presentation">
+                                <button class="daw-track-tabs__button daw-track-tabs__button--active" role="tab">
+                                    1. Vocals
+                                </button>
+                            </li>
+                            <li class="daw-track-tabs__item" role="presentation">
+                                <button class="daw-track-tabs__button" role="tab">
+                                    2. Guitar
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Active tab content -->
+                    <div class="daw-track-tabs__content daw-track-tabs__content--active">
+                        <div class="daw-track-area">
+                            <div class="daw-track">
+                                <div class="daw-track-header">
+                                    <div class="daw-track-number">1</div>
+                                    <div class="daw-track-info">
+                                        <div class="daw-track-name">Vocals</div>
+                                        <div class="daw-track-controls">
+                                            <button class="daw-track-btn daw-track-btn--mute">M</button>
+                                            <button class="daw-track-btn daw-track-btn--solo daw-track-btn--active">S</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="daw-track-content">
+                                    <div style="height: 30px; background: #ff6b6b; border-radius: 2px; margin: 2px;">
+                                        Waveform placeholder
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">Mobile View (≤480px) - Long Track Name Test</div>
+            <div class="width-indicator">Width: 375px (iPhone)</div>
+            
+            <div class="device-frame" style="width: 375px;">
+                <div class="daw-interface">
+                    <div class="daw-track-tabs__content daw-track-tabs__content--active">
+                        <div class="daw-track-area">
+                            <div class="daw-track">
+                                <div class="daw-track-header">
+                                    <div class="daw-track-number">2</div>
+                                    <div class="daw-track-info">
+                                        <div class="daw-track-name">Electric Guitar Lead Solo</div>
+                                        <div class="daw-track-controls">
+                                            <button class="daw-track-btn daw-track-btn--mute daw-track-btn--active">M</button>
+                                            <button class="daw-track-btn daw-track-btn--solo">S</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="daw-track-content">
+                                    <div style="height: 30px; background: #4ecdc4; border-radius: 2px; margin: 2px;">
+                                        Waveform placeholder
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">Very Small Mobile (≤320px) - Compact Layout</div>
+            <div class="width-indicator">Width: 280px (Very small phone)</div>
+            
+            <div class="device-frame" style="width: 280px;">
+                <div class="daw-interface" style="--daw-track-header-width: 120px;">
+                    <div class="daw-track-tabs__content daw-track-tabs__content--active">
+                        <div class="daw-track-area">
+                            <div class="daw-track">
+                                <div class="daw-track-header">
+                                    <div class="daw-track-number" style="width: 28px; font-size: 12px;">3</div>
+                                    <div class="daw-track-info" style="padding: 3px 5px;">
+                                        <div class="daw-track-name">Bass</div>
+                                        <div class="daw-track-controls">
+                                            <button class="daw-track-btn daw-track-btn--mute" style="width: 14px; height: 14px; font-size: 7px;">M</button>
+                                            <button class="daw-track-btn daw-track-btn--solo" style="width: 14px; height: 14px; font-size: 7px;">S</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="daw-track-content">
+                                    <div style="height: 30px; background: #45b7d1; border-radius: 2px; margin: 2px;">
+                                        Waveform placeholder
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="color: #888; font-size: 12px; text-align: center; margin-top: 20px;">
+            ✅ Buttons should now be visible and not cut off by tracks<br>
+            ✅ Track names should truncate with ellipsis if too long<br>
+            ✅ Layout should be responsive across different mobile sizes
+        </div>
+    </div>
+</body>
+</html>
