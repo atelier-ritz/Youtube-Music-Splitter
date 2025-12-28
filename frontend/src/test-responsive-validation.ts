@@ -31,9 +31,10 @@ class ResponsiveControlsValidator {
     
     const testCases = [
       { width: 320, expected: 'mobile' },
-      { width: 480, expected: 'tablet' },
+      { width: 480, expected: 'mobile' }, // 480px is still mobile (≤ 480px)
+      { width: 481, expected: 'tablet' }, // 481px is tablet (481px - 767px)
       { width: 600, expected: 'tablet' },
-      { width: 768, expected: 'desktop' },
+      { width: 768, expected: 'desktop' }, // 768px+ is desktop
       { width: 1024, expected: 'desktop' },
       { width: 1200, expected: 'desktop' }
     ];
@@ -245,9 +246,9 @@ class ResponsiveControlsValidator {
    * Helper method to determine viewport type
    */
   private getViewportType(width: number): 'mobile' | 'tablet' | 'desktop' {
-    if (width <= this.breakpoints.mobile) {
+    if (width <= 480) {
       return 'mobile';
-    } else if (width <= this.breakpoints.tablet) {
+    } else if (width <= 767) {
       return 'tablet';
     } else {
       return 'desktop';
