@@ -46,7 +46,29 @@ const TrackView: React.FC<TrackViewProps> = ({
   const timestampInputRef = useRef<HTMLInputElement>(null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Mobile responsive states
+  const [expandedTrackId, setExpandedTrackId] = useState<string | null>(null);
+  const [activeTabTrackId, setActiveTabTrackId] = useState<string | null>(null);
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [isTabletView, setIsTabletView] = useState(false);
 
+  // Track responsive breakpoints
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      setIsMobileView(width <= 480);
+      setIsTabletView(width > 480 && width <= 767);
+      
+      // Set default active tab for mobile view
+      if (width <= 480 && trackStates.length > 0 && !activeTabTrackId) {
+        setActiveTabTrackId(trackStates[0].id);
+      }
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, [trackStates, activeTabTrackId]);
 
   // Use waveform data hook for real audio visualization with performance optimizations
   // Only pass audioPlayer when tracks are loaded (not loading and no error)
@@ -327,6 +349,64 @@ const TrackView: React.FC<TrackViewProps> = ({
     }
   };
 
+  // Handle track volume change (for mobile controls)
+  const handleTrackVolumeChange = (trackId: string, volume: number) => {
+    // Update UI state immediately for instant feedback
+    setTrackStates(prevStates => 
+      prevStates.map(track => 
+        track.id === trackId ? { ...track, volume } : track
+      )
+    );
+    
+    // Apply audio volume without error handling that could trigger re-renders
+    try {
+      audioPlayer.setTrackVolume(trackId, volume);
+    } catch (error) {
+      // Silently handle errors to prevent UI flashing
+      console.warn('Audio volume failed (UI already updated):', error);
+    }
+  };
+
+  // Handle track pan change (for mobile controls)
+  const handleTrackPanChange = (trackId: string, pan: number) => {
+    // Update UI state immediately for instant feedback
+    setTrackStates(prevStates => 
+      prevStates.map(track => 
+        track.id === trackId ? { ...track, pan } : track
+      )
+    );
+    
+    // Apply audio pan without error handling that could trigger re-renders
+    try {
+      audioPlayer.setTrackPan(trackId, pan);
+    } catch (error) {
+      // Silently handle errors to prevent UI flashing
+      console.warn('Audio pan failed (UI already updated):', error);
+    }
+  };
+
+  // Handle mobile track expansion toggle
+  const handleTrackExpandToggle = (trackId: string) => {
+    setExpandedTrackId(expandedTrackId === trackId ? null : trackId);
+  };
+
+  // Handle mobile tab selection
+  const handleTabSelect = (trackId: string) => {
+    setActiveTabTrackId(trackId);
+  };
+
+  // Format volume for display
+  const formatVolume = (volume: number): string => {
+    return `${Math.round(volume * 100)}%`;
+  };
+
+  // Format pan for display
+  const formatPan = (pan: number): string => {
+    if (pan === 0) return 'Center';
+    if (pan < 0) return `L${Math.round(Math.abs(pan) * 100)}`;
+    return `R${Math.round(pan * 100)}`;
+  };
+
   // Helper function to determine if a track should be playing (for visual feedback)
   const isTrackPlaying = (track: Track) => {
     const hasSoloedTracks = trackStates.some(t => t.soloed);
@@ -479,7 +559,38 @@ const TrackView: React.FC<TrackViewProps> = ({
             handleSeekByOffset(1);
           }
           break;
+        case 'ArrowUp':
+          event.preventDefault();
+          // Navigate between tracks in mobile tab view
+          if (isMobileView && activeTabTrackId) {
+            const currentIndex = trackStates.findIndex(t => t.id === activeTabTrackId);
+            if (currentIndex > 0) {
+              handleTabSelect(trackStates[currentIndex - 1].id);
+            }
+          }
+          break;
+        case 'ArrowDown':
+          event.preventDefault();
+          // Navigate between tracks in mobile tab view
+          if (isMobileView && activeTabTrackId) {
+            const currentIndex = trackStates.findIndex(t => t.id === activeTabTrackId);
+            if (currentIndex < trackStates.length - 1) {
+              handleTabSelect(trackStates[currentIndex + 1].id);
+            }
+          }
+          break;
+        case 'Tab':
+          // Allow default tab behavior for accessibility
+          break;
         default:
+          // Handle number keys for quick track selection in mobile view
+          if (isMobileView && event.code.startsWith('Digit')) {
+            const trackIndex = parseInt(event.code.replace('Digit', '')) - 1;
+            if (trackIndex >= 0 && trackIndex < trackStates.length) {
+              event.preventDefault();
+              handleTabSelect(trackStates[trackIndex].id);
+            }
+          }
           break;
       }
     };
@@ -491,7 +602,7 @@ const TrackView: React.FC<TrackViewProps> = ({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isEditingTimestamp, trackStates.length, isLoading, loadError, isPlaying, duration]); // Dependencies for the keyboard handler
+  }, [isEditingTimestamp, trackStates.length, isLoading, loadError, isPlaying, duration, isMobileView, activeTabTrackId, trackStates]); // Dependencies for the keyboard handler
 
   if (isLoading) {
     const handleInitializeAudioFromLoading = async () => {
@@ -734,6 +845,28 @@ const TrackView: React.FC<TrackViewProps> = ({
         </div>
       </div>
 
+      {/* Mobile tabbed interface for very small screens */}
+      {isMobileView && (
+        <div className="daw-track-tabs">
+          <ul className="daw-track-tabs__list" role="tablist">
+            {trackStates.map((track, index) => (
+              <li key={track.id} className="daw-track-tabs__item" role="presentation">
+                <button
+                  className={`daw-track-tabs__button ${activeTabTrackId === track.id ? 'daw-track-tabs__button--active' : ''}`}
+                  onClick={() => handleTabSelect(track.id)}
+                  role="tab"
+                  aria-selected={activeTabTrackId === track.id}
+                  aria-controls={`track-panel-${track.id}`}
+                  id={`track-tab-${track.id}`}
+                >
+                  {index + 1}. {track.name.charAt(0).toUpperCase() + track.name.slice(1)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Main DAW area */}
       <div className="daw-main">
         {/* Timeline ruler */}
@@ -757,99 +890,282 @@ const TrackView: React.FC<TrackViewProps> = ({
           </div>
         </div>
 
-        {/* Track area */}
-        <div className="daw-track-area">
-          {trackStates.map((track, index) => (
-            <div key={track.id} className={`daw-track ${getTrackDimmingClass(track)}`}>
-              {/* Track header */}
-              <div className="daw-track-header">
-                <div className="daw-track-number">{index + 1}</div>
-                <div className="daw-track-info">
-                  <div className="daw-track-name">{track.name.charAt(0).toUpperCase() + track.name.slice(1)}</div>
-                  <div className="daw-track-controls">
-                    <button 
-                      className={`daw-track-btn daw-track-btn--mute ${track.muted ? 'daw-track-btn--active' : ''}`}
-                      onClick={() => handleTrackMuteToggle(track.id, !track.muted)}
-                      title={track.muted ? 'Unmute track' : 'Mute track'}
-                    >
-                      M
-                    </button>
-                    <button 
-                      className={`daw-track-btn daw-track-btn--solo ${track.soloed ? 'daw-track-btn--active' : ''}`}
-                      onClick={() => handleTrackSoloToggle(track.id, !track.soloed)}
-                      title={track.soloed ? 'Unsolo track' : 'Solo track'}
-                    >
-                      S
-                    </button>
-
+        {/* Track area - either tabbed content or regular tracks */}
+        {isMobileView ? (
+          // Mobile tabbed content
+          trackStates.map((track, index) => (
+            <div
+              key={track.id}
+              className={`daw-track-tabs__content ${activeTabTrackId === track.id ? 'daw-track-tabs__content--active' : ''}`}
+              role="tabpanel"
+              aria-labelledby={`track-tab-${track.id}`}
+              id={`track-panel-${track.id}`}
+            >
+              <div className="daw-track-area">
+                <div className={`daw-track ${getTrackDimmingClass(track)}`}>
+                  {/* Track header */}
+                  <div className="daw-track-header">
+                    <div className="daw-track-number">{index + 1}</div>
+                    <div className="daw-track-info">
+                      <div className="daw-track-name">{track.name.charAt(0).toUpperCase() + track.name.slice(1)}</div>
+                      <div className="daw-track-controls">
+                        <button 
+                          className={`daw-track-btn daw-track-btn--mute ${track.muted ? 'daw-track-btn--active' : ''}`}
+                          onClick={() => handleTrackMuteToggle(track.id, !track.muted)}
+                          title={track.muted ? 'Unmute track' : 'Mute track'}
+                          aria-label={track.muted ? `Unmute ${track.name} track` : `Mute ${track.name} track`}
+                        >
+                          M
+                        </button>
+                        <button 
+                          className={`daw-track-btn daw-track-btn--solo ${track.soloed ? 'daw-track-btn--active' : ''}`}
+                          onClick={() => handleTrackSoloToggle(track.id, !track.soloed)}
+                          title={track.soloed ? 'Unsolo track' : 'Solo track'}
+                          aria-label={track.soloed ? `Unsolo ${track.name} track` : `Solo ${track.name} track`}
+                        >
+                          S
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Track content area with waveform */}
+                  <div className="daw-track-content">
+                    <div className="daw-waveform-container">
+                      {/* Real waveform visualization */}
+                      {(() => {
+                        const trackWaveformData = waveformData.get(track.id);
+                        
+                        if (isGeneratingWaveforms) {
+                          return (
+                            <div className="daw-waveform-loading">
+                              <span>Generating waveform...</span>
+                            </div>
+                          );
+                        }
+                        
+                        if (waveformError) {
+                          return (
+                            <div className="daw-waveform-error">
+                              <span>Waveform unavailable</span>
+                            </div>
+                          );
+                        }
+                        
+                        if (!trackWaveformData) {
+                          return (
+                            <div className="daw-waveform-placeholder">
+                              <span>No waveform data</span>
+                            </div>
+                          );
+                        }
+                        
+                        return (
+                          <WaveformVisualization
+                            bars={trackWaveformData.bars}
+                            trackName={track.name}
+                            isPlaying={isTrackPlaying(track)}
+                            progress={progressPercentage / 100}
+                            showSilentSections={false}
+                            silentSections={[]}
+                            totalDuration={duration}
+                            onClick={handleTimelineClick}
+                            enableHighDPI={true}
+                            enableCaching={false}
+                          />
+                        );
+                      })()}
+                    </div>
                   </div>
                 </div>
 
-              </div>
-              
-              {/* Track content area with waveform */}
-              <div 
-                className="daw-track-content"
-              >
-                <div className="daw-waveform-container">
-                  {/* Real waveform visualization */}
-                  {(() => {
-                    const trackWaveformData = waveformData.get(track.id);
-                    
-                    if (isGeneratingWaveforms) {
-                      return (
-                        <div className="daw-waveform-loading">
-                          <span>Generating waveform...</span>
-                        </div>
-                      );
-                    }
-                    
-                    if (waveformError) {
-                      return (
-                        <div className="daw-waveform-error">
-                          <span>Waveform unavailable</span>
-                        </div>
-                      );
-                    }
-                    
-                    if (!trackWaveformData) {
-                      return (
-                        <div className="daw-waveform-placeholder">
-                          <span>No waveform data</span>
-                        </div>
-                      );
-                    }
-                    
-                    // Check for duration mismatch (removed debug logs for cleaner console)
-                    if (Math.abs(trackWaveformData.duration - duration) > 1) {
-                      // Duration mismatch detected but not logged to keep console clean
-                    }
-                    
-                    return (
-                      <WaveformVisualization
-                        bars={trackWaveformData.bars}
-                        trackName={track.name}
-                        isPlaying={isTrackPlaying(track)}
-                        progress={progressPercentage / 100}
-                        showSilentSections={false}
-                        silentSections={[]}
-                        totalDuration={duration} // Use AudioPlayer duration for consistency
-                        onClick={handleTimelineClick}
-                        enableHighDPI={true}
-                        enableCaching={false}
-                      />
-                    );
-                  })()}
+                {/* Mobile controls for active tab */}
+                <div className="daw-track-controls-mobile daw-track-controls-mobile--expanded">
+                  <div className="daw-track-controls-mobile__section">
+                    <label className="daw-track-controls-mobile__label" htmlFor={`volume-${track.id}`}>
+                      Volume
+                    </label>
+                    <input
+                      id={`volume-${track.id}`}
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={track.volume}
+                      onChange={(e) => handleTrackVolumeChange(track.id, parseFloat(e.target.value))}
+                      className="daw-track-controls-mobile__slider"
+                      aria-label={`${track.name} volume`}
+                    />
+                    <div className="daw-track-controls-mobile__value">
+                      {formatVolume(track.volume)}
+                    </div>
+                  </div>
                   
-
+                  <div className="daw-track-controls-mobile__section">
+                    <label className="daw-track-controls-mobile__label" htmlFor={`pan-${track.id}`}>
+                      Pan
+                    </label>
+                    <input
+                      id={`pan-${track.id}`}
+                      type="range"
+                      min="-1"
+                      max="1"
+                      step="0.01"
+                      value={track.pan}
+                      onChange={(e) => handleTrackPanChange(track.id, parseFloat(e.target.value))}
+                      className="daw-track-controls-mobile__slider"
+                      aria-label={`${track.name} pan`}
+                    />
+                    <div className="daw-track-controls-mobile__value">
+                      {formatPan(track.pan)}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          ))
+        ) : (
+          // Regular track area for larger screens
+          <div className="daw-track-area">
+            {trackStates.map((track, index) => (
+              <div key={track.id} className={`daw-track ${getTrackDimmingClass(track)}`}>
+                {/* Track header */}
+                <div className="daw-track-header">
+                  <div className="daw-track-number">{index + 1}</div>
+                  <div className="daw-track-info">
+                    <div className="daw-track-name">{track.name.charAt(0).toUpperCase() + track.name.slice(1)}</div>
+                    <div className="daw-track-controls">
+                      <button 
+                        className={`daw-track-btn daw-track-btn--mute ${track.muted ? 'daw-track-btn--active' : ''}`}
+                        onClick={() => handleTrackMuteToggle(track.id, !track.muted)}
+                        title={track.muted ? 'Unmute track' : 'Mute track'}
+                        aria-label={track.muted ? `Unmute ${track.name} track` : `Mute ${track.name} track`}
+                      >
+                        M
+                      </button>
+                      <button 
+                        className={`daw-track-btn daw-track-btn--solo ${track.soloed ? 'daw-track-btn--active' : ''}`}
+                        onClick={() => handleTrackSoloToggle(track.id, !track.soloed)}
+                        title={track.soloed ? 'Unsolo track' : 'Solo track'}
+                        aria-label={track.soloed ? `Unsolo ${track.name} track` : `Solo ${track.name} track`}
+                      >
+                        S
+                      </button>
+                      
+                      {/* Collapsible controls expand button for tablet view */}
+                      {isTabletView && (
+                        <button
+                          className={`daw-track-expand-btn ${expandedTrackId === track.id ? 'daw-track-expand-btn--expanded' : ''}`}
+                          onClick={() => handleTrackExpandToggle(track.id)}
+                          title="Show more controls"
+                          aria-label={`${expandedTrackId === track.id ? 'Hide' : 'Show'} additional controls for ${track.name}`}
+                          aria-expanded={expandedTrackId === track.id}
+                        >
+                          ▼
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Collapsible mobile controls for tablet view */}
+                  {isTabletView && (
+                    <div className={`daw-track-controls-mobile ${expandedTrackId === track.id ? 'daw-track-controls-mobile--expanded' : ''}`}>
+                      <div className="daw-track-controls-mobile__section">
+                        <label className="daw-track-controls-mobile__label" htmlFor={`volume-${track.id}`}>
+                          Volume
+                        </label>
+                        <input
+                          id={`volume-${track.id}`}
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.01"
+                          value={track.volume}
+                          onChange={(e) => handleTrackVolumeChange(track.id, parseFloat(e.target.value))}
+                          className="daw-track-controls-mobile__slider"
+                          aria-label={`${track.name} volume`}
+                        />
+                        <div className="daw-track-controls-mobile__value">
+                          {formatVolume(track.volume)}
+                        </div>
+                      </div>
+                      
+                      <div className="daw-track-controls-mobile__section">
+                        <label className="daw-track-controls-mobile__label" htmlFor={`pan-${track.id}`}>
+                          Pan
+                        </label>
+                        <input
+                          id={`pan-${track.id}`}
+                          type="range"
+                          min="-1"
+                          max="1"
+                          step="0.01"
+                          value={track.pan}
+                          onChange={(e) => handleTrackPanChange(track.id, parseFloat(e.target.value))}
+                          className="daw-track-controls-mobile__slider"
+                          aria-label={`${track.name} pan`}
+                        />
+                        <div className="daw-track-controls-mobile__value">
+                          {formatPan(track.pan)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Track content area with waveform */}
+                <div className="daw-track-content">
+                  <div className="daw-waveform-container">
+                    {/* Real waveform visualization */}
+                    {(() => {
+                      const trackWaveformData = waveformData.get(track.id);
+                      
+                      if (isGeneratingWaveforms) {
+                        return (
+                          <div className="daw-waveform-loading">
+                            <span>Generating waveform...</span>
+                          </div>
+                        );
+                      }
+                      
+                      if (waveformError) {
+                        return (
+                          <div className="daw-waveform-error">
+                            <span>Waveform unavailable</span>
+                          </div>
+                        );
+                      }
+                      
+                      if (!trackWaveformData) {
+                        return (
+                          <div className="daw-waveform-placeholder">
+                            <span>No waveform data</span>
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <WaveformVisualization
+                          bars={trackWaveformData.bars}
+                          trackName={track.name}
+                          isPlaying={isTrackPlaying(track)}
+                          progress={progressPercentage / 100}
+                          showSilentSections={false}
+                          silentSections={[]}
+                          totalDuration={duration}
+                          onClick={handleTimelineClick}
+                          enableHighDPI={true}
+                          enableCaching={false}
+                        />
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-
     </div>
   );
 };

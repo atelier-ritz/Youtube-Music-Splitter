@@ -798,6 +798,195 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Mobile-first collapsible track controls */
+.daw-track-controls-mobile {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--daw-bg-secondary);
+  border: 1px solid var(--daw-border-color);
+  border-top: none;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  padding: var(--spacing-sm);
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.daw-track-controls-mobile.daw-track-controls-mobile--expanded {
+  display: block;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.daw-track-expand-btn {
+  display: none;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  margin-left: auto;
+  
+  /* Touch-friendly sizing */
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  
+  /* Improve touch interaction */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.daw-track-expand-btn:hover {
+  color: white;
+  transform: scale(1.1);
+}
+
+.daw-track-expand-btn--expanded {
+  transform: rotate(180deg);
+}
+
+.daw-track-expand-btn--expanded:hover {
+  transform: rotate(180deg) scale(1.1);
+}
+
+/* Mobile volume and pan controls */
+.daw-track-controls-mobile__section {
+  margin-bottom: var(--spacing-sm);
+}
+
+.daw-track-controls-mobile__section:last-child {
+  margin-bottom: 0;
+}
+
+.daw-track-controls-mobile__label {
+  display: block;
+  font-size: 11px;
+  color: #ccc;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.daw-track-controls-mobile__slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #3a3d4a;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.daw-track-controls-mobile__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ff6b35;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.daw-track-controls-mobile__slider::-webkit-slider-thumb:hover {
+  background: #ff8555;
+  transform: scale(1.1);
+}
+
+.daw-track-controls-mobile__slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ff6b35;
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: none;
+}
+
+.daw-track-controls-mobile__value {
+  font-size: 10px;
+  color: #888;
+  font-family: 'Courier New', monospace;
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* Tabbed interface for very small screens */
+.daw-track-tabs {
+  display: none;
+  background: var(--daw-bg-secondary);
+  border-bottom: 1px solid var(--daw-border-color);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.daw-track-tabs__list {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: max-content;
+}
+
+.daw-track-tabs__item {
+  flex-shrink: 0;
+}
+
+.daw-track-tabs__button {
+  background: transparent;
+  border: none;
+  color: #888;
+  padding: var(--spacing-sm) var(--spacing-md);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  
+  /* Touch-friendly sizing */
+  min-height: var(--touch-target-min);
+  
+  /* Improve touch interaction */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.daw-track-tabs__button:hover {
+  color: #ccc;
+}
+
+.daw-track-tabs__button--active {
+  color: #ff6b35;
+  border-bottom-color: #ff6b35;
+}
+
+.daw-track-tabs__content {
+  display: none;
+}
+
+.daw-track-tabs__content--active {
+  display: block;
+}
+
 .daw-track-btn:hover {
   background: #5a5d6a;
   transform: translateY(-1px);
@@ -1045,6 +1234,82 @@
 
 /* Enhanced mobile-first responsive design */
 
+/* Very small mobile devices - Enable tabbed interface */
+@media (max-width: 480px) {
+  .daw-interface {
+    --daw-track-height: 45px;
+    --daw-track-header-width: 100px;
+  }
+  
+  /* Show tabbed interface on very small screens */
+  .daw-track-tabs {
+    display: block;
+  }
+  
+  .daw-track-area {
+    display: none;
+  }
+  
+  .daw-track-tabs__content--active .daw-track-area {
+    display: block;
+  }
+  
+  /* Compact track headers for mobile tabs */
+  .daw-track-header {
+    margin: 2px;
+    border-radius: 2px;
+  }
+  
+  .daw-track-number {
+    width: 30px;
+    font-size: 14px;
+  }
+  
+  .daw-track-info {
+    padding: 4px 8px;
+  }
+  
+  .daw-track-name {
+    font-size: 11px;
+  }
+  
+  .daw-track-controls {
+    gap: 2px;
+  }
+  
+  .daw-track-btn {
+    width: 16px;
+    height: 16px;
+    font-size: 8px;
+  }
+}
+
+/* Small mobile devices - Enable collapsible controls */
+@media (min-width: 481px) and (max-width: 767px) {
+  .daw-interface {
+    --daw-track-height: 50px;
+    --daw-track-header-width: 120px;
+  }
+  
+  /* Show expand button for collapsible controls */
+  .daw-track-expand-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Make track header relative for positioning mobile controls */
+  .daw-track-header {
+    position: relative;
+  }
+  
+  /* Hide volume/pan controls in main header on small screens */
+  .daw-track-controls .daw-track-btn--volume,
+  .daw-track-controls .daw-track-btn--pan {
+    display: none;
+  }
+}
+
 /* Small devices (480px and up) */
 @media (min-width: 480px) {
   .daw-interface {
@@ -1185,6 +1450,26 @@
     min-height: var(--touch-target-min);
   }
   
+  .daw-track-expand-btn {
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+  }
+  
+  .daw-track-tabs__button {
+    min-height: var(--touch-target-comfortable);
+    padding: var(--spacing-sm) var(--spacing-lg);
+  }
+  
+  .daw-track-controls-mobile__slider::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .daw-track-controls-mobile__slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+  }
+  
   /* Increase spacing for touch devices */
   .daw-transport-controls {
     gap: var(--touch-spacing);
@@ -1192,6 +1477,10 @@
   
   .daw-track-controls {
     gap: var(--touch-spacing);
+  }
+  
+  .daw-track-controls-mobile__section {
+    margin-bottom: var(--touch-spacing-lg);
   }
 }
 
@@ -1249,4 +1538,94 @@
   .daw-track-btn {
     font-size: 8px;
   }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .slideDown {
+    animation: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .daw-track-btn {
+    border: 2px solid transparent;
+  }
+  
+  .daw-track-btn:focus {
+    border-color: currentColor;
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+  
+  .daw-track-expand-btn:focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+  
+  .daw-track-tabs__button:focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+  
+  .daw-track-controls-mobile__slider:focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+}
+
+/* Focus management for accessibility */
+.daw-track-btn:focus,
+.daw-transport-btn:focus,
+.daw-track-expand-btn:focus {
+  outline: 2px solid #ff6b35;
+  outline-offset: 2px;
+}
+
+.daw-track-tabs__button:focus {
+  outline: 2px solid #ff6b35;
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+.daw-track-controls-mobile__slider:focus {
+  outline: 2px solid #ff6b35;
+  outline-offset: 2px;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 1000;
+}
+
+.skip-link:focus {
+  top: 6px;
 }
