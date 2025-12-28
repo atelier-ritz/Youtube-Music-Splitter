@@ -56,6 +56,10 @@ Thumbs.db
 *.swo
 *~
 
+# Docker
+.docker/
+docker-compose.override.yml
+
 # Audio files (temporary downloads)
 *.mp3
 *.wav

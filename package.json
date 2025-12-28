@@ -10,7 +10,14 @@
     "start:services": "concurrently \"npm run start:backend\" \"npm run start:audio\"",
     "start:backend": "cd backend && npm start",
     "start:audio": "cd audio-processing-service && python app.py",
-    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ../audio-processing-service && pip install -r requirements.txt"
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ../audio-processing-service && pip install -r requirements.txt",
+    "docker:build": "docker build -t band-practice-webapp .",
+    "docker:run": "docker run -p 8080:8080 band-practice-webapp",
+    "docker:dev": "docker-compose up --build",
+    "docker:dev:detached": "docker-compose up --build -d",
+    "docker:prod": "docker-compose --profile production up --build",
+    "docker:stop": "docker-compose down",
+    "docker:clean": "docker-compose down -v --rmi all"
   },
   "dependencies": {
     "concurrently": "^9.2.1"
