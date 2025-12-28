@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Banner Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Simulate the GitHub banner */
+        .github-banner-demo {
+            background: linear-gradient(135deg, #24292e 0%, #1a1e22 100%);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .github-banner-demo:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .github-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .github-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .github-text {
+            flex: 1;
+        }
+        
+        .github-title {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 3px 0;
+        }
+        
+        .github-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            margin: 0;
+        }
+        
+        .github-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        
+        .github-btn {
+            flex: 1;
+            min-width: 80px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #24292e;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .github-btn:hover {
+            background: white;
+            transform: translateY(-1px);
+        }
+        
+        .github-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+            gap: 12px;
+        }
+        
+        .minimized-demo {
+            background: linear-gradient(135deg, #24292e 0%, #1a1e22 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin: 10px 0;
+        }
+        
+        .minimized-demo:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #2f363d 0%, #24292e 100%);
+        }
+        
+        .banners-demo {
+            display: flex;
+            gap: 16px;
+            margin: 20px 0;
+        }
+        
+        .banner-demo {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            color: white;
+        }
+        
+        .donation-demo {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .github-demo {
+            background: linear-gradient(135deg, #24292e 0%, #1a1e22 100%);
+        }
+        
+        .status {
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+        .success { background: rgba(76, 175, 80, 0.2); }
+        .info { background: rgba(33, 150, 243, 0.2); }
+    </style>
+</head>
+<body>
+    <h1>GitHub Banner Integration</h1>
+    
+    <div class="test-section">
+        <h3>✅ New GitHub Banner Added:</h3>
+        <div class="status success">⭐ GitHub banner with repository actions</div>
+        <div class="status success">🎨 Matches donation banner design language</div>
+        <div class="status success">📱 Responsive design for all screen sizes</div>
+        <div class="status success">🔗 Direct links to repo, star, fork, and issues</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🎨 GitHub Banner (Expanded):</h3>
+        <div class="github-banner-demo">
+            <div class="github-header">
+                <div class="github-icon">⭐</div>
+                <div class="github-text">
+                    <h3 class="github-title">Open Source Project</h3>
+                    <p class="github-subtitle">Check out the code, contribute, or report issues</p>
+                </div>
+            </div>
+            
+            <div class="github-buttons">
+                <button class="github-btn">📂 View Code</button>
+                <button class="github-btn">⭐ Star</button>
+                <button class="github-btn">🍴 Fork</button>
+                <button class="github-btn">🐛 Issues</button>
+            </div>
+            
+            <div class="github-footer">
+                <span>🔓 MIT License</span>
+                <span>• Contributions welcome • Free & Open Source</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🎯 GitHub Banner (Minimized):</h3>
+        <button class="minimized-demo">⭐ GitHub</button>
+        <p>Starts collapsed by default, just like the donation banner</p>
+    </div>
+    
+    <div class="test-section">
+        <h3>📱 Side-by-Side Layout (Desktop):</h3>
+        <div class="banners-demo">
+            <div class="banner-demo donation-demo">
+                <strong>💝 Support</strong><br>
+                <small>Donation Banner</small>
+            </div>
+            <div class="banner-demo github-demo">
+                <strong>⭐ GitHub</strong><br>
+                <small>Repository Banner</small>
+            </div>
+        </div>
+        <p>On desktop: banners show side by side<br>
+        On mobile: banners stack vertically</p>
+    </div>
+    
+    <div class="test-section">
+        <h3>🔗 GitHub Actions:</h3>
+        <div class="status info">📂 <strong>View Code</strong> - Opens repository homepage</div>
+        <div class="status info">⭐ <strong>Star</strong> - Opens stargazers page to star the repo</div>
+        <div class="status info">🍴 <strong>Fork</strong> - Opens fork page to create a copy</div>
+        <div class="status info">🐛 <strong>Issues</strong> - Opens issues page for bug reports/features</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>⚙️ Configuration:</h3>
+        <p><strong>Repository URL:</strong> Set in GitHubBanner.tsx</p>
+        <p><strong>Default State:</strong> Minimized (like donation banner)</p>
+        <p><strong>Theme:</strong> GitHub dark theme colors</p>
+        <p><strong>Responsive:</strong> Adapts to mobile, tablet, desktop</p>
+    </div>
+    
+    <div class="test-section">
+        <h3>🎯 Benefits:</h3>
+        <div class="status success">🌟 Increases repository visibility</div>
+        <div class="status success">🤝 Encourages community contributions</div>
+        <div class="status success">🐛 Easy bug reporting and feature requests</div>
+        <div class="status success">📈 Helps grow the project's GitHub presence</div>
+        <div class="status success">🎨 Consistent with existing UI design</div>
+    </div>
+</body>
+</html>

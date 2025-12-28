@@ -5,6 +5,7 @@ import { useErrorHandler } from './ErrorBoundary';
 import LoadingSpinner from './LoadingSpinner';
 import InteractiveButton from './InteractiveButton';
 import DonationBanner from './DonationBanner';
+import GitHubBanner from './GitHubBanner';
 import './MainPage.css';
 
 interface DownloadStatus {
@@ -38,6 +39,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
   });
   const [validationError, setValidationError] = useState('');
   const [showDonationBanner, setShowDonationBanner] = useState(true);
+  const [showGitHubBanner, setShowGitHubBanner] = useState(true);
   const handleError = useErrorHandler();
   
   // Create retry-enabled axios client
@@ -461,12 +463,23 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
           </div>
         )}
 
-        {/* Donation Banner - Show when not processing */}
-        {showDonationBanner && downloadStatus.status === 'idle' && (
-          <DonationBanner 
-            onClose={() => setShowDonationBanner(false)}
-            className="main-page__donation-banner"
-          />
+        {/* Banners - Show when not processing */}
+        {downloadStatus.status === 'idle' && (
+          <div className="main-page__banners">
+            {showDonationBanner && (
+              <DonationBanner 
+                onClose={() => setShowDonationBanner(false)}
+                className="main-page__donation-banner"
+              />
+            )}
+            {showGitHubBanner && (
+              <GitHubBanner 
+                onClose={() => setShowGitHubBanner(false)}
+                className="main-page__github-banner"
+                repoUrl="https://github.com/your-username/Youtube-Music-Splitter" // Replace with your actual repo URL
+              />
+            )}
+          </div>
         )}
       </div>
     </div>

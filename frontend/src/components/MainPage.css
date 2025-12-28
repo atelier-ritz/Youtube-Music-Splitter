@@ -380,3 +380,37 @@
   max-width: 700px;
   width: 100%;
 }
+/* Banners container */
+.main-page__banners {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 20px;
+  max-width: 700px;
+  width: 100%;
+}
+
+.main-page__donation-banner,
+.main-page__github-banner {
+  /* Individual banner styling handled by their own CSS files */
+}
+
+/* On larger screens, show banners side by side */
+@media (min-width: 768px) {
+  .main-page__banners {
+    flex-direction: row;
+    gap: 16px;
+  }
+  
+  .main-page__donation-banner,
+  .main-page__github-banner {
+    flex: 1;
+  }
+}
+
+/* Remove the old donation banner styles since we now have the container */
+.main-page__donation-banner {
+  margin-top: 0;
+  max-width: none;
+  width: 100%;
+}
