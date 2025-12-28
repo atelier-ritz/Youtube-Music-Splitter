@@ -57,49 +57,6 @@
   max-width: none;
 }
 
-/* Responsive Grid System */
-.grid {
-  display: grid;
-  gap: var(--spacing-md);
-}
-
-.grid--cols-1 { grid-template-columns: 1fr; }
-.grid--cols-2 { grid-template-columns: repeat(2, 1fr); }
-.grid--cols-3 { grid-template-columns: repeat(3, 1fr); }
-.grid--cols-4 { grid-template-columns: repeat(4, 1fr); }
-
-/* Responsive Flexbox Utilities */
-.flex {
-  display: flex;
-}
-
-.flex--column {
-  flex-direction: column;
-}
-
-.flex--wrap {
-  flex-wrap: wrap;
-}
-
-.flex--center {
-  align-items: center;
-  justify-content: center;
-}
-
-.flex--between {
-  justify-content: space-between;
-}
-
-.flex--around {
-  justify-content: space-around;
-}
-
-.gap--xs { gap: var(--spacing-xs); }
-.gap--sm { gap: var(--spacing-sm); }
-.gap--md { gap: var(--spacing-md); }
-.gap--lg { gap: var(--spacing-lg); }
-.gap--xl { gap: var(--spacing-xl); }
-
 /* Touch-Friendly Interactive Elements */
 .touch-target {
   min-width: var(--touch-target-min);
@@ -114,38 +71,9 @@
   min-height: var(--touch-target-comfortable);
 }
 
-/* Responsive Typography */
-.text--xs { font-size: var(--font-size-xs); }
-.text--sm { font-size: var(--font-size-sm); }
-.text--base { font-size: var(--font-size-base); }
-.text--lg { font-size: var(--font-size-lg); }
-.text--xl { font-size: var(--font-size-xl); }
-.text--xxl { font-size: var(--font-size-xxl); }
-.text--xxxl { font-size: var(--font-size-xxxl); }
-
-/* Responsive Spacing */
-.p--xs { padding: var(--spacing-xs); }
-.p--sm { padding: var(--spacing-sm); }
-.p--md { padding: var(--spacing-md); }
-.p--lg { padding: var(--spacing-lg); }
-.p--xl { padding: var(--spacing-xl); }
-
-.m--xs { margin: var(--spacing-xs); }
-.m--sm { margin: var(--spacing-sm); }
-.m--md { margin: var(--spacing-md); }
-.m--lg { margin: var(--spacing-lg); }
-.m--xl { margin: var(--spacing-xl); }
-
 /* Responsive Visibility */
 .hidden { display: none !important; }
 .visible { display: block !important; }
-
-/* Mobile-first responsive visibility classes */
-.hidden-xs { display: none !important; }
-.hidden-sm { display: none !important; }
-.hidden-md { display: none !important; }
-.hidden-lg { display: none !important; }
-.hidden-xl { display: none !important; }
 
 /* Small devices (480px and up) */
 @media (min-width: 480px) {
@@ -157,14 +85,6 @@
   .container {
     max-width: 540px;
   }
-
-  .hidden-xs { display: block !important; }
-  .hidden-sm { display: none !important; }
-
-  .grid--sm-cols-1 { grid-template-columns: 1fr; }
-  .grid--sm-cols-2 { grid-template-columns: repeat(2, 1fr); }
-  .grid--sm-cols-3 { grid-template-columns: repeat(3, 1fr); }
-  .grid--sm-cols-4 { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* Medium devices (768px and up) - Tablets */
@@ -181,19 +101,6 @@
   .container {
     max-width: 720px;
   }
-
-  .hidden-sm { display: block !important; }
-  .hidden-md { display: none !important; }
-
-  .grid--md-cols-1 { grid-template-columns: 1fr; }
-  .grid--md-cols-2 { grid-template-columns: repeat(2, 1fr); }
-  .grid--md-cols-3 { grid-template-columns: repeat(3, 1fr); }
-  .grid--md-cols-4 { grid-template-columns: repeat(4, 1fr); }
-  .grid--md-cols-6 { grid-template-columns: repeat(6, 1fr); }
-
-  /* Tablet-specific flex utilities */
-  .flex--md-row { flex-direction: row; }
-  .flex--md-column { flex-direction: column; }
 }
 
 /* Large devices (1024px and up) - Desktops */
@@ -205,20 +112,6 @@
   .container {
     max-width: 960px;
   }
-
-  .hidden-md { display: block !important; }
-  .hidden-lg { display: none !important; }
-
-  .grid--lg-cols-1 { grid-template-columns: 1fr; }
-  .grid--lg-cols-2 { grid-template-columns: repeat(2, 1fr); }
-  .grid--lg-cols-3 { grid-template-columns: repeat(3, 1fr); }
-  .grid--lg-cols-4 { grid-template-columns: repeat(4, 1fr); }
-  .grid--lg-cols-6 { grid-template-columns: repeat(6, 1fr); }
-  .grid--lg-cols-8 { grid-template-columns: repeat(8, 1fr); }
-
-  /* Desktop-specific flex utilities */
-  .flex--lg-row { flex-direction: row; }
-  .flex--lg-column { flex-direction: column; }
 }
 
 /* Extra large devices (1200px and up) */
@@ -226,17 +119,6 @@
   .container {
     max-width: 1140px;
   }
-
-  .hidden-lg { display: block !important; }
-  .hidden-xl { display: none !important; }
-
-  .grid--xl-cols-1 { grid-template-columns: 1fr; }
-  .grid--xl-cols-2 { grid-template-columns: repeat(2, 1fr); }
-  .grid--xl-cols-3 { grid-template-columns: repeat(3, 1fr); }
-  .grid--xl-cols-4 { grid-template-columns: repeat(4, 1fr); }
-  .grid--xl-cols-6 { grid-template-columns: repeat(6, 1fr); }
-  .grid--xl-cols-8 { grid-template-columns: repeat(8, 1fr); }
-  .grid--xl-cols-12 { grid-template-columns: repeat(12, 1fr); }
 }
 
 /* Extra extra large devices (1440px and up) */
@@ -244,8 +126,6 @@
   .container {
     max-width: 1320px;
   }
-
-  .hidden-xl { display: block !important; }
 }
 
 /* Touch device optimizations */
@@ -260,10 +140,6 @@
     min-width: var(--touch-target-comfortable);
     min-height: var(--touch-target-comfortable);
   }
-
-  /* Increase spacing for touch devices */
-  .gap--touch { gap: var(--touch-spacing); }
-  .gap--touch-lg { gap: var(--touch-spacing-lg); }
 }
 
 /* High DPI displays */
@@ -286,13 +162,6 @@
 @media (prefers-contrast: high) {
   :root {
     --border-width: 2px;
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Dark mode specific adjustments can be added here */
   }
 }
 

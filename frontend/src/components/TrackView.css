@@ -458,6 +458,15 @@
   box-sizing: border-box;
 }
 
+.daw-bpm-label {
+  font-size: 8px;
+  color: #00ff00;
+  font-weight: bold;
+  margin-top: 1px;
+  opacity: 0.8;
+  line-height: 1;
+}
+
 .daw-bpm-value {
   font-size: 14px;
   font-weight: bold;
@@ -490,17 +499,6 @@
   display: flex;
   align-items: center;
   gap: 4px;
-}
-
-
-
-.daw-bpm-label {
-  font-size: 8px;
-  color: #00ff00;
-  font-weight: bold;
-  margin-top: 1px;
-  opacity: 0.8;
-  line-height: 1;
 }
 
 
@@ -538,35 +536,6 @@
   line-height: 1;
 }
 
-.daw-shortcuts-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #000;
-  border: 2px solid #3a3d4a;
-  padding: 8px;
-  border-radius: 6px;
-  min-width: 32px;
-  height: 28px;
-  cursor: help;
-  transition: all 0.2s ease;
-}
-
-.daw-shortcuts-hint:hover {
-  border-color: #00ff00;
-  box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
-}
-
-.daw-shortcuts-icon {
-  font-size: 14px;
-  color: #888;
-  transition: color 0.2s ease;
-}
-
-.daw-shortcuts-hint:hover .daw-shortcuts-icon {
-  color: #00ff00;
-  text-shadow: 0 0 4px rgba(0, 255, 0, 0.3);
-}
 
 /* DAW Main Area */
 .daw-main {
@@ -840,19 +809,9 @@
 
 .daw-track-controls-mobile.daw-track-controls-mobile--expanded {
   display: block;
-  animation: slideDown 0.2s ease-out;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+
 
 .daw-track-expand-btn {
   display: none;
@@ -1048,19 +1007,6 @@
   box-shadow: 0 4px 12px rgba(255, 152, 0, 0.6);
 }
 
-@keyframes daw-button-pulse {
-  0%, 100% {
-    box-shadow: 0 2px 8px rgba(255, 235, 59, 0.4);
-  }
-  50% {
-    box-shadow: 0 2px 12px rgba(255, 235, 59, 0.6);
-  }
-}
-
-.daw-track-btn--mute.daw-track-btn--active {
-  animation-name: daw-button-pulse-red;
-}
-
 @keyframes daw-button-pulse-red {
   0%, 100% {
     box-shadow: 0 2px 8px rgba(244, 67, 54, 0.4);
@@ -1109,30 +1055,6 @@
   transition: opacity 0.2s ease;
 }
 
-.daw-waveform--vocals .daw-waveform-bar {
-  background: #2196F3;
-}
-
-.daw-waveform--drums .daw-waveform-bar {
-  background: #FF9800;
-}
-
-.daw-waveform--bass .daw-waveform-bar {
-  background: #4CAF50;
-}
-
-.daw-waveform--guitar .daw-waveform-bar {
-  background: #E91E63;
-}
-
-.daw-waveform--piano .daw-waveform-bar {
-  background: #795548;
-}
-
-.daw-waveform--other .daw-waveform-bar {
-  background: #9C27B0;
-}
-
 
 
 /* Waveform States */
@@ -1145,7 +1067,6 @@
   width: 100%;
   height: 60px;
   font-size: 12px;
-  color: #888;
   font-style: italic;
 }
 
@@ -1353,8 +1274,8 @@
     --daw-toolbar-height: 55px;
     --daw-ruler-height: 38px;
     --daw-track-height: 60px;
-    --daw-track-header-width: 160px; /* Wider for full names */
-    --daw-transport-btn-size: 36px; /* Consistent height */
+    --daw-track-header-width: 160px;
+    --daw-transport-btn-size: 36px;
     --daw-track-btn-size: 20px;
   }
   
@@ -1389,8 +1310,8 @@
     --daw-toolbar-height: 60px;
     --daw-ruler-height: 40px;
     --daw-track-height: 66px;
-    --daw-track-header-width: 180px; /* Even wider for desktop */
-    --daw-transport-btn-size: 36px; /* Consistent height */
+    --daw-track-header-width: 180px;
+    --daw-transport-btn-size: 36px;
     --daw-track-btn-size: 22px;
   }
   
@@ -1447,8 +1368,8 @@
     --daw-toolbar-height: 65px;
     --daw-ruler-height: 42px;
     --daw-track-height: 70px;
-    --daw-track-header-width: 200px; /* Widest for desktop */
-    --daw-transport-btn-size: 36px; /* Consistent height */
+    --daw-track-header-width: 200px;
+    --daw-transport-btn-size: 36px;
     --daw-track-btn-size: 24px;
   }
   
@@ -1502,8 +1423,8 @@
   .daw-interface {
     --daw-toolbar-height: 70px;
     --daw-track-height: 75px;
-    --daw-track-header-width: 220px; /* Maximum width for full names */
-    --daw-transport-btn-size: 36px; /* Consistent height */
+    --daw-track-header-width: 220px;
+    --daw-transport-btn-size: 36px;
     --daw-track-btn-size: 26px;
   }
   
@@ -1521,11 +1442,10 @@
 /* Touch device optimizations */
 @media (pointer: coarse) {
   .daw-interface {
-    --daw-transport-btn-size: var(--touch-target-comfortable); /* 44px for touch accessibility */
-    --daw-track-btn-size: var(--touch-target-min); /* Keep minimum touch size */
+    --daw-transport-btn-size: var(--touch-target-comfortable);
+    --daw-track-btn-size: var(--touch-target-min);
   }
   
-  /* All toolbar elements match transport button size on touch */
   .daw-time-display,
   .daw-timestamp-input,
   .daw-speed-window,
@@ -1534,7 +1454,7 @@
   .daw-back-button,
   .daw-speed-input,
   .daw-speed-select {
-    height: var(--touch-target-comfortable); /* Match transport button size on touch */
+    height: var(--touch-target-comfortable);
   }
   
   .daw-transport-btn {
@@ -1543,50 +1463,32 @@
   }
   
   .daw-track-btn {
-    min-width: var(--touch-target-min); /* 44px minimum for touch */
+    min-width: var(--touch-target-min);
     min-height: var(--touch-target-min);
     width: var(--touch-target-min);
     height: var(--touch-target-min);
-    font-size: 14px; /* Larger font for touch */
+    font-size: 14px;
   }
   
-  .daw-time-display--clickable {
-    min-height: var(--touch-target-min);
-  }
-  
-  .daw-timestamp-input {
-    min-height: var(--touch-target-min);
-  }
-  
-  .daw-track-content {
-    min-height: var(--touch-target-min);
-  }
-  
-  .daw-track-expand-btn {
-    min-width: var(--touch-target-min);
+  .daw-time-display--clickable,
+  .daw-timestamp-input,
+  .daw-track-content,
+  .daw-track-expand-btn,
+  .daw-track-tabs__button {
     min-height: var(--touch-target-min);
   }
   
   .daw-track-tabs__button {
-    min-height: var(--touch-target-comfortable);
     padding: var(--spacing-sm) var(--spacing-lg);
   }
   
-  .daw-track-controls-mobile__slider::-webkit-slider-thumb {
-    width: 24px;
-    height: 24px;
-  }
-  
+  .daw-track-controls-mobile__slider::-webkit-slider-thumb,
   .daw-track-controls-mobile__slider::-moz-range-thumb {
     width: 24px;
     height: 24px;
   }
   
-  /* Increase spacing for touch devices */
-  .daw-transport-controls {
-    gap: var(--touch-spacing);
-  }
-  
+  .daw-transport-controls,
   .daw-track-controls {
     gap: var(--touch-spacing);
   }
@@ -1625,8 +1527,8 @@
     --daw-toolbar-height: 45px;
     --daw-ruler-height: 30px;
     --daw-track-height: 50px;
-    --daw-track-header-width: 120px; /* Increased from 100px */
-    --daw-transport-btn-size: 36px; /* Consistent height */
+    --daw-track-header-width: 120px;
+    --daw-transport-btn-size: 36px;
     --daw-track-btn-size: 16px;
     font-size: 12px;
   }
@@ -1646,26 +1548,22 @@
   }
   
   .daw-track-number {
-    width: 28px; /* Even smaller for very small screens */
+    width: 28px;
     font-size: 12px;
   }
   
   .daw-track-info {
-    padding: 3px 5px; /* Very compact padding */
+    padding: 3px 5px;
   }
   
   .daw-track-btn {
     width: 14px;
     height: 14px;
-    font-size: 7px;
+    font-size: 8px;
   }
   
   .daw-transport-btn {
     font-size: 10px;
-  }
-  
-  .daw-track-btn {
-    font-size: 8px;
   }
 }
 
@@ -1675,10 +1573,6 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-  
-  .slideDown {
-    animation: none;
   }
 }
 
