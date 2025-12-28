@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toolbar Height Consistency Test</title>
+    <link rel="stylesheet" href="src/components/TrackView.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #2a2d3a;
+            font-family: Arial, sans-serif;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #3a3d4a;
+            border-radius: 8px;
+        }
+        
+        .test-title {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        /* Include the CSS custom properties */
+        .daw-interface {
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 12px;
+            --spacing-lg: 16px;
+            --border-radius: 6px;
+            --border-radius-sm: 4px;
+            --daw-bg-secondary: #3a3d4a;
+            --daw-border-color: #4a4d5a;
+            --touch-target-min: 44px;
+            --touch-target-comfortable: 44px;
+            --daw-toolbar-height: 60px;
+            --daw-transport-btn-size: 36px;
+        }
+        
+        /* Add alignment guide */
+        .alignment-guide {
+            position: relative;
+        }
+        
+        .alignment-guide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 36px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px dashed rgba(0, 255, 0, 0.5);
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .guide-label {
+            color: #66ff66;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .success-message {
+            color: #66ff66;
+            background: rgba(0, 255, 0, 0.1);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+        }
+        
+        .height-indicator {
+            position: absolute;
+            right: -50px;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #ccc;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 style="color: white; text-align: center;">Toolbar Height Consistency Test</h1>
+        
+        <div class="success-message">
+            ✅ <strong>FIXED:</strong> All toolbar elements now have consistent 36px height (between old 32px and 40px)
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">Desktop Toolbar - All Elements 36px Height</div>
+            <div class="guide-label">Green dashed line shows 36px height reference - all elements should align perfectly</div>
+            
+            <div class="daw-interface">
+                <div class="daw-toolbar alignment-guide" style="position: relative;">
+                    <div class="height-indicator">36px</div>
+                    
+                    <div class="daw-toolbar__left">
+                        <button class="daw-back-button">← Back</button>
+                    </div>
+                    
+                    <div class="daw-toolbar__center">
+                        <div class="daw-timestamp-inspector">
+                            <div class="daw-time-display daw-time-display--clickable">
+                                02:34.567
+                            </div>
+                        </div>
+                        <div class="daw-transport-controls">
+                            <button class="daw-transport-btn daw-transport-btn--prev">◀◀</button>
+                            <button class="daw-transport-btn daw-transport-btn--play">▶</button>
+                            <button class="daw-transport-btn daw-transport-btn--stop">■</button>
+                        </div>
+                    </div>
+                    
+                    <div class="daw-toolbar__right">
+                        <div class="daw-speed-window">
+                            <select class="daw-speed-select">
+                                <option value="1.0">1.0x</option>
+                            </select>
+                            <span class="daw-speed-label">SPEED</span>
+                        </div>
+                        <div class="daw-bpm-window">
+                            <div class="daw-bpm-display">
+                                <span class="daw-bpm-value daw-bpm-value--detected">120</span>
+                            </div>
+                            <span class="daw-bpm-label">BPM</span>
+                        </div>
+                        <div class="daw-signature-window">
+                            <span class="daw-signature-value">4/4</span>
+                            <span class="daw-signature-label">TIME SIG.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">Touch Device Simulation (Transport 44px, Others 42px)</div>
+            <div class="guide-label">Simulating touch device with larger transport buttons for accessibility</div>
+            
+            <div class="daw-interface" style="--daw-transport-btn-size: 44px;">
+                <div class="daw-toolbar alignment-guide" style="position: relative;">
+                    <div class="height-indicator">44px</div>
+                    
+                    <div class="daw-toolbar__left">
+                        <button class="daw-back-button" style="height: 42px;">← Back</button>
+                    </div>
+                    
+                    <div class="daw-toolbar__center">
+                        <div class="daw-timestamp-inspector">
+                            <div class="daw-time-display daw-time-display--clickable" style="height: 44px;">
+                                02:34.567
+                            </div>
+                        </div>
+                        <div class="daw-transport-controls">
+                            <button class="daw-transport-btn daw-transport-btn--prev">◀◀</button>
+                            <button class="daw-transport-btn daw-transport-btn--play">▶</button>
+                            <button class="daw-transport-btn daw-transport-btn--stop">■</button>
+                        </div>
+                    </div>
+                    
+                    <div class="daw-toolbar__right">
+                        <div class="daw-speed-window" style="height: 42px;">
+                            <select class="daw-speed-select" style="height: 42px;">
+                                <option value="1.0">1.0x</option>
+                            </select>
+                            <span class="daw-speed-label">SPEED</span>
+                        </div>
+                        <div class="daw-bpm-window" style="height: 42px;">
+                            <div class="daw-bpm-display">
+                                <span class="daw-bpm-value daw-bpm-value--detected">120</span>
+                            </div>
+                            <span class="daw-bpm-label">BPM</span>
+                        </div>
+                        <div class="daw-signature-window" style="height: 42px;">
+                            <span class="daw-signature-value">4/4</span>
+                            <span class="daw-signature-label">TIME SIG.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <div class="test-title">Before vs After Comparison</div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; color: white;">
+                <div>
+                    <h4 style="color: #ff6666;">❌ Before (Inconsistent Heights)</h4>
+                    <ul style="font-size: 14px; line-height: 1.6;">
+                        <li>Transport controls: ~40px (32px buttons + 8px padding)</li>
+                        <li>Back button: 32px</li>
+                        <li>Timestamp: 32px</li>
+                        <li>Speed/BPM/Signature: 32px</li>
+                        <li><strong>Result:</strong> Misaligned toolbar elements</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: #66ff66;">✅ After (Consistent Heights)</h4>
+                    <ul style="font-size: 14px; line-height: 1.6;">
+                        <li>Transport buttons: 36px (no container padding)</li>
+                        <li>Back button: 36px</li>
+                        <li>Timestamp: 36px</li>
+                        <li>Speed/BPM/Signature: 36px</li>
+                        <li><strong>Result:</strong> Perfect toolbar alignment</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
