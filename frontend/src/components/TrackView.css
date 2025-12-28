@@ -1596,6 +1596,33 @@
   .daw-track-area {
     flex: 1;
     overflow-y: auto;
+    /* Ensure all tracks are visible in landscape */
+    max-height: calc(100vh - var(--daw-toolbar-height) - var(--daw-ruler-height));
+  }
+  
+  /* Force tabbed interface in landscape mobile for better UX */
+  .daw-track-tabs {
+    display: block !important;
+  }
+  
+  /* Hide regular track area when tabs are shown */
+  .daw-main > .daw-track-area {
+    display: none;
+  }
+  
+  /* Show only active tab content */
+  .daw-track-tabs__content {
+    display: none;
+  }
+  
+  .daw-track-tabs__content--active {
+    display: block;
+  }
+  
+  .daw-track-tabs__content--active .daw-track-area {
+    display: block;
+    max-height: calc(100vh - var(--daw-toolbar-height) - var(--daw-ruler-height) - 50px);
+    overflow-y: auto;
   }
 }
 

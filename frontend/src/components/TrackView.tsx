@@ -57,8 +57,18 @@ const TrackView: React.FC<TrackViewProps> = ({
   useEffect(() => {
     const checkScreenSize = () => {
       const width = window.innerWidth;
-      setIsMobileView(width <= 480);
-      setIsTabletView(width > 480 && width <= 767);
+      const height = window.innerHeight;
+      
+      // Consider a device mobile if:
+      // 1. Width is <= 480px (portrait mobile), OR
+      // 2. Height is <= 500px (landscape mobile), OR  
+      // 3. It's a touch device with small screen area
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const screenArea = width * height;
+      const isSmallScreen = width <= 480 || (height <= 500 && isTouchDevice) || (screenArea < 400000 && isTouchDevice);
+      
+      setIsMobileView(isSmallScreen);
+      setIsTabletView(!isSmallScreen && width > 480 && width <= 767);
     };
 
     checkScreenSize();

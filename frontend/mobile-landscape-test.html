@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Landscape Detection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #2a2d3a;
+            color: white;
+        }
+        .test-info {
+            background: #3a3d4a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+        .mobile { background: #4CAF50; }
+        .tablet { background: #FF9800; }
+        .desktop { background: #2196F3; }
+        .landscape { background: #9C27B0; }
+        .portrait { background: #E91E63; }
+    </style>
+</head>
+<body>
+    <h1>Mobile Landscape Detection Test</h1>
+    <div class="test-info">
+        <h3>Screen Information:</h3>
+        <div id="screen-info"></div>
+    </div>
+    
+    <div class="test-info">
+        <h3>Device Classification:</h3>
+        <div id="device-type"></div>
+    </div>
+    
+    <div class="test-info">
+        <h3>Instructions:</h3>
+        <p>1. Open this on a mobile device</p>
+        <p>2. Rotate between portrait and landscape</p>
+        <p>3. Check that landscape mode is detected as "Mobile" (green)</p>
+        <p>4. This ensures tracks will use tabbed interface in landscape</p>
+    </div>
+
+    <script>
+        function updateInfo() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const orientation = width > height ? 'landscape' : 'portrait';
+            
+            // Same logic as TrackView component
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const screenArea = width * height;
+            const isSmallScreen = width <= 480 || (height <= 500 && isTouchDevice) || (screenArea < 400000 && isTouchDevice);
+            const isMobileView = isSmallScreen;
+            const isTabletView = !isSmallScreen && width > 480 && width <= 767;
+            
+            // Update screen info
+            document.getElementById('screen-info').innerHTML = `
+                <div>Width: ${width}px</div>
+                <div>Height: ${height}px</div>
+                <div>Screen Area: ${screenArea.toLocaleString()}px²</div>
+                <div>Touch Device: ${isTouchDevice ? 'Yes' : 'No'}</div>
+                <div class="status ${orientation}">Orientation: ${orientation}</div>
+            `;
+            
+            // Update device type
+            let deviceType = 'Desktop';
+            let className = 'desktop';
+            
+            if (isMobileView) {
+                deviceType = 'Mobile (Tabbed Interface)';
+                className = 'mobile';
+            } else if (isTabletView) {
+                deviceType = 'Tablet (Collapsible Controls)';
+                className = 'tablet';
+            }
+            
+            document.getElementById('device-type').innerHTML = `
+                <div class="status ${className}">${deviceType}</div>
+                <div>Mobile View: ${isMobileView ? 'Yes' : 'No'}</div>
+                <div>Tablet View: ${isTabletView ? 'Yes' : 'No'}</div>
+            `;
+        }
+        
+        // Update on load and resize
+        updateInfo();
+        window.addEventListener('resize', updateInfo);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(updateInfo, 100); // Small delay for orientation change
+        });
+    </script>
+</body>
+</html>
