@@ -38,7 +38,7 @@ npm run dev
 # Or start services individually:
 npm run dev:frontend   # Frontend dev server (port 5173)
 npm run dev:backend    # Backend dev server (port 3001)
-npm run dev:audio      # Audio processing service (port 5000)
+npm run dev:audio      # Audio processing service (port 5001)
 ```
 
 ### Production Build
@@ -93,7 +93,7 @@ npm run dev
 This starts:
 - **Frontend**: http://localhost:5173 (with hot reload)
 - **Backend**: http://localhost:3001 (with nodemon auto-restart)
-- **Audio Processing**: http://localhost:5000 (Python Flask service)
+- **Audio Processing**: http://localhost:5001 (Python Flask service)
 
 ### Individual Service Development
 ```bash
@@ -136,7 +136,7 @@ PORT=3001
 NODE_ENV=development
 
 # Audio Processing Service
-AUDIO_PROCESSING_SERVICE_URL=http://localhost:5000
+AUDIO_PROCESSING_SERVICE_URL=http://localhost:5001
 
 # Stripe Donation System (optional)
 STRIPE_SECRET_KEY=sk_test_your_key_here
@@ -242,7 +242,7 @@ GET  /api/cache/status              # Cache usage information
 GET  /api/debug/paths               # File system debug info
 ```
 
-### Audio Processing Service (http://localhost:5000)
+### Audio Processing Service (http://localhost:5001)
 ```bash
 GET  /health                        # Service health check
 POST /separate                      # Upload and separate audio
@@ -376,7 +376,7 @@ PORT=3005 npm run dev:backend
 **Audio Processing Fails**
 ```bash
 # Check Python service
-curl http://localhost:5000/health
+curl http://localhost:5001/health
 # Clear cache if disk full
 npm run clear-audio-files
 ```

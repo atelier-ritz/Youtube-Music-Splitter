@@ -1086,7 +1086,7 @@ def create_app():
 if __name__ == '__main__':
     # Development server (only used locally)
     print("⚠️ WARNING: Running development server. Use Gunicorn for production.")
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
 else:
     # Production: Initialize when imported by Gunicorn

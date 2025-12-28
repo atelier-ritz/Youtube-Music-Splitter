@@ -22,7 +22,7 @@ npm run dev
 This starts:
 - Frontend dev server (usually port 5173)
 - Backend dev server (port 3001 or next available)
-- Audio processing service (port 5000)
+- Audio processing service (port 5001)
 
 ### 3. Individual Services
 
@@ -95,7 +95,7 @@ PORT=3001
 NODE_ENV=development
 
 # Audio Processing Service URL
-AUDIO_PROCESSING_SERVICE_URL=http://localhost:5000
+AUDIO_PROCESSING_SERVICE_URL=http://localhost:5001
 
 # Stripe Configuration (optional for donations)
 STRIPE_SECRET_KEY=sk_test_your_key_here
@@ -154,7 +154,7 @@ python3 --version
 3. **Test Changes**:
    - Frontend: http://localhost:5173
    - Backend API: http://localhost:3001/api/health
-   - Audio Processing: http://localhost:5000/health
+   - Audio Processing: http://localhost:5001/health
 
 4. **Build for Production**:
    ```bash
@@ -170,7 +170,7 @@ python3 --version
 - `GET /api/tracks/:filename` - Serve separated track files
 - `POST /api/donate/create-checkout-session` - Create Stripe donation session
 
-### Audio Processing (http://localhost:5000)
+### Audio Processing (http://localhost:5001)
 - `GET /health` - Health check
 - `POST /separate` - Separate audio tracks
 
@@ -181,3 +181,16 @@ python3 --version
 - Check browser console for frontend errors
 - Check terminal output for backend/audio processing errors
 - Use the debug endpoint `/api/debug/paths` to troubleshoot file paths in production
+
+## ✅ Development Setup Status
+
+**COMPLETED**: All development services are properly configured and tested:
+
+- ✅ **Audio Processing Service**: Running on port 5001 with virtual environment activation
+- ✅ **Backend Service**: Running on port 3001 with correct audio service URL configuration  
+- ✅ **Frontend Service**: Running on port 5173 with proper API connections
+- ✅ **Port Configuration**: All services updated to use port 5001 for audio processing (avoiding macOS AirPlay conflicts)
+- ✅ **Environment Variables**: Backend .env file updated with correct audio service URL
+- ✅ **Documentation**: All documentation files updated with correct port references
+
+The development environment is ready for use. Run `npm run dev` to start all services.

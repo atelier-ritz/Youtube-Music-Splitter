@@ -14,7 +14,7 @@ This project has been migrated from nixpacks to Docker for better control and co
 The application consists of three main services:
 - **Frontend**: React/Vite application (port 5173 in dev, served by backend in prod)
 - **Backend**: Node.js/Express API server (port 3001)
-- **Audio Service**: Python/Flask audio processing service (port 5000)
+- **Audio Service**: Python/Flask audio processing service (port 5001)
 
 ## Local Development
 
@@ -80,8 +80,8 @@ npm run docker:prod
 
 ### Development
 - Frontend: `PORT=5173`, `VITE_API_URL=http://localhost:3001`
-- Backend: `PORT=3001`, `AUDIO_SERVICE_URL=http://audio-service:5000`, `YOUTUBE_DL_SKIP_PYTHON_CHECK=1`
-- Audio Service: `PORT=5000`
+- Backend: `PORT=3001`, `AUDIO_SERVICE_URL=http://audio-service:5001`, `YOUTUBE_DL_SKIP_PYTHON_CHECK=1`
+- Audio Service: `PORT=5001`
 
 ## Build Optimization
 
@@ -121,14 +121,14 @@ The `YOUTUBE_DL_SKIP_PYTHON_CHECK=1` environment variable is set to handle youtu
 ```bash
 # Check what's using ports
 lsof -i :3001
-lsof -i :5000
+lsof -i :5001
 lsof -i :5173
 ```
 
 ### Service Communication
 Services communicate via Docker network:
 - Frontend → Backend: `http://backend:3001`
-- Backend → Audio Service: `http://audio-service:5000`
+- Backend → Audio Service: `http://audio-service:5001`
 
 ## Migration from Nixpacks
 
