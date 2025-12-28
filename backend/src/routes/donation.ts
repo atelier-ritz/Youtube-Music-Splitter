@@ -4,10 +4,13 @@ import { AppError } from '../middleware/errorHandler';
 
 const router = express.Router();
 
-// Initialize Stripe with your secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-02-24.acacia',
-});
+// Initialize Stripe with your secret key (only if key is provided)
+let stripe: Stripe | null = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-02-24.acacia',
+  });
+}
 
 interface CreateCheckoutSessionRequest {
   amount: number; // Amount in cents
@@ -21,6 +24,11 @@ interface CreateCheckoutSessionRequest {
  */
 router.post('/create-checkout-session', async (req, res, next) => {
   try {
+    // Check if Stripe is configured
+    if (!stripe) {
+      throw new AppError('Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.', 503, 'STRIPE_NOT_CONFIGURED');
+    }
+
     const { amount, currency = 'usd', successUrl, cancelUrl }: CreateCheckoutSessionRequest = req.body;
 
     // Validation
@@ -100,6 +108,12 @@ router.post('/create-checkout-session', async (req, res, next) => {
  * This is called by Stripe when payment events occur
  */
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res, next) => {
+  // Check if Stripe is configured
+  if (!stripe) {
+    console.error('Stripe webhook called but Stripe is not configured');
+    return res.status(503).send('Stripe not configured');
+  }
+
   const sig = req.headers['stripe-signature'] as string;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 

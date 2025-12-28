@@ -8,15 +8,15 @@ interface DonationBannerProps {
 }
 
 const DonationBanner: React.FC<DonationBannerProps> = ({ onClose, className }) => {
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true); // Start collapsed by default
   const [isLoading, setIsLoading] = useState(false);
 
-  // Predefined donation amounts
+  // Updated donation amounts
   const donationAmounts = [
-    { amount: 5, label: '$5', description: 'Buy me a coffee ☕' },
-    { amount: 10, label: '$10', description: 'Support development 🚀' },
-    { amount: 25, label: '$25', description: 'Sponsor a feature ⭐' },
-    { amount: 50, label: '$50', description: 'Become a patron 🎵' }
+    { amount: 1, label: '$1', description: 'Every bit helps! ☕' },
+    { amount: 3, label: '$3', description: 'Buy me a coffee ☕' },
+    { amount: 5, label: '$5', description: 'Support development 🚀' },
+    { amount: 10, label: '$10', description: 'Sponsor a feature ⭐' }
   ];
 
   const handleDonate = async (amount: number) => {
