@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-02-24.acacia',
 });
 
 interface CreateCheckoutSessionRequest {
@@ -87,8 +87,10 @@ router.post('/create-checkout-session', async (req, res, next) => {
     
     if (error instanceof Stripe.errors.StripeError) {
       next(new AppError(`Payment processing error: ${error.message}`, 400, 'STRIPE_ERROR'));
+    } else if (error instanceof Error) {
+      next(new AppError(`Payment processing error: ${error.message}`, 400, 'STRIPE_ERROR'));
     } else {
-      next(error);
+      next(new AppError('Payment processing error occurred', 400, 'STRIPE_ERROR'));
     }
   }
 });
