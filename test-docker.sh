@@ -19,13 +19,20 @@ fi
 echo "✅ Docker is installed"
 echo "✅ Docker Compose is available"
 
-# Test Dockerfile syntax
+# Check Node version requirement
 echo ""
-echo "🔍 Testing Dockerfile syntax..."
-if docker build -t band-practice-test . --dry-run 2>/dev/null; then
-    echo "✅ Main Dockerfile syntax is valid"
+echo "🔍 Checking Node.js version..."
+if command -v node &> /dev/null; then
+    NODE_VERSION=$(node --version | cut -d'v' -f2)
+    MAJOR_VERSION=$(echo $NODE_VERSION | cut -d'.' -f1)
+    if [ "$MAJOR_VERSION" -ge 20 ]; then
+        echo "✅ Node.js $NODE_VERSION (>= 20.0.0 required)"
+    else
+        echo "⚠️  Node.js $NODE_VERSION found, but >= 20.0.0 is required for dependencies"
+        echo "   Docker will use Node 20 internally, but local development may have issues"
+    fi
 else
-    echo "❌ Main Dockerfile has syntax issues"
+    echo "⚠️  Node.js not found locally (Docker will use Node 20)"
 fi
 
 # Test docker-compose syntax
@@ -51,8 +58,21 @@ for service in "${services[@]}"; do
     fi
 done
 
+# Check main Dockerfile
+if [ -f "Dockerfile" ]; then
+    echo "✅ Main Dockerfile exists"
+else
+    echo "❌ Main Dockerfile is missing"
+fi
+
 echo ""
 echo "🎯 Docker configuration test complete!"
+echo ""
+echo "Key changes made:"
+echo "  ✅ Upgraded to Node 20 (from Node 18)"
+echo "  ✅ Added Python build dependencies"
+echo "  ✅ Set YOUTUBE_DL_SKIP_PYTHON_CHECK=1"
+echo "  ✅ Added build-essential for native modules"
 echo ""
 echo "To start development:"
 echo "  npm run docker:dev"

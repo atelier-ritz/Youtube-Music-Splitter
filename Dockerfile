@@ -2,7 +2,7 @@
 # This builds all services and runs them together
 
 # Stage 1: Build Frontend
-FROM node:18-slim as frontend-builder
+FROM node:20-slim as frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
@@ -10,15 +10,27 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Build Backend
-FROM node:18-slim as backend-builder
+FROM node:20-slim as backend-builder
+
+# Install Python and system dependencies needed for backend build
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app/backend
 COPY backend/package*.json ./
+
+# Set environment variable to skip Python check for youtube-dl-exec
+ENV YOUTUBE_DL_SKIP_PYTHON_CHECK=1
+
 RUN npm install --include=dev
 COPY backend/ ./
 RUN npm run build
 
 # Stage 3: Final runtime image
-FROM node:18-slim
+FROM node:20-slim
 
 # Install system dependencies for all services
 RUN apt-get update && apt-get install -y \
@@ -28,6 +40,7 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     curl \
     libsndfile1 \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Create Python virtual environment
@@ -65,6 +78,10 @@ RUN pip install --no-cache-dir yt-dlp
 
 # Back to main directory
 WORKDIR /app
+
+# Set environment variables
+ENV YOUTUBE_DL_SKIP_PYTHON_CHECK=1
+ENV NODE_ENV=production
 
 # Expose port (Railway will set this)
 EXPOSE $PORT

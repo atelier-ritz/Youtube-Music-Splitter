@@ -1,5 +1,5 @@
 # Backend Dockerfile with YouTube download dependencies
-FROM node:18-slim
+FROM node:20-slim
 
 # Install system dependencies for YouTube downloads
 RUN apt-get update && apt-get install -y \
@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     ffmpeg \
     curl \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Install yt-dlp (better than youtube-dl)

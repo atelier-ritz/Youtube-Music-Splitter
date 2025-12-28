@@ -2,6 +2,13 @@
 
 This project has been migrated from nixpacks to Docker for better control and consistency across environments.
 
+## Requirements
+
+- **Node.js**: >= 20.0.0 (updated from 18 for compatibility)
+- **Python**: >= 3.12.0
+- **Docker**: Latest version
+- **Docker Compose**: Latest version
+
 ## Architecture
 
 The application consists of three main services:
@@ -59,7 +66,7 @@ npm run docker:prod
 
 ## Docker Configuration Files
 
-- `Dockerfile` - Multi-stage production build
+- `Dockerfile` - Multi-stage production build (Node 20)
 - `docker-compose.yml` - Development and production services
 - `.dockerignore` - Optimizes build context
 - Individual service Dockerfiles in each service directory
@@ -69,17 +76,18 @@ npm run docker:prod
 ### Production (Railway)
 - `PORT` - Set automatically by Railway
 - `NODE_ENV=production`
+- `YOUTUBE_DL_SKIP_PYTHON_CHECK=1` - Skips Python check for youtube-dl-exec
 
 ### Development
 - Frontend: `PORT=5173`, `VITE_API_URL=http://localhost:3001`
-- Backend: `PORT=3001`, `AUDIO_SERVICE_URL=http://audio-service:5000`
+- Backend: `PORT=3001`, `AUDIO_SERVICE_URL=http://audio-service:5000`, `YOUTUBE_DL_SKIP_PYTHON_CHECK=1`
 - Audio Service: `PORT=5000`
 
 ## Build Optimization
 
 The main Dockerfile uses multi-stage builds:
-1. **Stage 1**: Build frontend (React/Vite)
-2. **Stage 2**: Build backend (TypeScript compilation)
+1. **Stage 1**: Build frontend (React/Vite) with Node 20
+2. **Stage 2**: Build backend (TypeScript compilation) with Node 20 + Python
 3. **Stage 3**: Runtime image with all services
 
 Benefits:
@@ -87,6 +95,7 @@ Benefits:
 - Better caching
 - Consistent builds across environments
 - No nixpacks dependency
+- Proper Node 20 support
 
 ## Troubleshooting
 
@@ -98,6 +107,15 @@ docker system prune -a
 # Rebuild without cache
 docker-compose build --no-cache
 ```
+
+### Node Version Issues
+The project now requires Node 20+ due to dependency requirements. Make sure your local environment also uses Node 20:
+```bash
+node --version  # Should be >= 20.0.0
+```
+
+### Python/YouTube-DL Issues
+The `YOUTUBE_DL_SKIP_PYTHON_CHECK=1` environment variable is set to handle youtube-dl-exec installation issues.
 
 ### Port Conflicts
 ```bash
@@ -120,5 +138,8 @@ Changes made:
 3. ✅ Updated `railway.json` to use Docker builder
 4. ✅ Added `.dockerignore` for build optimization
 5. ✅ Added Docker scripts to `package.json`
+6. ✅ **Updated to Node 20** for dependency compatibility
+7. ✅ **Added Python build dependencies** for youtube-dl-exec
+8. ✅ **Set YOUTUBE_DL_SKIP_PYTHON_CHECK=1** environment variable
 
 The application now has full control over the build process and dependencies, making it more reliable and easier to debug than the previous nixpacks setup.
