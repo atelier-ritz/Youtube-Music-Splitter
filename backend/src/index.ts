@@ -180,4 +180,23 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Server accessible at: http://0.0.0.0:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Current working directory: ${process.cwd()}`);
+  console.log(`__dirname: ${__dirname}`);
+  
+  // Log frontend path info
+  if (process.env.NODE_ENV === 'production') {
+    const fs = require('fs');
+    const frontendPath = path.join(__dirname, '../../frontend/dist');
+    console.log(`Frontend path: ${frontendPath}`);
+    console.log(`Frontend exists: ${fs.existsSync(frontendPath)}`);
+    
+    // List contents of app directory
+    try {
+      const appContents = fs.readdirSync(path.join(__dirname, '../..'));
+      console.log(`App directory contents: ${appContents.join(', ')}`);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+      console.log(`Error reading app directory: ${errorMessage}`);
+    }
+  }
 });
