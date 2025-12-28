@@ -67,7 +67,14 @@ app.use('/api/donate', donationRoutes);
 
 // Serve static frontend files in production
 if (process.env.NODE_ENV === 'production') {
+  // In Docker, frontend dist is at /app/frontend/dist
+  // Backend dist is at /app/backend/dist
+  // So from backend/dist, we need to go up to /app then to frontend/dist
   const frontendPath = path.join(__dirname, '../../frontend/dist');
+  
+  console.log('Frontend path:', frontendPath);
+  console.log('Frontend path exists:', require('fs').existsSync(frontendPath));
+  
   app.use(express.static(frontendPath));
   
   // Serve index.html for all non-API routes (SPA routing)
@@ -76,7 +83,9 @@ if (process.env.NODE_ENV === 'production') {
     if (req.path.startsWith('/api/')) {
       return next();
     }
-    res.sendFile(path.join(frontendPath, 'index.html'));
+    const indexPath = path.join(frontendPath, 'index.html');
+    console.log('Serving index.html from:', indexPath);
+    res.sendFile(indexPath);
   });
 }
 
@@ -96,6 +105,41 @@ app.get('/api/health', (req, res, next) => {
     res.json(healthStatus);
   } catch (error) {
     next(new AppError('Health check failed', 503, 'HEALTH_CHECK_ERROR'));
+  }
+});
+
+// Debug endpoint for production troubleshooting
+app.get('/api/debug/paths', (req, res) => {
+  const fs = require('fs');
+  const frontendPath = path.join(__dirname, '../../frontend/dist');
+  const currentDir = __dirname;
+  
+  try {
+    const debugInfo: {
+      currentDir: string;
+      frontendPath: string;
+      frontendExists: boolean;
+      nodeEnv: string | undefined;
+      files: string[];
+    } = {
+      currentDir,
+      frontendPath,
+      frontendExists: fs.existsSync(frontendPath),
+      nodeEnv: process.env.NODE_ENV,
+      files: []
+    };
+    
+    // List files in current directory
+    try {
+      debugInfo.files = fs.readdirSync(path.join(__dirname, '../..'));
+    } catch (e) {
+      debugInfo.files = ['Error reading directory'];
+    }
+    
+    res.json(debugInfo);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ error: 'Debug info failed', message: errorMessage });
   }
 });
 
