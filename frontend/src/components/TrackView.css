@@ -156,7 +156,7 @@
   font-size: 14px;
   font-weight: bold;
   width: 124px;
-  height: 36px;
+  height: var(--daw-transport-btn-size); /* Match transport button height */
   text-align: center;
   transition: all 0.2s ease;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
@@ -188,7 +188,7 @@
   font-size: 14px;
   font-weight: bold;
   width: 124px;
-  height: 36px;
+  height: var(--daw-transport-btn-size); /* Match transport button height */
   text-align: center;
   outline: none;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 255, 0, 0.5);
@@ -216,7 +216,7 @@
   padding: 8px 12px;
   border-radius: 6px;
   min-width: 60px;
-  height: 36px;
+  height: var(--daw-transport-btn-size); /* Match transport button height */
   box-sizing: border-box;
 }
 
@@ -257,7 +257,7 @@
   font-size: 14px;
   font-weight: bold;
   width: 60px;
-  height: 36px;
+  height: var(--daw-transport-btn-size); /* Match transport button height */
   text-align: center;
   outline: none;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 255, 0, 0.5);
@@ -289,7 +289,7 @@
   font-size: 14px;
   font-weight: bold;
   width: 70px;
-  height: 36px;
+  height: var(--daw-transport-btn-size); /* Match transport button height */
   text-align: center;
   outline: none;
   text-shadow: 0 0 4px rgba(0, 255, 0, 0.3);
@@ -317,7 +317,7 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
-  height: 36px;
+  height: var(--daw-transport-btn-size); /* Match transport button height */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -328,18 +328,21 @@
   background: #5a5d6a;
 }
 
-/* Enhanced mobile-first transport controls */
+/* Enhanced mobile-first transport controls - Grouped with border */
 .daw-transport-controls {
   display: flex;
-  gap: var(--spacing-xs);
-  /* Removed background and padding to match other toolbar elements */
+  gap: 0; /* No gap between buttons for grouped look */
+  background: #4a4d5a; /* Background for the group */
+  border-radius: var(--border-radius-sm);
+  padding: 2px; /* Small padding around the group */
+  border: 1px solid #5a5d6a; /* Border around the entire group */
 }
 
 .daw-transport-btn {
   width: var(--daw-transport-btn-size);
   height: var(--daw-transport-btn-size);
   border: none;
-  border-radius: var(--border-radius-sm);
+  border-radius: 0; /* No individual border radius for grouped look */
   background: #4a4d5a;
   color: white;
   cursor: pointer;
@@ -358,6 +361,23 @@
   /* Improve touch interaction */
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  
+  /* Add separator between buttons */
+  border-right: 1px solid #5a5d6a;
+}
+
+/* Remove border from last button */
+.daw-transport-btn:last-child {
+  border-right: none;
+}
+
+/* Round corners for first and last buttons */
+.daw-transport-btn:first-child {
+  border-radius: var(--border-radius-sm) 0 0 var(--border-radius-sm);
+}
+
+.daw-transport-btn:last-child {
+  border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
 }
 
 .daw-transport-btn:hover {
@@ -433,7 +453,7 @@
   border-radius: 6px;
   min-width: 60px;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
-  height: 36px;
+  height: var(--daw-transport-btn-size); /* Match transport button height */
   position: relative; /* For positioning the indicator dot */
   box-sizing: border-box;
 }
@@ -496,7 +516,7 @@
   border-radius: 6px;
   min-width: 40px;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
-  height: 36px;
+  height: var(--daw-transport-btn-size); /* Match transport button height */
   box-sizing: border-box;
 }
 
@@ -1505,17 +1525,16 @@
     --daw-track-btn-size: var(--touch-target-min); /* Keep minimum touch size */
   }
   
-  /* Adjust other toolbar elements for better alignment with larger transport buttons on touch */
+  /* All toolbar elements match transport button size on touch */
   .daw-time-display,
-  .daw-timestamp-input {
-    height: 44px; /* Match transport button size on touch */
-  }
-  
+  .daw-timestamp-input,
   .daw-speed-window,
   .daw-bpm-window,
   .daw-signature-window,
-  .daw-back-button {
-    height: 42px; /* Slightly smaller but still larger than desktop */
+  .daw-back-button,
+  .daw-speed-input,
+  .daw-speed-select {
+    height: var(--touch-target-comfortable); /* Match transport button size on touch */
   }
   
   .daw-transport-btn {

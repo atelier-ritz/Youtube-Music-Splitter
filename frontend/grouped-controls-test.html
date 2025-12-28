@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grouped Transport Controls Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #2a2d3a;
+            color: white;
+        }
+        .test-section {
+            background: #3a3d4a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        /* Simulate the grouped transport controls */
+        .transport-controls-demo {
+            display: flex;
+            gap: 0;
+            background: #4a4d5a;
+            border-radius: 4px;
+            padding: 2px;
+            border: 1px solid #5a5d6a;
+            width: fit-content;
+            margin: 10px 0;
+        }
+        
+        .transport-btn-demo {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: #4a4d5a;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            border-right: 1px solid #5a5d6a;
+            transition: all 0.15s ease;
+        }
+        
+        .transport-btn-demo:last-child {
+            border-right: none;
+        }
+        
+        .transport-btn-demo:first-child {
+            border-radius: 4px 0 0 4px;
+        }
+        
+        .transport-btn-demo:last-child {
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .transport-btn-demo:hover {
+            background: #5a5d6a;
+        }
+        
+        .transport-btn-demo.play {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+        
+        .transport-btn-demo.stop {
+            background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%);
+        }
+        
+        /* Simulate consistent height elements */
+        .toolbar-demo {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: #1e2028;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .toolbar-element {
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .back-btn {
+            background: #4a4d5a;
+            color: white;
+            padding: 0 12px;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .time-display {
+            background: #000;
+            color: #00ff00;
+            border: 2px solid #3a3d4a;
+            padding: 0 12px;
+            font-family: 'Courier New', monospace;
+            width: 124px;
+        }
+        
+        .info-window {
+            background: #000;
+            color: #00ff00;
+            border: 2px solid #3a3d4a;
+            padding: 0 12px;
+            font-family: 'Courier New', monospace;
+            min-width: 60px;
+        }
+        
+        .status {
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+        .success { background: #4CAF50; }
+        .info { background: #2196F3; }
+    </style>
+</head>
+<body>
+    <h1>Grouped Transport Controls & Consistent Heights</h1>
+    
+    <div class="test-section">
+        <h3>✅ Changes Made:</h3>
+        <div class="status success">🎮 Transport controls now grouped with border</div>
+        <div class="status success">📏 All header elements have consistent heights</div>
+        <div class="status success">🎯 Perfect alignment across all toolbar elements</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🎮 Grouped Transport Controls:</h3>
+        <p>Before: Individual buttons with gaps</p>
+        <div style="display: flex; gap: 8px; margin: 10px 0;">
+            <button style="width: 36px; height: 36px; background: #4a4d5a; color: white; border: none; border-radius: 4px;">⏮</button>
+            <button style="width: 36px; height: 36px; background: #4CAF50; color: white; border: none; border-radius: 4px;">▶</button>
+            <button style="width: 36px; height: 36px; background: #9e9e9e; color: white; border: none; border-radius: 4px;">⏹</button>
+        </div>
+        
+        <p>After: Grouped with shared border</p>
+        <div class="transport-controls-demo">
+            <button class="transport-btn-demo">⏮</button>
+            <button class="transport-btn-demo play">▶</button>
+            <button class="transport-btn-demo stop">⏹</button>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h3>📏 Consistent Header Heights:</h3>
+        <p>All toolbar elements now have the same height as transport buttons:</p>
+        <div class="toolbar-demo">
+            <button class="toolbar-element back-btn">← Back</button>
+            <div class="toolbar-element time-display">00:00.000</div>
+            <div class="transport-controls-demo">
+                <button class="transport-btn-demo">⏮</button>
+                <button class="transport-btn-demo play">▶</button>
+                <button class="transport-btn-demo stop">⏹</button>
+            </div>
+            <div class="toolbar-element info-window">1.0x</div>
+            <div class="toolbar-element info-window">120</div>
+            <div class="toolbar-element info-window">4/4</div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h3>🎯 Benefits:</h3>
+        <div class="status info">🎨 Cleaner, more professional look</div>
+        <div class="status info">👆 Better touch targets (grouped buttons)</div>
+        <div class="status info">📐 Perfect visual alignment</div>
+        <div class="status info">🎵 More DAW-like interface</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>📱 Responsive Behavior:</h3>
+        <p><strong>Desktop:</strong> 36px height for all elements</p>
+        <p><strong>Touch Devices:</strong> 44px height for better accessibility</p>
+        <p><strong>Mobile:</strong> Maintains grouping and consistent heights</p>
+    </div>
+</body>
+</html>

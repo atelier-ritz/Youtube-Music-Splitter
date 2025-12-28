@@ -2,180 +2,185 @@
 
 A web application that helps musicians practice with their band by providing audio track separation and playback control features. Users can download audio from YouTube videos, separate the audio into individual instrument tracks, and use interactive playback controls for focused practice sessions.
 
-## Project Structure
+## 🎵 Features
 
-```
-band-practice-webapp/
-├── frontend/                    # React TypeScript frontend with Vite
-│   ├── src/
-│   │   ├── components/         # React components (MainPage, etc.)
-│   │   └── services/          # AudioPlayer service and utilities
-├── backend/                    # Node.js Express backend with TypeScript
-│   ├── src/
-│   │   ├── routes/            # API routes (download, process, cache)
-│   │   ├── services/          # Business logic services
-│   │   └── utils/             # Utility functions
-│   └── temp/                  # Temporary file storage
-├── audio-processing-service/   # Local Demucs audio separation service
-│   ├── app.py                 # Flask application
-│   ├── uploads/               # Uploaded audio files
-│   ├── separated/             # Separated track files
-│   ├── temp/                  # Temporary processing files
-│   └── venv/                  # Python virtual environment
-├── package.json               # Root package.json for managing all projects
-└── README.md
-```
+- **YouTube Audio Download** - Extract high-quality audio from YouTube videos
+- **AI-Powered Track Separation** - Separate songs into vocals, drums, bass, and other instruments
+- **Professional DAW Interface** - Multi-track audio player with individual controls
+- **Mobile-Responsive Design** - Works seamlessly on desktop, tablet, and mobile devices
+- **Donation System** - Optional Stripe integration for user support
+- **BPM Detection** - Automatic tempo detection for practice coordination
+- **Real-time Controls** - Volume, pan, mute, and solo controls for each track
+- **Timeline Navigation** - Click-to-seek timeline with visual playhead
 
-## Prerequisites
+## 🚀 Quick Start
 
-- Node.js (v20.19+ or v22.12+)
-- Python 3.12+ (for audio processing service)
-- yt-dlp (for YouTube audio downloading)
-- ffmpeg (for audio format conversion)
-- npm or yarn
-- curl (for cache management commands)
+### Prerequisites
+- Node.js >= 20.0.0
+- Python >= 3.12.0
+- npm >= 10.0.0
 
-### System Dependencies
-
-Install yt-dlp and ffmpeg using your system package manager:
-
+### Installation
 ```bash
-# macOS (using Homebrew)
-brew install yt-dlp ffmpeg
+# Clone the repository
+git clone <repository-url>
+cd Youtube-Music-Splitter
 
-# Ubuntu/Debian
-sudo apt install yt-dlp ffmpeg
-```
-
-## Installation
-
-### 1. Install Node.js Dependencies
-
-Install all dependencies for both frontend and backend:
-
-```bash
+# Install all dependencies
 npm run install:all
 ```
 
-Or install manually:
-
+### Development
 ```bash
-# Install root dependencies
-npm install
+# Start all services (recommended)
+npm run dev
 
-# Install frontend dependencies
-cd frontend && npm install
-
-# Install backend dependencies
-cd ../backend && npm install
+# Or start services individually:
+npm run dev:frontend   # Frontend dev server (port 5173)
+npm run dev:backend    # Backend dev server (port 3001)
+npm run dev:audio      # Audio processing service (port 5000)
 ```
 
-### 2. Set Up Audio Processing Service
-
-The audio processing service uses Facebook's Demucs for high-quality audio separation:
-
-```bash
-cd audio-processing-service
-
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-source venv/bin/activate  # On macOS/Linux
-# or
-venv\Scripts\activate     # On Windows
-
-# Install dependencies
-pip install flask flask-cors demucs librosa
-
-# The service will automatically download the Demucs model on first use (~300MB)
-```
-
-## Development
-
-### Start All Services
-
-Start the complete development environment:
-
-```bash
-# Start backend (port 3001)
-npm run dev:backend
-
-# Start frontend (port 5173) - in another terminal
-npm run dev:frontend
-
-# Start audio processing service (port 8000) - in another terminal
-cd audio-processing-service
-source venv/bin/activate && python app.py
-```
-
-Or start them separately:
-
-```bash
-# Start backend only
-npm run dev:backend
-
-# Start frontend only
-npm run dev:frontend
-```
-
-### Cross-Device Access
-
-To access the application from other devices on your network:
-
-1. **Find your server's IP address:**
-   ```bash
-   # On macOS/Linux
-   ifconfig | grep "inet " | grep -v 127.0.0.1
-   
-   # On Windows
-   ipconfig | findstr "IPv4"
-   ```
-
-2. **Configure the frontend for network access:**
-   ```bash
-   # In the frontend directory, create a .env file
-   cd frontend
-   cp .env.example .env
-   
-   # Edit .env and set your server's IP address
-   VITE_BACKEND_URL=http://YOUR_SERVER_IP:3001
-   ```
-
-3. **Configure the audio processing service for network access:**
-   ```bash
-   # In the audio-processing-service directory, create a .env file
-   cd audio-processing-service
-   cp .env.example .env
-   
-   # Edit .env and set your server's IP address
-   BACKEND_URL=http://YOUR_SERVER_IP:3001
-   ```
-
-4. **Access from other devices:**
-   - Frontend: `http://YOUR_SERVER_IP:5174`
-   - Backend API: `http://YOUR_SERVER_IP:3001`
-
-**Example:** If your server IP is `192.168.1.100`:
-- Set `VITE_BACKEND_URL=http://192.168.1.100:3001` in `frontend/.env`
-- Set `BACKEND_URL=http://192.168.1.100:3001` in `audio-processing-service/.env`
-- Access frontend from other devices at `http://192.168.1.100:5174`
-
-## Build
-
-Build both projects:
-
+### Production Build
 ```bash
 npm run build
+npm start
 ```
 
-## Environment Configuration
+## 📁 Project Structure
 
-Copy the example environment file and configure as needed:
+```
+Youtube-Music-Splitter/
+├── frontend/                    # React TypeScript frontend with Vite
+│   ├── src/
+│   │   ├── components/         # React components
+│   │   │   ├── MainPage.tsx    # Landing page with URL input
+│   │   │   ├── TrackView.tsx   # DAW interface with multi-track player
+│   │   │   ├── DonationBanner.tsx # Stripe donation integration
+│   │   │   └── ...
+│   │   ├── services/          # AudioPlayer service and utilities
+│   │   └── hooks/             # Custom React hooks
+├── backend/                    # Node.js Express backend with TypeScript
+│   ├── src/
+│   │   ├── routes/            # API routes
+│   │   │   ├── download.ts    # YouTube download handling
+│   │   │   ├── process.ts     # Audio processing coordination
+│   │   │   ├── donation.ts    # Stripe donation endpoints
+│   │   │   └── ...
+│   │   ├── services/          # Business logic services
+│   │   └── middleware/        # Express middleware
+├── audio-processing-service/   # Python Flask audio separation service
+│   ├── app.py                 # Flask application with Demucs integration
+│   ├── uploads/               # Uploaded audio files
+│   ├── separated/             # AI-separated track files
+│   └── requirements.txt       # Python dependencies
+├── DEVELOPMENT.md             # Detailed development guide
+├── STRIPE_SETUP.md           # Stripe donation setup guide
+└── package.json              # Root package management
+```
 
+## 🛠️ Development
+
+### Quick Development Setup
 ```bash
-cp backend/.env.example backend/.env
+# Install all dependencies
+npm run install:all
+
+# Start all services in development mode
+npm run dev
 ```
+
+This starts:
+- **Frontend**: http://localhost:5173 (with hot reload)
+- **Backend**: http://localhost:3001 (with nodemon auto-restart)
+- **Audio Processing**: http://localhost:5000 (Python Flask service)
+
+### Individual Service Development
+```bash
+# Start services individually
+npm run dev:frontend   # Frontend only (React + Vite)
+npm run dev:backend    # Backend only (Node.js + Express)
+npm run dev:audio      # Audio processing only (Python + Flask)
+```
+
+### Available Scripts
+```bash
+# Development
+npm run dev            # Start all services
+npm run dev:frontend   # Frontend dev server
+npm run dev:backend    # Backend dev server  
+npm run dev:audio      # Audio processing service
+
+# Building
+npm run build          # Build both frontend and backend
+npm run build:frontend # Build frontend only
+npm run build:backend  # Build backend only
+
+# Production
+npm start              # Start production backend
+npm run start:services # Start backend + audio processing
+
+# Utilities
+npm run install:all    # Install all dependencies
+npm run clear-audio-files  # Clear cached audio files
+npm run clear-temp-files   # Clear temporary files
+npm run cache-status       # Check cache usage
+```
+
+### Environment Configuration
+
+#### Backend (.env in backend/ folder)
+```bash
+# Server Configuration
+PORT=3001
+NODE_ENV=development
+
+# Audio Processing Service
+AUDIO_PROCESSING_SERVICE_URL=http://localhost:5000
+
+# Stripe Donation System (optional)
+STRIPE_SECRET_KEY=sk_test_your_key_here
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+
+# File Handling
+TEMP_STORAGE_PATH=./temp
+MAX_FILE_SIZE=100MB
+```
+
+See `DEVELOPMENT.md` for detailed development setup and troubleshooting.
+
+## 🌐 Deployment
+
+### Docker Deployment
+```bash
+# Build and run with Docker
+docker build -t band-practice-webapp .
+docker run -p 8080:8080 band-practice-webapp
+
+# Or use Docker Compose
+docker-compose up --build
+```
+
+### Railway Deployment
+The application is configured for Railway deployment with:
+- Multi-stage Docker build
+- Automatic environment variable handling
+- Health checks and monitoring
+
+See `railway.json` for deployment configuration.
+
+### Stripe Donation Setup
+To enable the donation system:
+1. Create a Stripe account at [stripe.com](https://stripe.com)
+2. Get your API keys from the Stripe Dashboard
+3. Set environment variables:
+   ```bash
+   STRIPE_SECRET_KEY=sk_live_your_secret_key
+   STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+   ```
+4. Configure webhook endpoint: `https://your-domain.com/api/donate/webhook`
+
+See `STRIPE_SETUP.md` for detailed setup instructions.
 
 ## Cache Management
 
@@ -211,129 +216,215 @@ chmod +x scripts/cache-management.sh  # Make executable (first time only)
 ./scripts/cache-management.sh help
 ```
 
-## API Endpoints
+## 🎛️ API Endpoints
 
-### Core Application
-- `GET /api/health` - Health check endpoint
-- `POST /api/download` - Download audio from YouTube URL
-- `GET /api/download/:jobId` - Get download status
-- `POST /api/process` - Start audio separation process
-- `GET /api/process/:jobId` - Get processing status
+### Backend API (http://localhost:3001)
+```bash
+# Core Application
+GET  /api/health                    # Health check
+POST /api/download                  # Download YouTube audio
+GET  /api/download/:jobId           # Download status
+POST /api/process                   # Start audio separation
+GET  /api/process/:jobId            # Processing status
+GET  /api/tracks/:filename          # Serve separated tracks
 
-### Cache Management
-- `POST /api/cache/clear` - Clear all cached audio files
-- `POST /api/cache/clear-temp` - Clear temporary files only
-- `GET /api/cache/status` - Get cache status information
+# Donation System (Stripe)
+POST /api/donate/create-checkout-session  # Create donation session
+POST /api/donate/webhook                   # Stripe webhook handler
+GET  /api/donate/stats                     # Donation statistics
 
-### Audio Processing Service (Port 8000)
-- `GET /api/health` - Service health check
-- `POST /api/process` - Upload and process audio file
-- `GET /api/process/:jobId` - Get job status and results
-- `GET /api/tracks/:jobId/:filename` - Serve separated track files
-- `POST /api/cache/clear` - Clear all processing cache
-- `POST /api/cache/clear-temp` - Clear temporary processing files
-- `GET /api/cache/status` - Get processing service cache status
+# Cache Management
+POST /api/cache/clear               # Clear all cached files
+POST /api/cache/clear-temp          # Clear temporary files
+GET  /api/cache/status              # Cache usage information
 
-## Technology Stack
+# Debug (production)
+GET  /api/debug/paths               # File system debug info
+```
+
+### Audio Processing Service (http://localhost:5000)
+```bash
+GET  /health                        # Service health check
+POST /separate                      # Upload and separate audio
+GET  /tracks/:jobId/:filename       # Serve separated track files
+POST /cache/clear                   # Clear processing cache
+GET  /cache/status                  # Processing cache status
+```
+
+## 🔧 Technology Stack
 
 ### Frontend
-- React with TypeScript
-- Vite for build tooling
-- **AudioPlayer Service** - Web Audio API abstraction for multi-track playback
-  - Individual track control (volume, pan, mute)
-  - Synchronized playback across all tracks
-  - Position tracking and seeking
-  - Memory management with cache clearing
-- Axios for HTTP requests
+- **React 18** with TypeScript
+- **Vite** for fast development and building
+- **Web Audio API** for multi-track audio playback
+- **Custom AudioPlayer Service** with individual track controls
+- **Responsive Design** for mobile, tablet, and desktop
+- **Axios** for HTTP requests
 
-### Backend
-- Node.js with Express
-- TypeScript
-- youtube-dl-exec for YouTube audio extraction
-- Multer for file uploads
-- CORS for cross-origin requests
-- **Cache Management** - File cleanup and disk space management
+### Backend  
+- **Node.js 20** with Express and TypeScript
+- **youtube-dl-exec** for YouTube audio extraction
+- **Stripe** integration for donations
+- **Rate limiting** and security middleware
+- **File management** with automatic cleanup
+- **Comprehensive error handling**
 
-### Audio Processing Service
-- **Python Flask** - RESTful API server
-- **Facebook's Demucs** - State-of-the-art AI audio source separation
-  - htdemucs model for high-quality separation
-  - Separates into: vocals, drums, bass, other instruments
-- **Librosa** - BPM detection and audio analysis
-- **Automatic Cleanup** - Files older than 24 hours are automatically removed
+### Audio Processing
+- **Python 3.12** with Flask
+- **Facebook's Demucs AI** for source separation
+- **Librosa** for BPM detection and audio analysis
+- **Automatic model downloading** and caching
+- **Background job processing**
 
-## Features
+### Infrastructure
+- **Docker** multi-stage builds for production
+- **Railway** deployment configuration
+- **Concurrently** for development orchestration
+- **TypeScript** throughout for type safety
 
-### ✅ Implemented
-1. **YouTube Audio Download** - Extract audio from YouTube URLs
-2. **Local Audio Processing** - High-quality track separation using Demucs AI
-3. **Multi-track Audio Player** - Web Audio API-based player with individual track controls
-4. **BPM Detection** - Automatic tempo detection for practice coordination
-5. **Cache Management** - Disk space management with multiple clearing options
-6. **File Management** - Automatic cleanup and secure file serving
-7. **Error Handling** - Comprehensive error handling and user feedback
+## ✨ Features Status
 
-### 🔄 In Development
-1. Track view interface components
-2. Navigation cursor and timeline
-3. Responsive design for mobile devices
-4. Real-time audio control UI
+### ✅ Completed Features
+- **YouTube Audio Download** - High-quality audio extraction
+- **AI Track Separation** - Vocals, drums, bass, other instruments  
+- **Professional DAW Interface** - Multi-track player with timeline
+- **Mobile-Responsive Design** - Works on all device sizes
+- **Individual Track Controls** - Volume, pan, mute, solo for each track
+- **BPM Detection** - Automatic tempo analysis
+- **Donation System** - Stripe integration with customizable amounts
+- **Timeline Navigation** - Click-to-seek with visual playhead
+- **Grouped Transport Controls** - Professional DAW-style interface
+- **Cache Management** - Automatic cleanup and disk space management
+- **Error Handling** - Comprehensive error recovery and user feedback
+- **Development Tools** - Hot reload, TypeScript, comprehensive logging
+
+### 🔄 In Progress
+- Performance optimizations
+- Additional audio effects
+- Enhanced mobile experience
 
 ### 📋 Planned
-1. Practice session management
-2. Audio effects and filters
-3. Export and sharing features
+- Practice session management
+- Audio export features
+- User accounts and saved sessions
+- Advanced audio effects and filters
 
-## Usage
+## 🎯 Usage
 
-1. **Start all services** (backend, frontend, audio processing)
-2. **Open the application** in your browser (typically http://localhost:5173)
-3. **Enter a YouTube URL** in the input field
-4. **Wait for processing** - the system will:
-   - Download the audio from YouTube
-   - Separate it into individual tracks using AI
-   - Detect the BPM automatically
-5. **Practice with separated tracks** using individual volume, pan, and mute controls
-6. **Manage disk space** using the cache clearing commands when needed
+1. **Start the application**:
+   ```bash
+   npm run dev  # Development mode
+   # or
+   npm start    # Production mode
+   ```
 
-## Performance Notes
+2. **Open in browser**: http://localhost:5173 (dev) or http://localhost:3001 (prod)
 
-- **Processing Time**: 2-5 minutes for typical 3-4 minute songs
-- **Memory Usage**: 2-4GB during active processing
+3. **Process a song**:
+   - Enter a YouTube URL in the input field
+   - Click "Start Practice" and wait for processing (2-5 minutes)
+   - The system will automatically:
+     - Download high-quality audio from YouTube
+     - Separate into individual tracks using AI
+     - Detect BPM and prepare the DAW interface
+
+4. **Practice with separated tracks**:
+   - Use individual volume sliders for each track
+   - Mute/solo specific instruments
+   - Navigate using the timeline
+   - Control playback with transport buttons
+
+5. **Manage storage**:
+   ```bash
+   npm run cache-status      # Check disk usage
+   npm run clear-temp-files  # Free up space
+   ```
+
+## 📊 Performance & Requirements
+
+### System Requirements
+- **RAM**: 4GB minimum, 8GB recommended
+- **Storage**: 2GB free space for processing
+- **CPU**: Multi-core processor recommended
+- **Network**: Stable internet for YouTube downloads
+
+### Performance Metrics
+- **Processing Time**: 2-5 minutes for typical songs
+- **Memory Usage**: 2-4GB during active processing  
 - **Disk Usage**: ~5x original file size during processing
-- **Model Size**: ~300MB for Demucs model (downloaded automatically)
-- **Cost**: $0 ongoing operational costs, unlimited usage
+- **Model Size**: ~300MB (downloaded automatically)
+- **Operational Cost**: $0 - completely free to run
 
-## Troubleshooting
+### Audio Quality
+- **Input**: Up to 320kbps from YouTube
+- **Output**: High-quality separated tracks
+- **Formats**: MP3, WAV support
+- **Separation Quality**: Professional-grade using Demucs AI
 
-### Audio Processing Service Issues
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**Port Already in Use**
 ```bash
-# Check if service is running
-curl http://localhost:8000/api/health
+# Find and kill process using port
+lsof -ti:3001 | xargs kill
+# Or use different port
+PORT=3005 npm run dev:backend
+```
 
-# View service logs
-cd audio-processing-service
-source venv/bin/activate && python app.py
-
-# Clear cache if disk space is low
+**Audio Processing Fails**
+```bash
+# Check Python service
+curl http://localhost:5000/health
+# Clear cache if disk full
 npm run clear-audio-files
 ```
 
-### Backend Issues
+**Frontend Build Issues**
 ```bash
-# Check backend status
-curl http://localhost:3001/api/health
-
-# View backend logs
-npm run dev:backend
+# Clear node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
 ```
 
-### Cache Management
+**Memory Issues During Processing**
 ```bash
-# Check current disk usage
+# Clear temporary files
+npm run clear-temp-files
+# Monitor system resources
 npm run cache-status
-
-# Free up space
-npm run clear-temp-files  # Clear temp files only
-npm run clear-audio-files # Clear all cached files
 ```
+
+### Getting Help
+- Check `DEVELOPMENT.md` for detailed development setup
+- Check `STRIPE_SETUP.md` for donation system setup
+- Use debug endpoint: `GET /api/debug/paths` for file system issues
+- Check browser console for frontend errors
+- Check terminal output for backend/processing errors
+
+## 📄 Documentation
+
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Comprehensive development setup guide
+- **[STRIPE_SETUP.md](STRIPE_SETUP.md)** - Donation system configuration
+- **API Documentation** - Available in code comments and this README
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes and test thoroughly
+4. Commit your changes: `git commit -m 'Add amazing feature'`
+5. Push to the branch: `git push origin feature/amazing-feature`
+6. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- **Facebook Research** for the Demucs audio separation model
+- **YouTube** for providing audio content
+- **Stripe** for payment processing infrastructure
+- **Open Source Community** for the amazing tools and libraries
