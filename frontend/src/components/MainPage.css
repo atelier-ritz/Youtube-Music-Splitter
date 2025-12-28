@@ -353,8 +353,9 @@
   .main-page__form {
     margin-bottom: var(--spacing-md);
   }
-}.main-
-page__success {
+}
+
+.main-page__success {
   background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
   color: white;
   padding: 20px;
@@ -371,4 +372,11 @@ page__success {
 .main-page__success p {
   margin: 0;
   font-weight: 600;
+}
+
+/* Donation Banner */
+.main-page__donation-banner {
+  margin-top: 2rem;
+  max-width: 700px;
+  width: 100%;
 }

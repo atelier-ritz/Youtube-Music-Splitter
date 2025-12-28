@@ -11,6 +11,7 @@ import downloadRoutes from './routes/download';
 import processRoutes from './routes/process';
 import cacheRoutes from './routes/cache';
 import tracksRoutes from './routes/tracks';
+import donationRoutes from './routes/donation';
 import { 
   errorHandler, 
   notFoundHandler, 
@@ -62,6 +63,7 @@ app.use('/api/download', downloadRoutes);
 app.use('/api/process', processRoutes);
 app.use('/api/cache', cacheRoutes);
 app.use('/api/tracks', trackServingLimiter, tracksRoutes);
+app.use('/api/donate', donationRoutes);
 
 // Serve static frontend files in production
 if (process.env.NODE_ENV === 'production') {

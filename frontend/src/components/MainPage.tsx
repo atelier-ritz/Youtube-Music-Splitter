@@ -4,6 +4,7 @@ import { categorizeError, createRetryableAxios } from '../utils/retryUtils';
 import { useErrorHandler } from './ErrorBoundary';
 import LoadingSpinner from './LoadingSpinner';
 import InteractiveButton from './InteractiveButton';
+import DonationBanner from './DonationBanner';
 import './MainPage.css';
 
 interface DownloadStatus {
@@ -36,6 +37,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
     message: ''
   });
   const [validationError, setValidationError] = useState('');
+  const [showDonationBanner, setShowDonationBanner] = useState(true);
   const handleError = useErrorHandler();
   
   // Create retry-enabled axios client
@@ -457,6 +459,14 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
               </div>
             ) : null}
           </div>
+        )}
+
+        {/* Donation Banner - Show when not processing */}
+        {showDonationBanner && downloadStatus.status === 'idle' && (
+          <DonationBanner 
+            onClose={() => setShowDonationBanner(false)}
+            className="main-page__donation-banner"
+          />
         )}
       </div>
     </div>
