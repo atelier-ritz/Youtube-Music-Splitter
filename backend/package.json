@@ -6,7 +6,6 @@
     "build": "tsc --project tsconfig.prod.json",
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
-    "postinstall": "npm run build",
     "clear-audio-files": "curl -X POST http://localhost:3001/api/cache/clear",
     "clear-temp-files": "curl -X POST http://localhost:3001/api/cache/clear-temp",
     "cache-status": "curl -X GET http://localhost:3001/api/cache/status"
@@ -37,7 +36,7 @@
     "typescript": "^5.9.3"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
   }
 }

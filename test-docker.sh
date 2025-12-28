@@ -65,14 +65,24 @@ else
     echo "❌ Main Dockerfile is missing"
 fi
 
+# Check backend TypeScript configs
+echo ""
+echo "🔍 Checking backend TypeScript configuration..."
+if [ -f "backend/tsconfig.json" ] && [ -f "backend/tsconfig.prod.json" ]; then
+    echo "✅ Backend TypeScript configs exist"
+else
+    echo "❌ Backend TypeScript configs missing"
+fi
+
 echo ""
 echo "🎯 Docker configuration test complete!"
 echo ""
-echo "Key changes made:"
-echo "  ✅ Upgraded to Node 20 (from Node 18)"
-echo "  ✅ Added Python build dependencies"
-echo "  ✅ Set YOUTUBE_DL_SKIP_PYTHON_CHECK=1"
-echo "  ✅ Added build-essential for native modules"
+echo "Recent fixes applied:"
+echo "  ✅ Fixed backend build issue (tsconfig.prod.json not found)"
+echo "  ✅ Removed problematic postinstall script"
+echo "  ✅ Updated to Node 20 across all services"
+echo "  ✅ Fixed TypeScript config copying order"
+echo "  ✅ Standardized toolbar heights to 36px"
 echo ""
 echo "To start development:"
 echo "  npm run docker:dev"

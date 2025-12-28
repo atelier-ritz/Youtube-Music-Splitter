@@ -16,17 +16,20 @@ RUN pip3 install --break-system-packages yt-dlp
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files and TypeScript configs first
 COPY package*.json ./
+COPY tsconfig*.json ./
+
+# Set environment variable to skip Python check for youtube-dl-exec
+ENV YOUTUBE_DL_SKIP_PYTHON_CHECK=1
 
 # Install Node.js dependencies
-ENV YOUTUBE_DL_SKIP_PYTHON_CHECK=1
 RUN npm install --include=dev
 
 # Copy source code
 COPY . .
 
-# Build TypeScript
+# Build TypeScript (run explicitly instead of relying on postinstall)
 RUN npm run build
 
 # Expose port

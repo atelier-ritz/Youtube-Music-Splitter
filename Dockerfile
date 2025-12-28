@@ -20,13 +20,21 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app/backend
+
+# Copy package files and TypeScript configs first
 COPY backend/package*.json ./
+COPY backend/tsconfig*.json ./
 
 # Set environment variable to skip Python check for youtube-dl-exec
 ENV YOUTUBE_DL_SKIP_PYTHON_CHECK=1
 
+# Install dependencies
 RUN npm install --include=dev
+
+# Copy source code
 COPY backend/ ./
+
+# Build TypeScript
 RUN npm run build
 
 # Stage 3: Final runtime image
