@@ -5,9 +5,10 @@ import './DonationBanner.css';
 interface DonationBannerProps {
   onClose?: () => void;
   className?: string;
+  onExpandedChange?: (isExpanded: boolean) => void;
 }
 
-const DonationBanner: React.FC<DonationBannerProps> = ({ onClose, className }) => {
+const DonationBanner: React.FC<DonationBannerProps> = ({ onClose, className, onExpandedChange }) => {
   const [isMinimized, setIsMinimized] = useState(true); // Start collapsed by default
   const [isLoading, setIsLoading] = useState(false);
 
@@ -66,7 +67,10 @@ const DonationBanner: React.FC<DonationBannerProps> = ({ onClose, className }) =
       <div className={`donation-banner donation-banner--minimized ${className || ''}`}>
         <button 
           className="donation-banner__expand"
-          onClick={() => setIsMinimized(false)}
+          onClick={() => {
+            setIsMinimized(false);
+            onExpandedChange?.(true);
+          }}
           title="Support this project"
         >
           💝 Support
@@ -89,7 +93,10 @@ const DonationBanner: React.FC<DonationBannerProps> = ({ onClose, className }) =
           <div className="donation-banner__controls">
             <button 
               className="donation-banner__minimize"
-              onClick={() => setIsMinimized(true)}
+              onClick={() => {
+                setIsMinimized(true);
+                onExpandedChange?.(false);
+              }}
               title="Minimize"
             >
               −

@@ -4,7 +4,7 @@ import { categorizeError, createRetryableAxios } from '../utils/retryUtils';
 import { useErrorHandler } from './ErrorBoundary';
 import LoadingSpinner from './LoadingSpinner';
 import InteractiveButton from './InteractiveButton';
-import DonationButton from './DonationButton';
+import DonationBanner from './DonationBanner';
 import GitHubBanner from './GitHubBanner';
 import './MainPage.css';
 
@@ -38,6 +38,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
     message: ''
   });
   const [validationError, setValidationError] = useState('');
+  const [isDonationExpanded, setIsDonationExpanded] = useState(false);
   const handleError = useErrorHandler();
   
   // Create retry-enabled axios client
@@ -400,7 +401,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
           <div className="main-page__input-group">
             <input
               type="url"
-              className={`main-page__input ${hasError ? 'main-page__input--error' : ''}`}
+              className={`main-page__input input-base ${hasError ? 'main-page__input--error' : ''}`}
               placeholder="https://www.youtube.com/watch?v=..."
               value={url}
               onChange={handleUrlChange}
@@ -414,7 +415,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
               loading={isLoading}
               loadingText="Processing..."
               disabled={!url.trim()}
-              className="main-page__submit"
+              className="main-page__submit btn-base"
             >
               Start Practice
             </InteractiveButton>
@@ -463,12 +464,17 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
 
         {/* Action Buttons - Show when not processing */}
         {downloadStatus.status === 'idle' && (
-          <div className="main-page__action-buttons">
-            <DonationButton className="main-page__donation-button" />
-            <GitHubBanner 
-              className="main-page__github-banner"
-              repoUrl="https://github.com/atelier-ritz/Youtube-Music-Splitter"
+          <div className={`main-page__action-buttons ${isDonationExpanded ? 'main-page__action-buttons--donation-expanded' : ''}`}>
+            <DonationBanner 
+              className="main-page__donation-banner" 
+              onExpandedChange={setIsDonationExpanded}
             />
+            {!isDonationExpanded && (
+              <GitHubBanner 
+                className="main-page__github-banner"
+                repoUrl="https://github.com/atelier-ritz/Youtube-Music-Splitter"
+              />
+            )}
           </div>
         )}
       </div>

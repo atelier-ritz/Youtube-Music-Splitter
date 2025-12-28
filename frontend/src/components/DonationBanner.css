@@ -2,12 +2,13 @@
 .donation-banner {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 8px; /* Reduced from 12px */
-  padding: 12px; /* Reduced from 20px */
+  padding: 20px; /* Reduced from 20px */
   margin: 12px 0; /* Reduced from 20px */
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1); /* Reduced shadow */
   border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
 }
 
 .donation-banner:hover {
@@ -23,6 +24,9 @@
   box-shadow: none;
   border: none;
   backdrop-filter: none;
+  width: auto;
+  display: flex;
+  justify-content: center;
 }
 
 .donation-banner--minimized:hover {
@@ -182,7 +186,7 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .donation-banner {
-    padding: 10px; /* Reduced from 16px */
+    padding: 20px; /* Reduced from 16px */
     margin: 10px 0; /* Reduced from 16px */
     border-radius: 6px; /* Reduced from 8px */
   }
@@ -222,7 +226,7 @@
 
 @media (max-width: 480px) {
   .donation-banner {
-    padding: 8px; /* Reduced from 12px */
+    padding: 16px; /* Reduced from 12px */
     margin: 8px 0; /* Reduced from 12px */
   }
   

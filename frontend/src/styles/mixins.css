@@ -16,6 +16,58 @@
   min-height: var(--touch-target-comfortable);
 }
 
+/* Common button patterns */
+.btn-base {
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-base:hover {
+  transform: translateY(-1px);
+}
+
+.btn-base:active {
+  transform: translateY(0);
+}
+
+/* Common input patterns */
+.input-base {
+  border: 2px solid #e1e5e9;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  transition: all 0.2s ease;
+  outline: none;
+  min-height: var(--touch-target-comfortable);
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: manipulation;
+}
+
+.input-base:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Common card patterns */
+.card-base {
+  background: white;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.card-base:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
 /* Responsive text that scales with viewport */
 .responsive-text {
   font-size: clamp(var(--font-size-sm), 4vw, var(--font-size-base));
@@ -206,13 +258,15 @@
 
 /* Touch device optimizations */
 @media (pointer: coarse) {
-  .responsive-button {
+  .responsive-button,
+  .btn-base {
     min-width: var(--touch-target-comfortable);
     min-height: var(--touch-target-comfortable);
     padding: var(--spacing-md) var(--spacing-lg);
   }
   
-  .responsive-input {
+  .responsive-input,
+  .input-base {
     min-height: var(--touch-target-comfortable);
     padding: var(--spacing-md) var(--spacing-lg);
   }
@@ -225,19 +279,23 @@
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-  .responsive-button {
+  .responsive-button,
+  .btn-base {
     border: 2px solid transparent;
   }
   
-  .responsive-button:focus {
+  .responsive-button:focus,
+  .btn-base:focus {
     border-color: currentColor;
   }
   
-  .responsive-input {
+  .responsive-input,
+  .input-base {
     border-width: 2px;
   }
   
-  .responsive-card {
+  .responsive-card,
+  .card-base {
     border: 1px solid #ccc;
   }
 }
@@ -246,24 +304,30 @@
 @media (prefers-reduced-motion: reduce) {
   .responsive-button,
   .responsive-input,
-  .responsive-card {
+  .responsive-card,
+  .btn-base,
+  .input-base,
+  .card-base {
     transition: none;
   }
   
-  .responsive-button:hover {
+  .responsive-button:hover,
+  .btn-base:hover {
     transform: none;
   }
 }
 
 /* Print styles */
 @media print {
-  .responsive-button {
+  .responsive-button,
+  .btn-base {
     background: white !important;
     color: black !important;
     border: 1px solid black !important;
   }
   
-  .responsive-card {
+  .responsive-card,
+  .card-base {
     box-shadow: none !important;
     border: 1px solid #ccc !important;
   }
