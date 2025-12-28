@@ -125,7 +125,7 @@ const DonationBanner: React.FC<DonationBannerProps> = ({ onClose, className }) =
           
           <div className="donation-banner__custom">
             <InteractiveButton
-              variant="outline"
+              variant="secondary"
               size="small"
               onClick={handleCustomAmount}
               disabled={isLoading}
