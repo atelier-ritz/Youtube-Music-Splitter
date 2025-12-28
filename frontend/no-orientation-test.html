@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>No Orientation Enforcement Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #2a2d3a;
+            color: white;
+        }
+        .test-info {
+            background: #3a3d4a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+        .success { background: #4CAF50; }
+        .info { background: #2196F3; }
+        .track-list {
+            background: #3a3d4a;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .track-item {
+            background: #4a4d5a;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>No Orientation Enforcement Test</h1>
+    
+    <div class="test-info">
+        <h3>Changes Made:</h3>
+        <div class="status success">✅ Removed forced horizontal orientation</div>
+        <div class="status success">✅ Disabled tabbed interface on mobile</div>
+        <div class="status success">✅ All tracks now show in scrollable list</div>
+    </div>
+    
+    <div class="test-info">
+        <h3>Expected Behavior:</h3>
+        <div class="status info">📱 Mobile Portrait: All tracks visible in scrollable list</div>
+        <div class="status info">📱 Mobile Landscape: All tracks visible in scrollable list</div>
+        <div class="status info">💻 Desktop: All tracks visible as before</div>
+        <div class="status info">🚫 No orientation prompts or forced rotation</div>
+    </div>
+    
+    <div class="test-info">
+        <h3>Simulated Track List (Mobile View):</h3>
+        <div class="track-list">
+            <div class="track-item">
+                <span>1. Vocals</span>
+                <div>
+                    <button style="margin: 0 2px; padding: 4px 8px; font-size: 10px;">M</button>
+                    <button style="margin: 0 2px; padding: 4px 8px; font-size: 10px;">S</button>
+                </div>
+            </div>
+            <div class="track-item">
+                <span>2. Drums</span>
+                <div>
+                    <button style="margin: 0 2px; padding: 4px 8px; font-size: 10px;">M</button>
+                    <button style="margin: 0 2px; padding: 4px 8px; font-size: 10px;">S</button>
+                </div>
+            </div>
+            <div class="track-item">
+                <span>3. Bass</span>
+                <div>
+                    <button style="margin: 0 2px; padding: 4px 8px; font-size: 10px;">M</button>
+                    <button style="margin: 0 2px; padding: 4px 8px; font-size: 10px;">S</button>
+                </div>
+            </div>
+            <div class="track-item">
+                <span>4. Guitar</span>
+                <div>
+                    <button style="margin: 0 2px; padding: 4px 8px; font-size: 10px;">M</button>
+                    <button style="margin: 0 2px; padding: 4px 8px; font-size: 10px;">S</button>
+                </div>
+            </div>
+            <div class="track-item">
+                <span>5. Piano</span>
+                <div>
+                    <button style="margin: 0 2px; padding: 4px 8px; font-size: 10px;">M</button>
+                    <button style="margin: 0 2px; padding: 4px 8px; font-size: 10px;">S</button>
+                </div>
+            </div>
+            <div class="track-item">
+                <span>6. Other</span>
+                <div>
+                    <button style="margin: 0 2px; padding: 4px 8px; font-size: 10px;">M</button>
+                    <button style="margin: 0 2px; padding: 4px 8px; font-size: 10px;">S</button>
+                </div>
+            </div>
+        </div>
+        <p style="font-size: 12px; color: #ccc;">
+            All tracks are now visible and scrollable on any device orientation.
+            No tabs, no forced rotation - just a clean scrollable list.
+        </p>
+    </div>
+    
+    <div class="test-info">
+        <h3>Testing Instructions:</h3>
+        <p>1. Deploy the updated app</p>
+        <p>2. Test on mobile in both portrait and landscape</p>
+        <p>3. Verify all tracks are visible without tabs</p>
+        <p>4. Confirm no orientation prompts appear</p>
+    </div>
+</body>
+</html>

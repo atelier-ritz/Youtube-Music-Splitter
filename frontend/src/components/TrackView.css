@@ -1238,34 +1238,33 @@
 
 /* Enhanced mobile-first responsive design */
 
-/* Very small mobile devices - Enable tabbed interface */
+/* Very small mobile devices - Disable tabbed interface, use regular scrollable tracks */
 @media (max-width: 480px) {
   .daw-interface {
     --daw-track-height: 45px;
-    --daw-track-header-width: 140px; /* Increased from 100px to accommodate buttons */
+    --daw-track-header-width: 140px; /* Increased to accommodate buttons */
   }
   
-  /* Show tabbed interface on very small screens */
+  /* Never show tabbed interface - always use regular track list */
   .daw-track-tabs {
-    display: block;
+    display: none !important;
   }
   
   .daw-track-area {
-    display: none;
+    display: block !important;
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - var(--daw-toolbar-height) - var(--daw-ruler-height));
   }
   
-  .daw-track-tabs__content--active .daw-track-area {
-    display: block;
-  }
-  
-  /* Compact track headers for mobile tabs */
+  /* Compact track headers for mobile */
   .daw-track-header {
     margin: 2px;
     border-radius: 2px;
   }
   
   .daw-track-number {
-    width: 30px; /* Reduced from 40px to save space */
+    width: 30px; /* Reduced to save space */
     font-size: 14px; /* Slightly smaller font for mobile */
     flex-shrink: 0; /* Don't shrink the number */
   }
@@ -1598,31 +1597,6 @@
     overflow-y: auto;
     /* Ensure all tracks are visible in landscape */
     max-height: calc(100vh - var(--daw-toolbar-height) - var(--daw-ruler-height));
-  }
-  
-  /* Force tabbed interface in landscape mobile for better UX */
-  .daw-track-tabs {
-    display: block !important;
-  }
-  
-  /* Hide regular track area when tabs are shown */
-  .daw-main > .daw-track-area {
-    display: none;
-  }
-  
-  /* Show only active tab content */
-  .daw-track-tabs__content {
-    display: none;
-  }
-  
-  .daw-track-tabs__content--active {
-    display: block;
-  }
-  
-  .daw-track-tabs__content--active .daw-track-area {
-    display: block;
-    max-height: calc(100vh - var(--daw-toolbar-height) - var(--daw-ruler-height) - 50px);
-    overflow-y: auto;
   }
 }
 
