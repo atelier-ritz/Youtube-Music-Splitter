@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Grid Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #2a2d3a;
+            color: white;
+        }
+        
+        .test-container {
+            background: #1e2028;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #3a3d4a;
+        }
+        
+        .timeline-ruler {
+            position: relative;
+            height: 40px;
+            background: #1e2028;
+            border: 1px solid #3a3d4a;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .ruler-marker {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            border-left: 1px solid #4a4d5a;
+            padding-left: 4px;
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            overflow: visible;
+        }
+        
+        .ruler-number {
+            font-size: 12px;
+            color: #ccc;
+            font-weight: bold;
+            white-space: nowrap;
+            user-select: none;
+        }
+        
+        .controls {
+            margin: 20px 0;
+        }
+        
+        .control-group {
+            margin: 10px 0;
+        }
+        
+        label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 300px;
+            margin: 0 10px;
+        }
+        
+        .info {
+            background: #0f1419;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .ruler-number {
+                font-size: 10px;
+            }
+            
+            input[type="range"] {
+                width: 200px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .ruler-number {
+                font-size: 9px;
+            }
+            
+            input[type="range"] {
+                width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 Dynamic Grid System Test</h1>
+    <p>This demonstrates how the timeline grid adapts to different song durations and screen sizes.</p>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>Duration:</label>
+            <input type="range" id="durationSlider" min="10" max="7200" value="180" step="10">
+            <span id="durationValue">3:00</span>
+        </div>
+        
+        <div class="control-group">
+            <label>Width:</label>
+            <input type="range" id="widthSlider" min="200" max="1000" value="600" step="50">
+            <span id="widthValue">600px</span>
+        </div>
+    </div>
+
+    <div class="info" id="gridInfo">
+        Grid Interval: 30s | Markers: 7 | Text Width Estimate: 45px
+    </div>
+
+    <div class="test-container">
+        <h3>Timeline Ruler Preview</h3>
+        <div class="timeline-ruler" id="timelineRuler"></div>
+    </div>
+
+    <div class="test-container">
+        <h3>Test Cases</h3>
+        <button onclick="testCase(30, 300)">Short Song (30s) - Mobile</button>
+        <button onclick="testCase(180, 600)">Medium Song (3m) - Desktop</button>
+        <button onclick="testCase(600, 400)">Long Song (10m) - Tablet</button>
+        <button onclick="testCase(3600, 800)">Very Long (1h) - Desktop</button>
+        <button onclick="testCase(7200, 300)">Extra Long (2h) - Mobile</button>
+    </div>
+
+    <script>
+        // Dynamic grid calculation (same logic as React component)
+        function calculateGridInterval(duration, availableWidth) {
+            if (duration <= 0 || availableWidth <= 0) return 10;
+            
+            let estimatedTextWidth = 45;
+            
+            if (duration >= 3600) {
+                estimatedTextWidth = 60;
+            } else if (duration >= 600) {
+                estimatedTextWidth = 50;
+            }
+            
+            let minSpacing = estimatedTextWidth + 20;
+            if (availableWidth < 400) {
+                minSpacing = estimatedTextWidth + 10;
+            }
+            
+            const maxMarkers = Math.max(2, Math.floor(availableWidth / minSpacing));
+            
+            const possibleIntervals = [
+                1, 2, 5, 10, 15, 20, 30,
+                60, 120, 300, 600, 900, 1200, 1800,
+                3600, 7200, 10800, 18000, 36000
+            ];
+            
+            for (const interval of possibleIntervals) {
+                const markerCount = Math.ceil(duration / interval);
+                if (markerCount <= maxMarkers) {
+                    return interval;
+                }
+            }
+            
+            const calculatedInterval = Math.ceil(duration / maxMarkers);
+            
+            if (calculatedInterval < 60) {
+                return Math.max(5, Math.ceil(calculatedInterval / 5) * 5);
+            } else if (calculatedInterval < 3600) {
+                return Math.ceil(calculatedInterval / 60) * 60;
+            } else {
+                return Math.ceil(calculatedInterval / 3600) * 3600;
+            }
+        }
+
+        // Format time with adaptive precision
+        function formatTime(seconds, gridInterval) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            
+            if (gridInterval >= 3600) {
+                const hours = Math.floor(seconds / 3600);
+                const remainingMins = Math.floor((seconds % 3600) / 60);
+                if (hours > 0) {
+                    return remainingMins > 0 ? `${hours}h${remainingMins}m` : `${hours}h`;
+                }
+            }
+            
+            if (gridInterval >= 60 && secs === 0 && mins > 0) {
+                return `${mins}m`;
+            }
+            
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Update timeline display
+        function updateTimeline() {
+            const duration = parseInt(document.getElementById('durationSlider').value);
+            const width = parseInt(document.getElementById('widthSlider').value);
+            
+            const gridInterval = calculateGridInterval(duration, width);
+            const markerCount = Math.ceil(duration / gridInterval);
+            
+            // Update info display
+            const estimatedTextWidth = duration >= 3600 ? 60 : (duration >= 600 ? 50 : 45);
+            document.getElementById('gridInfo').textContent = 
+                `Grid Interval: ${gridInterval >= 3600 ? Math.floor(gridInterval/3600) + 'h' : 
+                  gridInterval >= 60 ? Math.floor(gridInterval/60) + 'm' : gridInterval + 's'} | ` +
+                `Markers: ${markerCount} | Text Width Estimate: ${estimatedTextWidth}px`;
+            
+            // Update value displays
+            const mins = Math.floor(duration / 60);
+            const secs = duration % 60;
+            document.getElementById('durationValue').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            document.getElementById('widthValue').textContent = `${width}px`;
+            
+            // Generate timeline markers
+            const ruler = document.getElementById('timelineRuler');
+            ruler.style.width = width + 'px';
+            ruler.innerHTML = '';
+            
+            for (let i = 0; i < markerCount; i++) {
+                const timeValue = i * gridInterval;
+                const marker = document.createElement('div');
+                marker.className = 'ruler-marker';
+                marker.style.left = `${(timeValue / duration) * 100}%`;
+                
+                const number = document.createElement('span');
+                number.className = 'ruler-number';
+                number.textContent = formatTime(timeValue, gridInterval);
+                
+                marker.appendChild(number);
+                ruler.appendChild(marker);
+            }
+        }
+
+        // Test case function
+        function testCase(duration, width) {
+            document.getElementById('durationSlider').value = duration;
+            document.getElementById('widthSlider').value = width;
+            updateTimeline();
+        }
+
+        // Event listeners
+        document.getElementById('durationSlider').addEventListener('input', updateTimeline);
+        document.getElementById('widthSlider').addEventListener('input', updateTimeline);
+
+        // Initial update
+        updateTimeline();
+    </script>
+</body>
+</html>

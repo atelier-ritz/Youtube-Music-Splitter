@@ -584,8 +584,9 @@
   padding-left: 4px;
   display: flex;
   align-items: center;
-  /* Ensure markers align with track content */
   transform: translateX(0);
+  min-width: 0; /* Allow shrinking */
+  overflow: visible; /* Allow text to extend beyond marker */
 }
 
 .daw-ruler-number {
@@ -593,6 +594,26 @@
   color: #ccc;
   font-weight: 500;
   font-weight: bold;
+  white-space: nowrap; /* Prevent text wrapping */
+  user-select: none; /* Prevent text selection */
+  pointer-events: none; /* Don't interfere with timeline clicks */
+}
+
+/* Mobile optimizations for ruler */
+@media (max-width: 768px) {
+  .daw-ruler-marker {
+    padding-left: 2px; /* Reduce padding on mobile */
+  }
+  
+  .daw-ruler-number {
+    font-size: 10px; /* Smaller font on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .daw-ruler-number {
+    font-size: 9px; /* Even smaller on very small screens */
+  }
 }
 
 .daw-playhead {

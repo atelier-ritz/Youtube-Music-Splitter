@@ -68,6 +68,18 @@ const TrackView: React.FC<TrackViewProps> = ({
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []); // Remove trackStates from dependency to prevent resets
 
+  // Force re-render when window resizes to recalculate grid
+  const [, forceUpdate] = useState({});
+  useEffect(() => {
+    const handleResize = () => {
+      // Force component re-render to recalculate grid interval
+      forceUpdate({});
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [duration]); // Re-setup when duration changes
+
   // Initialize active tab for mobile view when tracks are loaded
   useEffect(() => {
     if (isMobileView && trackStates.length > 0 && !activeTabTrackId) {
@@ -303,12 +315,115 @@ const TrackView: React.FC<TrackViewProps> = ({
     }
   };
 
-  // Format time for display with milliseconds
+  // Format time for display with adaptive precision based on interval
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
+    
+    // For very short intervals, show seconds more precisely
+    if (gridInterval < 10) {
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    // For longer intervals, we can be less precise
+    if (gridInterval >= 3600) {
+      // Hour intervals - show hours and minutes
+      const hours = Math.floor(seconds / 3600);
+      const remainingMins = Math.floor((seconds % 3600) / 60);
+      if (hours > 0) {
+        return remainingMins > 0 ? `${hours}h${remainingMins}m` : `${hours}h`;
+      }
+    }
+    
+    if (gridInterval >= 60) {
+      // Minute intervals - show minutes only for round minutes
+      if (secs === 0 && mins > 0) {
+        return `${mins}m`;
+      }
+    }
+    
+    // Default MM:SS format
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Calculate optimal grid interval based on duration and available width
+  const calculateGridInterval = (duration: number, availableWidth: number): number => {
+    if (duration <= 0 || availableWidth <= 0) return 10; // Default fallback
+    
+    // Estimate text width for time labels based on duration
+    let estimatedTextWidth = 45; // Base width for "MM:SS" format
+    
+    // Adjust text width estimate based on duration
+    if (duration >= 3600) {
+      estimatedTextWidth = 60; // Wider for "Xh" or "XhYm" format
+    } else if (duration >= 600) {
+      estimatedTextWidth = 50; // Slightly wider for longer times
+    }
+    
+    // Add responsive padding based on screen size
+    let minSpacing = estimatedTextWidth + 20;
+    if (availableWidth < 400) {
+      minSpacing = estimatedTextWidth + 10; // Less padding on mobile
+    }
+    
+    // Calculate how many markers we can fit
+    const maxMarkers = Math.max(2, Math.floor(availableWidth / minSpacing)); // At least 2 markers
+    
+    // Define possible intervals (in seconds) - nice round numbers
+    const possibleIntervals = [
+      1, 2, 5, 10, 15, 20, 30, // Sub-minute intervals
+      60, 120, 300, 600, 900, 1200, 1800, // Minute intervals (1m, 2m, 5m, 10m, 15m, 20m, 30m)
+      3600, 7200, 10800, 18000, 36000 // Hour intervals (1h, 2h, 3h, 5h, 10h)
+    ];
+    
+    // Find the best interval that doesn't exceed our marker limit
+    for (const interval of possibleIntervals) {
+      const markerCount = Math.ceil(duration / interval);
+      if (markerCount <= maxMarkers) {
+        return interval;
+      }
+    }
+    
+    // If even the largest interval gives too many markers, use a calculated interval
+    const calculatedInterval = Math.ceil(duration / maxMarkers);
+    
+    // Round to a nice number
+    if (calculatedInterval < 60) {
+      // Round to nearest 5 seconds for sub-minute intervals
+      return Math.max(5, Math.ceil(calculatedInterval / 5) * 5);
+    } else if (calculatedInterval < 3600) {
+      // Round to nearest minute for minute intervals
+      return Math.ceil(calculatedInterval / 60) * 60;
+    } else {
+      // Round to nearest hour for hour intervals
+      return Math.ceil(calculatedInterval / 3600) * 3600;
+    }
+  };
+
+  // Get timeline width for grid calculation
+  const getTimelineWidth = (): number => {
+    if (timelineRef.current) {
+      return timelineRef.current.clientWidth;
+    }
+    // Fallback estimates based on screen size
+    if (window.innerWidth < 480) return 280; // Mobile
+    if (window.innerWidth < 768) return 400; // Tablet
+    return 600; // Desktop
+  };
+
+  // Calculate current grid interval
+  const gridInterval = calculateGridInterval(duration, getTimelineWidth());
+  const markerCount = duration > 0 ? Math.ceil(duration / gridInterval) : 0;
+  
+  // Show at least one marker at 0:00 even if duration is unknown
+  const shouldShowZeroMarker = duration === 0 && trackStates.length > 0;
+
+  // Debug logging for grid calculation (only in development)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && duration > 0) {
+      console.log(`🎵 Dynamic Grid: Duration=${duration}s, Width=${getTimelineWidth()}px, Interval=${gridInterval}s, Markers=${markerCount}`);
+    }
+  }, [duration, gridInterval, markerCount]);
 
   // Format time with milliseconds for timestamp inspector
   const formatTimeWithMs = (seconds: number): string => {
@@ -893,6 +1008,17 @@ const TrackView: React.FC<TrackViewProps> = ({
             <span className="daw-signature-label">TIME SIG.</span>
           </div>
           
+          {/* Debug: Show current grid interval in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div 
+              className="daw-signature-window"
+              title={`Grid interval: ${gridInterval}s, Markers: ${markerCount}, Width: ${getTimelineWidth()}px`}
+            >
+              <span className="daw-signature-value">{gridInterval}s</span>
+              <span className="daw-signature-label">GRID</span>
+            </div>
+          )}
+          
           {/* Export controls */}
 
         </div>
@@ -930,11 +1056,26 @@ const TrackView: React.FC<TrackViewProps> = ({
             onClick={handleTimelineClick}
             ref={timelineRef}
           >
-            {Array.from({ length: Math.ceil(duration / 10) }, (_, i) => (
-              <div key={i} className="daw-ruler-marker" style={{ left: `${(i * 10 / duration) * 100}%` }}>
-                <span className="daw-ruler-number">{formatTime(i * 10)}</span>
+            {/* Dynamic grid markers */}
+            {markerCount > 0 ? (
+              Array.from({ length: markerCount }, (_, i) => {
+                const timeValue = i * gridInterval;
+                return (
+                  <div 
+                    key={i} 
+                    className="daw-ruler-marker" 
+                    style={{ left: `${(timeValue / duration) * 100}%` }}
+                  >
+                    <span className="daw-ruler-number">{formatTime(timeValue)}</span>
+                  </div>
+                );
+              })
+            ) : shouldShowZeroMarker ? (
+              // Show just 0:00 when duration is unknown but tracks are loaded
+              <div className="daw-ruler-marker" style={{ left: '0%' }}>
+                <span className="daw-ruler-number">0:00</span>
               </div>
-            ))}
+            ) : null}
             {/* Playhead cursor */}
             <div 
               className="daw-playhead"
