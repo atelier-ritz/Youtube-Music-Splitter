@@ -1022,9 +1022,4 @@ export class AudioPlayer {
     // Dispose analysis service
     this.analysisService.dispose();
   }
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
-    }
-  }
 }
