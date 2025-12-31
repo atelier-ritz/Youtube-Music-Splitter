@@ -291,7 +291,7 @@ const TrackView: React.FC<TrackViewProps> = ({
       setIsPlaying(false); // Reset play button to "Play" state
       setCurrentPosition(0); // Reset position to beginning
       setIsLoading(true);
-      consoldError(null);
+      consoleError(null);
       
       // Force re-initialization by incrementing forceReload
       setForceReload(prev => prev + 1);
