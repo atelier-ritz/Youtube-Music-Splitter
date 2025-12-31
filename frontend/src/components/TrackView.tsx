@@ -105,6 +105,13 @@ const TrackView: React.FC<TrackViewProps> = ({
         setIsLoading(true);
         setLoadError(null);
         
+        // Safari-specific debugging
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        if (isSafari) {
+          console.log('🍎 Safari detected - enhanced audio debugging enabled');
+          console.log('AudioContext support:', !!(window.AudioContext || (window as any).webkitAudioContext));
+        }
+        
         // Set up position update callback
         audioPlayer.setPositionUpdateCallback((position: number) => {
           setCurrentPosition(position);
@@ -239,6 +246,21 @@ const TrackView: React.FC<TrackViewProps> = ({
       setCurrentPosition(0);
     } catch (error) {
       console.error('Seek to beginning error:', error);
+    }
+  };
+
+  // Handle audio cache clear (for Safari issues)
+  const handleClearAudioCache = () => {
+    try {
+      audioPlayer.clearAudioCache();
+      setIsLoading(true);
+      setLoadError(null);
+      // Force re-initialization by incrementing forceReload
+      setForceReload(prev => prev + 1);
+      onShowToast?.showInfo('Audio Cache Cleared', 'Reinitializing audio system...');
+    } catch (error) {
+      console.error('Clear audio cache error:', error);
+      onShowToast?.showError('Cache Clear Failed', 'Could not clear audio cache');
     }
   };
 
@@ -544,6 +566,13 @@ const TrackView: React.FC<TrackViewProps> = ({
           event.preventDefault();
           handleStop();
           break;
+        case 'KeyR':
+          // R key: Clear audio cache (Safari fix)
+          if (event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+            handleClearAudioCache();
+          }
+          break;
         case 'ArrowLeft':
           event.preventDefault(); // Prevent default browser behavior
           if (event.shiftKey) {
@@ -750,7 +779,16 @@ const TrackView: React.FC<TrackViewProps> = ({
               <button className="daw-back-button" onClick={onBack}>
                 ← Back
               </button>
-          )}
+            )}
+            {/* Safari Audio Fix Button */}
+            <button 
+              className="daw-back-button" 
+              onClick={handleClearAudioCache}
+              title="Clear audio cache (fixes Safari audio issues)"
+              style={{ marginLeft: '8px', fontSize: '11px' }}
+            >
+              🔄 Fix Audio
+            </button>
         </div>
         
         <div className="daw-toolbar__center">

@@ -58,7 +58,9 @@ export class AudioPlayer {
   constructor() {
     // Don't initialize AudioContext in constructor - wait for user interaction
     this.analysisService = new AudioAnalysisService();
-
+    
+    // Clear any cached audio state on initialization
+    this.clearAudioCache();
   }
 
   /**
@@ -66,8 +68,12 @@ export class AudioPlayer {
    */
   private initializeAudioContext(): void {
     if (this.audioContext) {
-
-      return;
+      // If context exists but is closed, create a new one
+      if (this.audioContext.state === 'closed') {
+        this.audioContext = null;
+      } else {
+        return;
+      }
     }
     
     try {
@@ -78,7 +84,12 @@ export class AudioPlayer {
       }
       
       this.audioContext = new AudioContextClass();
-
+      
+      // Safari-specific: Force a fresh AudioContext state
+      if (this.audioContext.state === 'suspended') {
+        // Don't resume here - let the user interaction handle it
+        console.log('AudioContext created in suspended state (normal for Safari)');
+      }
       
       // Initialize analysis service with the audio context
       this.analysisService.initialize(this.audioContext);
@@ -88,7 +99,7 @@ export class AudioPlayer {
       
       // Add error event listener
       this.audioContext.addEventListener('statechange', () => {
-
+        console.log('AudioContext state changed to:', this.audioContext?.state);
       });
       
     } catch (error) {
@@ -109,6 +120,19 @@ export class AudioPlayer {
     if (this.audioContext.state === 'suspended') {
       try {
         await this.audioContext.resume();
+        
+        // Safari-specific: Create a silent buffer and play it to "unlock" audio
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        if (isSafari) {
+          console.log('🍎 Safari audio unlock sequence initiated');
+          // Create a short silent buffer to unlock audio on Safari
+          const buffer = this.audioContext.createBuffer(1, 1, 22050);
+          const source = this.audioContext.createBufferSource();
+          source.buffer = buffer;
+          source.connect(this.audioContext.destination);
+          source.start(0);
+          console.log('🍎 Safari audio unlock completed');
+        }
         
         // iOS-specific: Create a silent buffer and play it to "unlock" audio
         if (this.isIOSDevice()) {
@@ -251,7 +275,7 @@ export class AudioPlayer {
     const savedLastPlayStartPosition = this.lastPlayStartPosition;
     
     // Clear existing tracks and cache
-    this.clearCache();
+    this.clearAudioCache();
     
     // Restore positions after cache clear
     this.currentPosition = savedCurrentPosition;
@@ -789,59 +813,66 @@ export class AudioPlayer {
 
   /**
    * Clear all audio caches and reset player state
-   * This frees up memory by removing all loaded audio buffers and disconnecting audio nodes
+   * This includes waveform cache, audio buffers, and AudioContext state
+   * Useful for Safari session issues
    */
-  clearCache(): void {
-    // Stop playback if currently playing
+  clearAudioCache(): void {
+    // Stop any current playback
     if (this.isPlaying) {
-      this.pause();
+      this.stop();
     }
-
-    // Disconnect and clean up all audio nodes
-    this.audioTracks.forEach((audioTrack) => {
-      // Stop any active source nodes
+    
+    // Clear waveform storage cache
+    this.analysisService.clearWaveformStorage();
+    
+    // Disconnect and clear all audio tracks
+    this.audioTracks.forEach(audioTrack => {
       if (audioTrack.source) {
-        audioTrack.source.stop();
-        audioTrack.source.disconnect();
-        audioTrack.source = undefined;
-      }
-
-      // Clean up SoundTouch resources
-      if (audioTrack.soundTouchNode) {
-        audioTrack.soundTouchNode.disconnect();
-        audioTrack.soundTouchNode = undefined;
+        try {
+          audioTrack.source.disconnect();
+        } catch (error) {
+          // Ignore disconnect errors
+        }
       }
       
-      audioTrack.soundTouch = undefined;
-      audioTrack.filter = undefined;
-
-      // Disconnect gain and pan nodes
-      audioTrack.gainNode.disconnect();
-      audioTrack.panNode.disconnect();
+      try {
+        audioTrack.gainNode.disconnect();
+        audioTrack.panNode.disconnect();
+      } catch (error) {
+        // Ignore disconnect errors
+      }
     });
-
-    // Clear all tracks from memory
+    
     this.audioTracks.clear();
-
+    
     // Reset playback state
+    this.isPlaying = false;
     this.currentPosition = 0;
     this.lastPlayStartPosition = 0;
     this.startTime = 0;
-    this.isPlaying = false;
+    this.playbackRate = 1.0;
     this.usingSoundTouch = false;
-    this.soundTouchStartTime = 0;
-    this.soundTouchStartPosition = 0;
-    this.lastSoundTouchPosition = 0;
-    this.lastSoundTouchUpdateTime = 0;
     
-
-
-    // Stop position updates
-    this.stopPositionUpdates();
-
-
+    // Close and reset AudioContext if it exists
+    if (this.audioContext) {
+      if (this.audioContext.state !== 'closed') {
+        try {
+          this.audioContext.close();
+        } catch (error) {
+          console.warn('Error closing AudioContext:', error);
+        }
+      }
+      this.audioContext = null;
+    }
+    
+    // Cancel any pending animation frames
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+    
+    console.log('Audio cache and state cleared');
   }
-
   /**
    * Start position update loop
    */
@@ -986,12 +1017,11 @@ export class AudioPlayer {
    */
   dispose(): void {
     // Clear all caches and stop playback
-    this.clearCache();
+    this.clearAudioCache();
     
     // Dispose analysis service
     this.analysisService.dispose();
-    
-    // Close the audio context
+  }
     if (this.audioContext) {
       this.audioContext.close();
       this.audioContext = null;
