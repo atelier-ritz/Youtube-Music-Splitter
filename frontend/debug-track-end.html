@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Track End Issue</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #2a2d3a;
+            color: white;
+        }
+        .debug-panel {
+            background: #1e2028;
+            border: 1px solid #3a3d4a;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #5CBF60;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #000;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .status {
+            display: flex;
+            gap: 20px;
+            margin: 10px 0;
+        }
+        .status-item {
+            background: #3a3d4a;
+            padding: 10px;
+            border-radius: 4px;
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐛 Debug Track End Issue</h1>
+    
+    <div class="debug-panel">
+        <h3>Test Audio End Detection</h3>
+        <p>This test will help identify why the play button doesn't reset when audio ends.</p>
+        
+        <div class="controls">
+            <button id="loadBtn">Load Test Audio</button>
+            <button id="playBtn" disabled>Play</button>
+            <button id="seekEndBtn" disabled>Seek to Near End</button>
+            <button id="clearLogBtn">Clear Log</button>
+        </div>
+        
+        <div class="status">
+            <div class="status-item">
+                <strong>Position:</strong> <span id="position">0:00</span>
+            </div>
+            <div class="status-item">
+                <strong>Duration:</strong> <span id="duration">0:00</span>
+            </div>
+            <div class="status-item">
+                <strong>Playing:</strong> <span id="playing">false</span>
+            </div>
+            <div class="status-item">
+                <strong>Context State:</strong> <span id="contextState">-</span>
+            </div>
+        </div>
+        
+        <div class="debug-panel">
+            <h4>Debug Log:</h4>
+            <div id="log" class="log">Waiting for test to start...\n</div>
+        </div>
+    </div>
+
+    <script>
+        let audioContext = null;
+        let audioBuffer = null;
+        let source = null;
+        let gainNode = null;
+        let isPlaying = false;
+        let startTime = 0;
+        let currentPosition = 0;
+        let animationFrameId = null;
+        let duration = 0;
+
+        const loadBtn = document.getElementById('loadBtn');
+        const playBtn = document.getElementById('playBtn');
+        const seekEndBtn = document.getElementById('seekEndBtn');
+        const clearLogBtn = document.getElementById('clearLogBtn');
+        const positionEl = document.getElementById('position');
+        const durationEl = document.getElementById('duration');
+        const playingEl = document.getElementById('playing');
+        const contextStateEl = document.getElementById('contextState');
+        const logEl = document.getElementById('log');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.textContent += `[${timestamp}] ${message}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(`[DEBUG] ${message}`);
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateDisplay() {
+            positionEl.textContent = formatTime(currentPosition);
+            durationEl.textContent = formatTime(duration);
+            playingEl.textContent = isPlaying;
+            contextStateEl.textContent = audioContext ? audioContext.state : 'null';
+        }
+
+        function startPositionUpdates() {
+            const updatePosition = () => {
+                if (isPlaying && audioContext) {
+                    const elapsed = audioContext.currentTime - startTime;
+                    currentPosition = Math.min(currentPosition + elapsed, duration);
+                    
+                    // Check if we've reached the end (with tolerance)
+                    if (duration > 0 && currentPosition >= (duration - 0.1)) {
+                        log(`🎯 POSITION END DETECTED: ${currentPosition.toFixed(3)}s >= ${(duration - 0.1).toFixed(3)}s`);
+                        handleTrackEnd();
+                        return;
+                    }
+                    
+                    updateDisplay();
+                    animationFrameId = requestAnimationFrame(updatePosition);
+                }
+            };
+            updatePosition();
+        }
+
+        function stopPositionUpdates() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+
+        function handleTrackEnd() {
+            log(`🎵 handleTrackEnd() called - Position: ${currentPosition.toFixed(3)}s, Duration: ${duration.toFixed(3)}s`);
+            
+            isPlaying = false;
+            currentPosition = 0;
+            
+            stopPositionUpdates();
+            
+            // Update UI
+            playBtn.textContent = '▶ Play';
+            playBtn.disabled = false;
+            
+            log(`✅ Track ended - button reset to Play, position reset to 0`);
+            updateDisplay();
+        }
+
+        async function loadTestAudio() {
+            try {
+                log('🔄 Initializing AudioContext...');
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                    log('✅ AudioContext resumed');
+                }
+                
+                log('🔄 Creating test audio buffer (5 seconds)...');
+                // Create a 5-second test tone
+                const sampleRate = audioContext.sampleRate;
+                const bufferLength = sampleRate * 5; // 5 seconds
+                audioBuffer = audioContext.createBuffer(2, bufferLength, sampleRate);
+                
+                // Generate a simple tone
+                for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
+                    const channelData = audioBuffer.getChannelData(channel);
+                    for (let i = 0; i < bufferLength; i++) {
+                        // Create a fade-out tone
+                        const fadeOut = 1 - (i / bufferLength);
+                        channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.1 * fadeOut;
+                    }
+                }
+                
+                duration = audioBuffer.duration;
+                log(`✅ Test audio created: ${duration}s duration`);
+                
+                // Create gain node
+                gainNode = audioContext.createGain();
+                gainNode.connect(audioContext.destination);
+                
+                loadBtn.disabled = true;
+                playBtn.disabled = false;
+                seekEndBtn.disabled = false;
+                
+                updateDisplay();
+                log('🎉 Ready to test!');
+                
+            } catch (error) {
+                log(`❌ Error loading audio: ${error.message}`);
+            }
+        }
+
+        async function playAudio() {
+            try {
+                if (isPlaying) {
+                    // Pause
+                    log('⏸️ Pausing audio...');
+                    isPlaying = false;
+                    
+                    if (source) {
+                        source.stop();
+                        source = null;
+                    }
+                    
+                    stopPositionUpdates();
+                    playBtn.textContent = '▶ Play';
+                    log('✅ Audio paused');
+                    
+                } else {
+                    // Play
+                    log(`▶️ Starting playback from ${currentPosition.toFixed(3)}s...`);
+                    
+                    source = audioContext.createBufferSource();
+                    source.buffer = audioBuffer;
+                    source.connect(gainNode);
+                    
+                    // Set up end event listener
+                    source.onended = () => {
+                        log('🔔 source.onended event fired!');
+                        if (isPlaying) {
+                            log('📞 Calling handleTrackEnd from onended...');
+                            handleTrackEnd();
+                        } else {
+                            log('⚠️ onended fired but isPlaying is false');
+                        }
+                    };
+                    
+                    startTime = audioContext.currentTime;
+                    source.start(0, currentPosition);
+                    
+                    isPlaying = true;
+                    playBtn.textContent = '⏸️ Pause';
+                    
+                    startPositionUpdates();
+                    log('✅ Playback started');
+                }
+                
+                updateDisplay();
+                
+            } catch (error) {
+                log(`❌ Error during playback: ${error.message}`);
+            }
+        }
+
+        function seekToNearEnd() {
+            if (duration > 0) {
+                const nearEndPosition = duration - 2; // 2 seconds before end
+                log(`⏭️ Seeking to near end: ${nearEndPosition.toFixed(3)}s`);
+                
+                const wasPlaying = isPlaying;
+                
+                if (isPlaying) {
+                    // Stop current playback
+                    isPlaying = false;
+                    if (source) {
+                        source.stop();
+                        source = null;
+                    }
+                    stopPositionUpdates();
+                }
+                
+                currentPosition = nearEndPosition;
+                updateDisplay();
+                
+                if (wasPlaying) {
+                    // Restart playback from new position
+                    setTimeout(() => playAudio(), 100);
+                }
+                
+                log(`✅ Seeked to ${nearEndPosition.toFixed(3)}s`);
+            }
+        }
+
+        function clearLog() {
+            logEl.textContent = 'Log cleared...\n';
+        }
+
+        // Event listeners
+        loadBtn.addEventListener('click', loadTestAudio);
+        playBtn.addEventListener('click', playAudio);
+        seekEndBtn.addEventListener('click', seekToNearEnd);
+        clearLogBtn.addEventListener('click', clearLog);
+
+        // Initial display update
+        updateDisplay();
+        
+        log('🚀 Debug tool ready - Click "Load Test Audio" to start');
+    </script>
+</body>
+</html>

@@ -129,6 +129,12 @@ const TrackView: React.FC<TrackViewProps> = ({
           setCurrentPosition(position);
         });
 
+        // Set up playback state callback to sync UI with audio player state
+        audioPlayer.setPlaybackStateCallback((playing: boolean) => {
+          console.log(`🎵 TrackView: playbackStateCallback received - playing: ${playing}`);
+          setIsPlaying(playing);
+        });
+
         // Load tracks with retry mechanism
         let retryCount = 0;
         const maxRetries = 2;
@@ -161,8 +167,8 @@ const TrackView: React.FC<TrackViewProps> = ({
             
             // Check if AudioContext was lost during loading
             if ((error as Error).message.includes('AudioContext became null') || (error as Error).message.includes('AudioContext was lost')) {
-              // AudioContext was cleared during loading - suggest using the Fix Audio button
-              setLoadError('Audio system was reset during loading. Click "🔄 Fix Audio" button to reinitialize.');
+              // AudioContext was cleared during loading - suggest using the Re-initialie Audio button
+              setLoadError('Audio system was reset during loading. Click "Re-initialie Audio" button to reinitialize.');
               setIsLoading(false);
               return;
             }
@@ -183,7 +189,7 @@ const TrackView: React.FC<TrackViewProps> = ({
         if (errorMessage.includes('AudioContext') || errorMessage.includes('suspended') || errorMessage.includes('user interaction')) {
           setLoadError('Audio requires user interaction. Click "Initialize Audio" to load tracks.');
         } else if (errorMessage.includes('AudioContext became null') || errorMessage.includes('AudioContext was lost')) {
-          setLoadError('Audio system was reset during loading. Click "🔄 Fix Audio" button to reinitialize.');
+          setLoadError('Audio system was reset during loading. Click "Re-initialie Audio" button to reinitialize.');
         } else {
           const fullErrorMessage = `${errorMessage}. Please try refreshing the page or check your browser's audio permissions.`;
           setLoadError(fullErrorMessage);
@@ -221,6 +227,8 @@ const TrackView: React.FC<TrackViewProps> = ({
   // Handle play/pause
   const handlePlayPause = async () => {
     try {
+      console.log(`🎵 TrackView: handlePlayPause called - current isPlaying: ${isPlaying}`);
+      
       // CRITICAL: Handle AudioContext resume synchronously in user gesture context
       // This prevents browser autoplay policy blocks
       if (loadError && loadError.includes('AudioContext')) {
@@ -234,12 +242,14 @@ const TrackView: React.FC<TrackViewProps> = ({
       }
       
       if (isPlaying) {
+        console.log('🎵 TrackView: Calling audioPlayer.pause()');
         audioPlayer.pause();
-        setIsPlaying(false);
+        // Don't manually set state - let the callback handle it
       } else {
+        console.log('🎵 TrackView: Calling audioPlayer.play()');
         // Call play() directly in the user gesture context - no await here!
         audioPlayer.play();
-        setIsPlaying(true);
+        // Don't manually set state - let the callback handle it
       }
     } catch (error) {
       console.error('Playback error:', error);
@@ -274,9 +284,15 @@ const TrackView: React.FC<TrackViewProps> = ({
   // Handle audio cache clear (for Safari issues)
   const handleClearAudioCache = () => {
     try {
+      console.log('🔄 TrackView: Clearing audio cache and resetting play button');
       audioPlayer.clearAudioCache();
+      
+      // Reset UI state to ensure clean state
+      setIsPlaying(false); // Reset play button to "Play" state
+      setCurrentPosition(0); // Reset position to beginning
       setIsLoading(true);
-      setLoadError(null);
+      consoldError(null);
+      
       // Force re-initialization by incrementing forceReload
       setForceReload(prev => prev + 1);
       onShowToast?.showInfo('Audio Cache Cleared', 'Reinitializing audio system...');
@@ -289,8 +305,9 @@ const TrackView: React.FC<TrackViewProps> = ({
   // Handle stop
   const handleStop = () => {
     try {
+      console.log('🎵 TrackView: Calling audioPlayer.stop()');
       audioPlayer.stop();
-      setIsPlaying(false);
+      // Don't manually set state - let the callback handle it
       // Don't set currentPosition here - let the AudioPlayer's position callback handle it
     } catch (error) {
       console.error('Stop error:', error);
@@ -912,7 +929,7 @@ const TrackView: React.FC<TrackViewProps> = ({
               title="Clear audio cache (fixes Safari audio issues)"
               style={{ marginLeft: '8px', fontSize: '11px' }}
             >
-              🔄 Fix Audio
+              Re-initialie Audio
             </button>
         </div>
         

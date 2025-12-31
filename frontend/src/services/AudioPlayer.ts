@@ -47,6 +47,7 @@ export class AudioPlayer {
   private lastPlayStartPosition: number = 0;
   private animationFrameId: number | null = null;
   private positionUpdateCallback?: (position: number) => void;
+  private playbackStateCallback?: (isPlaying: boolean) => void;
   private analysisService: AudioAnalysisService;
   private playbackRate: number = 1.0;
   private usingSoundTouch: boolean = false;
@@ -433,6 +434,12 @@ export class AudioPlayer {
   private startPlaybackInternal(): void {
     this.isPlaying = true;
     this.startTime = this.audioContext!.currentTime;
+    
+    // Notify UI of playback state change
+    if (this.playbackStateCallback) {
+      this.playbackStateCallback(true);
+    }
+    
     // Remember where we started playing from
     this.lastPlayStartPosition = this.currentPosition;
 
@@ -466,8 +473,12 @@ export class AudioPlayer {
 
         // Handle track end
         source.onended = () => {
+          console.log('🎵 Regular playback source.onended event fired');
           if (this.isPlaying) {
+            console.log('🎵 Track end detected via regular source.onended');
             this.handleTrackEnd();
+          } else {
+            console.log('⚠️ source.onended fired but isPlaying is false');
           }
         };
       } else {
@@ -496,6 +507,11 @@ export class AudioPlayer {
     }
 
     this.isPlaying = false;
+    
+    // Notify UI of playback state change
+    if (this.playbackStateCallback) {
+      this.playbackStateCallback(false);
+    }
     
     // Update current position based on the playback method used
     if (this.usingSoundTouch) {
@@ -769,6 +785,13 @@ export class AudioPlayer {
   }
 
   /**
+   * Set callback for playback state changes (play/pause/stop)
+   */
+  setPlaybackStateCallback(callback: (isPlaying: boolean) => void): void {
+    this.playbackStateCallback = callback;
+  }
+
+  /**
    * Get waveform data for a specific track
    */
   getTrackWaveformData(trackId: string): WaveformData | undefined {
@@ -919,6 +942,17 @@ export class AudioPlayer {
     const updatePosition = () => {
       if (this.isPlaying) {
         const position = this.getCurrentPosition();
+        const duration = this.getDuration();
+        
+        // Check if we've reached the end of the track (with tolerance)
+        // Use a more generous tolerance for SoundTouch playback due to processing delays
+        const tolerance = this.usingSoundTouch ? 0.2 : 0.1;
+        if (duration > 0 && position >= (duration - tolerance)) {
+          console.log(`🎵 Track end detected via position polling: ${position.toFixed(3)}s >= ${(duration - tolerance).toFixed(3)}s (SoundTouch: ${this.usingSoundTouch})`);
+          this.handleTrackEnd();
+          return; // Stop the update loop
+        }
+        
         if (this.positionUpdateCallback) {
           this.positionUpdateCallback(position);
         }
@@ -956,7 +990,9 @@ export class AudioPlayer {
       // Create filter for processing
       const filter = new SoundTouchJS.SimpleFilter(bufferSource, soundTouch, () => {
         // Called when processing ends
+        console.log('🎵 SoundTouch filter callback: processing ended');
         if (this.isPlaying) {
+          console.log('🎵 Track end detected via SoundTouch filter callback');
           this.handleTrackEnd();
         }
       });
@@ -1031,8 +1067,12 @@ export class AudioPlayer {
 
     // Handle track end
     source.onended = () => {
+      console.log('🎵 Fallback playback source.onended event fired');
       if (this.isPlaying) {
+        console.log('🎵 Track end detected via fallback source.onended');
         this.handleTrackEnd();
+      } else {
+        console.log('⚠️ Fallback source.onended fired but isPlaying is false');
       }
     };
   }
@@ -1042,12 +1082,34 @@ export class AudioPlayer {
    */
   private handleTrackEnd(): void {
     const duration = this.getDuration();
-    if (this.getCurrentPosition() >= duration) {
-      this.pause();
+    const position = this.getCurrentPosition();
+    
+    console.log(`🎵 handleTrackEnd called - Position: ${position.toFixed(3)}s, Duration: ${duration.toFixed(3)}s, Playing: ${this.isPlaying}, SoundTouch: ${this.usingSoundTouch}`);
+    
+    // Add small tolerance for floating-point precision issues
+    if (duration > 0 && position >= (duration - 0.1)) {
+      // Stop playback completely (not just pause)
+      this.isPlaying = false;
       this.currentPosition = 0;
+      
+      // Stop position updates
+      this.stopPositionUpdates();
+      
+      // Notify UI of playback state change
+      if (this.playbackStateCallback) {
+        console.log('🎵 Calling playbackStateCallback(false) to update UI');
+        this.playbackStateCallback(false);
+      }
+      
+      // Update position callback to show reset position
       if (this.positionUpdateCallback) {
+        console.log('🎵 Calling positionUpdateCallback(0) to reset position display');
         this.positionUpdateCallback(0);
       }
+      
+      console.log('🎵 Track ended - playback stopped and reset to beginning');
+    } else {
+      console.log(`⚠️ handleTrackEnd called but conditions not met - Position: ${position.toFixed(3)}s, Duration: ${duration.toFixed(3)}s`);
     }
   }
 

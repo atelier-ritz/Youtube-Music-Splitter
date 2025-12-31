@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track End Behavior Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #2a2d3a;
+            color: white;
+        }
+        
+        .test-container {
+            background: #1e2028;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #3a3d4a;
+        }
+        
+        .transport-controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            align-items: center;
+        }
+        
+        .transport-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 6px;
+            background: #4a4d5a;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+        
+        .transport-btn:hover {
+            background: #5a5d6a;
+            transform: translateY(-1px);
+        }
+        
+        .transport-btn--play {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+        
+        .transport-btn--playing {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            animation: playing-pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes playing-pulse {
+            0%, 100% { box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3); }
+            50% { box-shadow: 0 2px 12px rgba(244, 67, 54, 0.6); }
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #3a3d4a;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #ff6b35;
+            transition: width 0.1s ease;
+            border-radius: 4px;
+        }
+        
+        .time-display {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #00ff00;
+            background: #000;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin: 0 10px;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        .status--stopped {
+            background: #333;
+            color: #ccc;
+        }
+        
+        .status--playing {
+            background: #1a4d1a;
+            color: #4CAF50;
+        }
+        
+        .status--ended {
+            background: #4d1a1a;
+            color: #f44336;
+        }
+        
+        .controls {
+            margin: 20px 0;
+        }
+        
+        label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 200px;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 Track End Behavior Test</h1>
+    <p>This simulates how the play button should behave when a track reaches its end.</p>
+
+    <div class="test-container">
+        <h3>Simulated Audio Player</h3>
+        
+        <div class="controls">
+            <label>Track Duration:</label>
+            <input type="range" id="durationSlider" min="5" max="60" value="10" step="1">
+            <span id="durationValue">10s</span>
+        </div>
+        
+        <div class="transport-controls">
+            <button class="transport-btn transport-btn--play" id="playBtn" onclick="togglePlay()">
+                ▶
+            </button>
+            <button class="transport-btn" onclick="stop()">
+                ■
+            </button>
+            <div class="time-display" id="timeDisplay">0:00 / 0:10</div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+        
+        <div class="status status--stopped" id="status">
+            Status: Stopped - Ready to play
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h3>Expected Behavior</h3>
+        <ul>
+            <li>✅ <strong>Play button starts as "Play" (▶)</strong></li>
+            <li>✅ <strong>When playing, button shows "Pause" (❚❚) with red color and pulse animation</strong></li>
+            <li>✅ <strong>When track reaches end, button automatically returns to "Play" (▶) state</strong></li>
+            <li>✅ <strong>Position resets to 0:00 when track ends</strong></li>
+            <li>✅ <strong>Status shows "Track Ended" briefly, then "Stopped"</strong></li>
+        </ul>
+    </div>
+
+    <script>
+        let isPlaying = false;
+        let currentPosition = 0;
+        let duration = 10;
+        let animationId = null;
+        
+        const playBtn = document.getElementById('playBtn');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const progressFill = document.getElementById('progressFill');
+        const status = document.getElementById('status');
+        const durationSlider = document.getElementById('durationSlider');
+        const durationValue = document.getElementById('durationValue');
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        function updateDisplay() {
+            timeDisplay.textContent = `${formatTime(currentPosition)} / ${formatTime(duration)}`;
+            const progress = (currentPosition / duration) * 100;
+            progressFill.style.width = `${Math.min(progress, 100)}%`;
+        }
+        
+        function updateStatus(message, className) {
+            status.textContent = message;
+            status.className = `status ${className}`;
+        }
+        
+        function togglePlay() {
+            if (isPlaying) {
+                pause();
+            } else {
+                play();
+            }
+        }
+        
+        function play() {
+            isPlaying = true;
+            playBtn.textContent = '❚❚';
+            playBtn.classList.add('transport-btn--playing');
+            playBtn.classList.remove('transport-btn--play');
+            updateStatus('Status: Playing', 'status--playing');
+            
+            // Start position update loop
+            const startTime = Date.now();
+            const startPosition = currentPosition;
+            
+            function updatePosition() {
+                if (!isPlaying) return;
+                
+                const elapsed = (Date.now() - startTime) / 1000;
+                currentPosition = Math.min(startPosition + elapsed, duration);
+                
+                updateDisplay();
+                
+                // Check if track has ended
+                if (currentPosition >= duration) {
+                    handleTrackEnd();
+                    return;
+                }
+                
+                animationId = requestAnimationFrame(updatePosition);
+            }
+            
+            updatePosition();
+        }
+        
+        function pause() {
+            isPlaying = false;
+            playBtn.textContent = '▶';
+            playBtn.classList.remove('transport-btn--playing');
+            playBtn.classList.add('transport-btn--play');
+            updateStatus('Status: Paused', 'status--stopped');
+            
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+        
+        function stop() {
+            if (isPlaying) {
+                pause();
+            }
+            currentPosition = 0;
+            updateDisplay();
+            updateStatus('Status: Stopped - Ready to play', 'status--stopped');
+        }
+        
+        function handleTrackEnd() {
+            // This simulates the AudioPlayer.handleTrackEnd() behavior
+            isPlaying = false;
+            currentPosition = 0;
+            
+            // Update UI to show stopped state
+            playBtn.textContent = '▶';
+            playBtn.classList.remove('transport-btn--playing');
+            playBtn.classList.add('transport-btn--play');
+            
+            // Show "Track Ended" status briefly, then switch to "Stopped"
+            updateStatus('Status: Track Ended - Automatically stopped', 'status--ended');
+            updateDisplay();
+            
+            setTimeout(() => {
+                updateStatus('Status: Stopped - Ready to play', 'status--stopped');
+            }, 2000);
+            
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+            
+            console.log('🎵 Track ended - playback stopped and reset to beginning');
+        }
+        
+        // Duration slider handler
+        durationSlider.addEventListener('input', (e) => {
+            duration = parseInt(e.target.value);
+            durationValue.textContent = `${duration}s`;
+            
+            // Reset if currently playing and position exceeds new duration
+            if (currentPosition >= duration) {
+                stop();
+            }
+            
+            updateDisplay();
+        });
+        
+        // Initialize display
+        updateDisplay();
+        updateStatus('Status: Stopped - Ready to play', 'status--stopped');
+    </script>
+</body>
+</html>
