@@ -147,6 +147,14 @@ const TrackView: React.FC<TrackViewProps> = ({
               return;
             }
             
+            // Check if AudioContext was lost during loading
+            if ((error as Error).message.includes('AudioContext became null') || (error as Error).message.includes('AudioContext was lost')) {
+              // AudioContext was cleared during loading - suggest using the Fix Audio button
+              setLoadError('Audio system was reset during loading. Click "🔄 Fix Audio" button to reinitialize.');
+              setIsLoading(false);
+              return;
+            }
+            
             if (retryCount > maxRetries) {
               throw error; // Re-throw after max retries
             }
@@ -162,6 +170,8 @@ const TrackView: React.FC<TrackViewProps> = ({
         // Check if it's an AudioContext issue
         if (errorMessage.includes('AudioContext') || errorMessage.includes('suspended') || errorMessage.includes('user interaction')) {
           setLoadError('Audio requires user interaction. Click "Initialize Audio" to load tracks.');
+        } else if (errorMessage.includes('AudioContext became null') || errorMessage.includes('AudioContext was lost')) {
+          setLoadError('Audio system was reset during loading. Click "🔄 Fix Audio" button to reinitialize.');
         } else {
           const fullErrorMessage = `${errorMessage}. Please try refreshing the page or check your browser's audio permissions.`;
           setLoadError(fullErrorMessage);

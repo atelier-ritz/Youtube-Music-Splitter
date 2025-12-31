@@ -59,23 +59,20 @@ export class AudioPlayer {
     // Don't initialize AudioContext in constructor - wait for user interaction
     this.analysisService = new AudioAnalysisService();
     
-    // Clear any cached audio state on initialization
-    this.clearAudioCache();
+    // Only clear waveform cache on initialization, not the entire audio state
+    this.analysisService.clearWaveformStorage();
   }
 
   /**
    * Initialize Web Audio API context (requires user interaction in modern browsers)
    */
   private initializeAudioContext(): void {
-    if (this.audioContext) {
-      // If context exists but is closed, create a new one
-      if (this.audioContext.state === 'closed') {
-        this.audioContext = null;
-      } else {
-        return;
-      }
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      // AudioContext exists and is not closed, we can use it
+      return;
     }
     
+    // Create a new AudioContext (either first time or replacing a closed one)
     try {
       // Check for Web Audio API support
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -270,16 +267,22 @@ export class AudioPlayer {
     await this.resumeAudioContext();
 
 
-    // Store current positions before clearing cache
+    // Store current positions before clearing tracks
     const savedCurrentPosition = this.currentPosition;
     const savedLastPlayStartPosition = this.lastPlayStartPosition;
     
-    // Clear existing tracks and cache
-    this.clearAudioCache();
+    // Clear existing tracks but preserve AudioContext
+    this.clearTracksOnly();
     
     // Restore positions after cache clear
     this.currentPosition = savedCurrentPosition;
     this.lastPlayStartPosition = savedLastPlayStartPosition;
+
+    // Ensure AudioContext is still valid before loading tracks
+    if (!this.audioContext) {
+      console.error('AudioContext became null after clearing tracks');
+      throw new Error('AudioContext was lost during initialization. Please try again.');
+    }
     
 
 
@@ -812,29 +815,42 @@ export class AudioPlayer {
   }
 
   /**
-   * Clear all audio caches and reset player state
-   * This includes waveform cache, audio buffers, and AudioContext state
-   * Useful for Safari session issues
+   * Clear only audio tracks without destroying AudioContext
+   * Used during track loading to preserve the audio context
    */
-  clearAudioCache(): void {
+  private clearTracksOnly(): void {
     // Stop any current playback
     if (this.isPlaying) {
-      this.stop();
+      this.pause();
     }
-    
-    // Clear waveform storage cache
-    this.analysisService.clearWaveformStorage();
-    
-    // Disconnect and clear all audio tracks
-    this.audioTracks.forEach(audioTrack => {
+
+    // Disconnect and clean up all audio nodes
+    this.audioTracks.forEach((audioTrack) => {
+      // Stop any active source nodes
       if (audioTrack.source) {
         try {
+          audioTrack.source.stop();
           audioTrack.source.disconnect();
+        } catch (error) {
+          // Ignore errors from already stopped sources
+        }
+        audioTrack.source = undefined;
+      }
+
+      // Clean up SoundTouch resources
+      if (audioTrack.soundTouchNode) {
+        try {
+          audioTrack.soundTouchNode.disconnect();
         } catch (error) {
           // Ignore disconnect errors
         }
+        audioTrack.soundTouchNode = undefined;
       }
       
+      audioTrack.soundTouch = undefined;
+      audioTrack.filter = undefined;
+
+      // Disconnect gain and pan nodes
       try {
         audioTrack.gainNode.disconnect();
         audioTrack.panNode.disconnect();
@@ -842,16 +858,39 @@ export class AudioPlayer {
         // Ignore disconnect errors
       }
     });
-    
+
+    // Clear all tracks from memory
     this.audioTracks.clear();
-    
-    // Reset playback state
+
+    // Reset playback state but preserve AudioContext
     this.isPlaying = false;
+    this.usingSoundTouch = false;
+    this.soundTouchStartTime = 0;
+    this.soundTouchStartPosition = 0;
+    this.lastSoundTouchPosition = 0;
+    this.lastSoundTouchUpdateTime = 0;
+
+    // Stop position updates
+    this.stopPositionUpdates();
+  }
+
+  /**
+   * Clear all audio caches and reset player state
+   * This includes waveform cache, audio buffers, and AudioContext state
+   * Useful for Safari session issues
+   */
+  clearAudioCache(): void {
+    // Clear tracks first
+    this.clearTracksOnly();
+    
+    // Clear waveform storage cache
+    this.analysisService.clearWaveformStorage();
+    
+    // Reset additional state
     this.currentPosition = 0;
     this.lastPlayStartPosition = 0;
     this.startTime = 0;
     this.playbackRate = 1.0;
-    this.usingSoundTouch = false;
     
     // Close and reset AudioContext if it exists
     if (this.audioContext) {
