@@ -138,7 +138,7 @@ export class AudioPlayer {
         }
       } catch (error) {
         console.error('Failed to resume AudioContext:', error);
-        throw new Error('AudioContext is suspended and requires user interaction to resume. Please click to initialize audio.');
+        throw new Error('AudioContext is suspended and requires user interaction to resume. Please click play to initialize audio.');
       }
     }
     

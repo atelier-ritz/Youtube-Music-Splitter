@@ -40,7 +40,6 @@ const TrackView: React.FC<TrackViewProps> = ({
   const [timestampInputValue, setTimestampInputValue] = useState('');
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
 
-  const [showAudioInitPrompt, setShowAudioInitPrompt] = useState(false);
   const [forceReload, setForceReload] = useState(0);
   const timelineRef = useRef<HTMLDivElement>(null);
   const timestampInputRef = useRef<HTMLInputElement>(null);
@@ -146,11 +145,6 @@ const TrackView: React.FC<TrackViewProps> = ({
             // Ensure position is synced after loading (should be 0 initially)
             setCurrentPosition(audioPlayer.getCurrentPosition());
             
-            // Clear timeout and prompts on successful load
-            if (loadingTimeoutRef.current) {
-              clearTimeout(loadingTimeoutRef.current);
-            }
-            setShowAudioInitPrompt(false);
             setIsLoading(false);
             return; // Success, exit retry loop
           } catch (error) {
@@ -160,7 +154,7 @@ const TrackView: React.FC<TrackViewProps> = ({
             // Check if it's an AudioContext suspended error
             if ((error as Error).message.includes('AudioContext') || (error as Error).message.includes('suspended')) {
               // This is likely an AudioContext suspended error - show a user interaction prompt
-              setLoadError('Audio requires user interaction. Click "Initialize Audio" to load tracks.');
+              setLoadError('Audio requires user interaction. Please try refreshing the page or clicking play.');
               setIsLoading(false);
               return;
             }
@@ -187,9 +181,9 @@ const TrackView: React.FC<TrackViewProps> = ({
         
         // Check if it's an AudioContext issue
         if (errorMessage.includes('AudioContext') || errorMessage.includes('suspended') || errorMessage.includes('user interaction')) {
-          setLoadError('Audio requires user interaction. Click "Initialize Audio" to load tracks.');
+          setLoadError('Audio requires user interaction. Please try refreshing the page or clicking play.');
         } else if (errorMessage.includes('AudioContext became null') || errorMessage.includes('AudioContext was lost')) {
-          setLoadError('Audio system was reset during loading. Click "Re-initialie Audio" button to reinitialize.');
+          setLoadError('Audio system was reset during loading. Click "🔄 Fix Audio" button to reinitialize.');
         } else {
           const fullErrorMessage = `${errorMessage}. Please try refreshing the page or check your browser's audio permissions.`;
           setLoadError(fullErrorMessage);
@@ -202,13 +196,6 @@ const TrackView: React.FC<TrackViewProps> = ({
     };
 
     if (trackStates.length > 0) {
-      // Set a timeout to show audio init prompt if loading takes too long
-      loadingTimeoutRef.current = setTimeout(() => {
-        if (isLoading && !loadError) {
-          setShowAudioInitPrompt(true);
-        }
-      }, 3000); // Show prompt after 3 seconds
-      
       initializePlayer();
     } else {
       // No tracks to load, skip loading state
@@ -781,34 +768,6 @@ const TrackView: React.FC<TrackViewProps> = ({
   }, [isEditingTimestamp, trackStates.length, isLoading, loadError, isPlaying, duration, isMobileView, activeTabTrackId, trackStates]); // Dependencies for the keyboard handler
 
   if (isLoading) {
-    const handleInitializeAudioFromLoading = async () => {
-      try {
-        // Force AudioContext initialization with user interaction
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-        const tempContext = new AudioContextClass();
-        
-        if (tempContext.state === 'suspended') {
-          await tempContext.resume();
-        }
-        
-        // Close temp context
-        await tempContext.close();
-        
-        // Clear the prompt and timeout
-        setShowAudioInitPrompt(false);
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-        }
-        
-        // Force re-initialization by incrementing forceReload
-        setForceReload(prev => prev + 1);
-      } catch (error) {
-        console.error('🎵 Failed to initialize audio:', error);
-        setLoadError('Failed to initialize audio. Please try again or check your browser settings.');
-        setIsLoading(false);
-      }
-    };
-
     return (
       <div className="track-view">
         <div className="track-view__loading">
@@ -817,20 +776,6 @@ const TrackView: React.FC<TrackViewProps> = ({
             variant="accent"
             message="Loading audio tracks..."
           />
-          {showAudioInitPrompt && (
-            <div style={{ marginTop: '20px', textAlign: 'center' }}>
-              <div style={{ marginBottom: '15px', fontSize: '14px', color: '#666' }}>
-                Audio requires user interaction to start
-              </div>
-              <InteractiveButton 
-                variant="success" 
-                size="medium"
-                onClick={handleInitializeAudioFromLoading}
-              >
-                Click to Initialize Audio
-              </InteractiveButton>
-            </div>
-          )}
         </div>
       </div>
     );
@@ -844,58 +789,20 @@ const TrackView: React.FC<TrackViewProps> = ({
       setForceReload(prev => prev + 1);
     };
 
-    const handleInitializeAudio = async () => {
-      try {
-        setLoadError(null);
-        setIsLoading(true);
-        
-        // Force AudioContext initialization with user interaction
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-        const tempContext = new AudioContextClass();
-        
-        if (tempContext.state === 'suspended') {
-          await tempContext.resume();
-        }
-        
-        // Close temp context
-        await tempContext.close();
-        
-        // Force re-initialization by incrementing forceReload
-        setForceReload(prev => prev + 1);
-      } catch (error) {
-        console.error('Failed to initialize audio:', error);
-        setLoadError('Failed to initialize audio. Please try again or check your browser settings.');
-        setIsLoading(false);
-      }
-    };
-
-    const isAudioContextError = loadError.includes('user interaction') || loadError.includes('AudioContext');
-
     return (
       <div className="track-view">
         <div className="track-view__error">
           <h2>Failed to Load Tracks</h2>
           <p>{loadError}</p>
           <div className="track-view__error-actions">
-            {isAudioContextError ? (
-              <InteractiveButton 
-                variant="success" 
-                size="medium"
-                onClick={handleInitializeAudio}
-                className="track-view__retry-button"
-              >
-                Initialize Audio
-              </InteractiveButton>
-            ) : (
-              <InteractiveButton 
-                variant="success" 
-                size="medium"
-                onClick={handleRetry}
-                className="track-view__retry-button"
-              >
-                Retry Loading
-              </InteractiveButton>
-            )}
+            <InteractiveButton 
+              variant="success" 
+              size="medium"
+              onClick={handleRetry}
+              className="track-view__retry-button"
+            >
+              Retry Loading
+            </InteractiveButton>
             {onBack && (
               <InteractiveButton 
                 variant="secondary" 
