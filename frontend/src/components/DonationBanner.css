@@ -98,6 +98,8 @@
   border: none;
   width: 24px;
   height: 24px;
+  min-width: 24px; /* Prevent shrinking */
+  max-width: 24px; /* Prevent growing */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -106,6 +108,9 @@
   font-size: 14px;
   font-weight: bold;
   transition: all 0.2s ease;
+  flex-shrink: 0; /* Prevent flexbox from shrinking the button */
+  box-sizing: border-box; /* Ensure padding/border don't affect size */
+  line-height: 1; /* Prevent line-height from affecting height */
 }
 
 .donation-banner__minimize:hover,
