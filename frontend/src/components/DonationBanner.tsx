@@ -33,7 +33,7 @@ const DonationBanner: React.FC<DonationBannerProps> = ({ onClose, className, onE
         body: JSON.stringify({
           amount: amount * 100, // Convert to cents
           currency: 'usd',
-          successUrl: `${window.location.origin}?donation=success`,
+          successUrl: `${window.location.origin}/thank-you.html?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}?donation=cancelled`,
         }),
       });
