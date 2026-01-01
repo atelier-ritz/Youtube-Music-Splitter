@@ -97,13 +97,15 @@
 
 .donation-banner__minimize,
 .donation-banner__close {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0);
   color: white;
   border: none;
-  width: 24px;
-  height: 24px;
+  width: 24px !important; /* Force exact width */
+  height: 24px !important; /* Force exact height */
   min-width: 24px; /* Prevent shrinking */
   max-width: 24px; /* Prevent growing */
+  min-height: 24px; /* Prevent shrinking */
+  max-height: 24px; /* Prevent growing */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -114,7 +116,10 @@
   transition: all 0.2s ease;
   flex-shrink: 0; /* Prevent flexbox from shrinking the button */
   box-sizing: border-box; /* Ensure padding/border don't affect size */
-  line-height: 1; /* Prevent line-height from affecting height */
+  line-height: 0; /* Remove line-height completely */
+  padding: 0; /* Explicitly remove any inherited padding */
+  margin: 0; /* Explicitly remove any inherited margin */
+  overflow: hidden; /* Prevent content from affecting size */
 }
 
 .donation-banner__minimize:hover,
