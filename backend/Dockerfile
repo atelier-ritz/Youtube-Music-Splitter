@@ -23,11 +23,17 @@ COPY tsconfig*.json ./
 # Set environment variable to skip Python check for youtube-dl-exec
 ENV YOUTUBE_DL_SKIP_PYTHON_CHECK=1
 
+# Set yt-dlp to use Node.js as JavaScript runtime
+ENV YT_DLP_JS_RUNTIME=node
+
 # Install Node.js dependencies
 RUN npm install --include=dev
 
 # Copy source code
 COPY . .
+
+# Copy yt-dlp configuration
+COPY yt-dlp.conf /etc/yt-dlp.conf
 
 # Build TypeScript (run explicitly instead of relying on postinstall)
 RUN npm run build

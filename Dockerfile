@@ -55,6 +55,9 @@ RUN apt-get update && apt-get install -y \
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+# Set yt-dlp to use Node.js as JavaScript runtime
+ENV YT_DLP_JS_RUNTIME=node
+
 # Set working directory
 WORKDIR /app
 

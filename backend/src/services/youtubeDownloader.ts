@@ -32,6 +32,12 @@ export class YouTubeDownloaderService {
       const nodeVersion = process.version;
       console.log(`Node.js version: ${nodeVersion}`);
       
+      // Set environment variable for yt-dlp JavaScript runtime
+      if (!process.env.YT_DLP_JS_RUNTIME) {
+        process.env.YT_DLP_JS_RUNTIME = 'node';
+        console.log('Set YT_DLP_JS_RUNTIME to node');
+      }
+      
       // Check yt-dlp version
       try {
         const versionOutput = await ytDlp('--version', {});
@@ -100,9 +106,8 @@ export class YouTubeDownloaderService {
       await ytDlp(url, {
         dumpSingleJson: true,
         noPlaylist: true,
-        quiet: true,
-        jsRuntimes: 'node'
-      });
+        quiet: true
+      } as any);
       return true;
     } catch (error) {
       console.warn(`YouTube URL test failed for ${url}:`, error);
@@ -220,39 +225,20 @@ export class YouTubeDownloaderService {
         audioQuality: 192,
         output: outputTemplate,
         noPlaylist: true,
-        retries: 3,
-        // Add JavaScript runtime support
-        jsRuntimes: 'node',
-        // Use better user agent and headers to avoid 403 errors
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        // Use better format selection to avoid SABR streaming issues
-        format: 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio',
-        // Add more robust error handling
-        ignoreErrors: false,
-        // Add timeout to prevent hanging
-        socketTimeout: 30,
-        // Use IPv4 to avoid connection issues
-        forceIpv4: true,
-        // Add more headers to appear more like a real browser
-        addHeader: [
-          'Accept-Language:en-US,en;q=0.9',
-          'Accept-Encoding:gzip, deflate, br',
-          'Accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Connection:keep-alive',
-          'Upgrade-Insecure-Requests:1'
-        ],
+        // Config file will handle: retries, user-agent, format, timeouts, headers, etc.
+        configLocation: '/etc/yt-dlp.conf',
         // Verbose output for debugging
         verbose: process.env.NODE_ENV === 'development'
-      };
+      } as any;
 
       let output;
       try {
-        // Try with enhanced options first
+        // Try with config file first
         output = await ytDlp(job.youtubeUrl, downloadOptions);
       } catch (enhancedError) {
-        console.warn(`Enhanced download failed for ${jobId}, trying fallback options:`, enhancedError);
+        console.warn(`Config-based download failed for ${jobId}, trying fallback options:`, enhancedError);
         
-        // Fallback to basic options if enhanced options fail
+        // Fallback to basic options without config file
         const fallbackOptions = {
           extractAudio: true,
           audioFormat: 'mp3',
@@ -260,10 +246,11 @@ export class YouTubeDownloaderService {
           output: outputTemplate,
           noPlaylist: true,
           retries: 3,
-          // Minimal options for maximum compatibility
+          // Basic format selection
           format: 'bestaudio',
-          ignoreErrors: true
-        };
+          // Basic user agent
+          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        } as any;
         
         output = await ytDlp(job.youtubeUrl, fallbackOptions);
       }
