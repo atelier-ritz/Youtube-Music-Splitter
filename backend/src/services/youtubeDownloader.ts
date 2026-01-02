@@ -20,6 +20,29 @@ export class YouTubeDownloaderService {
     // Use temp directory for downloads
     this.downloadDir = path.join(process.cwd(), 'temp');
     this.ensureDownloadDirectory();
+    this.checkSystemRequirements();
+  }
+
+  /**
+   * Check if system requirements are met for YouTube downloads
+   */
+  private async checkSystemRequirements(): Promise<void> {
+    try {
+      // Check if Node.js is available (it should be since we're running in Node.js)
+      const nodeVersion = process.version;
+      console.log(`Node.js version: ${nodeVersion}`);
+      
+      // Check yt-dlp version
+      try {
+        const versionOutput = await ytDlp('--version', {});
+        console.log(`yt-dlp version: ${versionOutput}`);
+      } catch (error) {
+        console.warn('Could not check yt-dlp version:', error);
+      }
+      
+    } catch (error) {
+      console.error('System requirements check failed:', error);
+    }
   }
 
   private async ensureDownloadDirectory(): Promise<void> {
@@ -69,6 +92,25 @@ export class YouTubeDownloaderService {
   }
 
   /**
+   * Test if a YouTube URL is accessible and extractable
+   */
+  private async testYouTubeUrl(url: string): Promise<boolean> {
+    try {
+      // Use yt-dlp to just extract info without downloading
+      await ytDlp(url, {
+        dumpSingleJson: true,
+        noPlaylist: true,
+        quiet: true,
+        jsRuntimes: 'node'
+      });
+      return true;
+    } catch (error) {
+      console.warn(`YouTube URL test failed for ${url}:`, error);
+      return false;
+    }
+  }
+
+  /**
    * Start a new download job
    */
   async startDownload(youtubeUrl: string): Promise<string> {
@@ -78,10 +120,25 @@ export class YouTubeDownloaderService {
       youtubeUrl,
       status: 'pending',
       progress: 0,
-      createdAt: new Date()
+      createdAt: new Date(),
+      message: 'Validating YouTube URL...'
     };
 
     this.jobs.set(jobId, job);
+
+    // Test URL accessibility first (optional - don't fail if test fails)
+    try {
+      const isAccessible = await this.testYouTubeUrl(youtubeUrl);
+      if (!isAccessible) {
+        console.warn(`YouTube URL may not be accessible: ${youtubeUrl}`);
+        job.message = 'URL validation failed, attempting download anyway...';
+      } else {
+        job.message = 'URL validated, starting download...';
+      }
+    } catch (error) {
+      console.warn('URL test failed, proceeding with download:', error);
+      job.message = 'Starting download...';
+    }
 
     // Start download asynchronously
     this.performDownload(jobId).catch(error => {
@@ -153,17 +210,65 @@ export class YouTubeDownloaderService {
       // Simulate more granular progress during download
       const progressSimulation = this.simulateDownloadProgress(jobId);
 
-      // Download audio using youtube-dl-exec with basic options
-      const output = await ytDlp(job.youtubeUrl, {
+      // Enhanced yt-dlp options to handle modern YouTube restrictions
+
+      console.log(`Starting download for ${jobId} with enhanced options`);
+
+      let downloadOptions = {
         extractAudio: true,
         audioFormat: 'mp3',
         audioQuality: 192,
         output: outputTemplate,
         noPlaylist: true,
-        // Basic retry option
         retries: 3,
-        // Progress callback would be nice but youtube-dl-exec doesn't support it directly
-      });
+        // Add JavaScript runtime support
+        jsRuntimes: 'node',
+        // Use better user agent and headers to avoid 403 errors
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        // Use better format selection to avoid SABR streaming issues
+        format: 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio',
+        // Add more robust error handling
+        ignoreErrors: false,
+        // Add timeout to prevent hanging
+        socketTimeout: 30,
+        // Use IPv4 to avoid connection issues
+        forceIpv4: true,
+        // Add more headers to appear more like a real browser
+        addHeader: [
+          'Accept-Language:en-US,en;q=0.9',
+          'Accept-Encoding:gzip, deflate, br',
+          'Accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Connection:keep-alive',
+          'Upgrade-Insecure-Requests:1'
+        ],
+        // Verbose output for debugging
+        verbose: process.env.NODE_ENV === 'development'
+      };
+
+      let output;
+      try {
+        // Try with enhanced options first
+        output = await ytDlp(job.youtubeUrl, downloadOptions);
+      } catch (enhancedError) {
+        console.warn(`Enhanced download failed for ${jobId}, trying fallback options:`, enhancedError);
+        
+        // Fallback to basic options if enhanced options fail
+        const fallbackOptions = {
+          extractAudio: true,
+          audioFormat: 'mp3',
+          audioQuality: 192,
+          output: outputTemplate,
+          noPlaylist: true,
+          retries: 3,
+          // Minimal options for maximum compatibility
+          format: 'bestaudio',
+          ignoreErrors: true
+        };
+        
+        output = await ytDlp(job.youtubeUrl, fallbackOptions);
+      }
+
+      // Download audio using youtube-dl-exec with enhanced options
 
       // Stop progress simulation
       clearInterval(progressSimulation);
@@ -190,11 +295,29 @@ export class YouTubeDownloaderService {
       job.status = 'completed';
       job.progress = 100;
       job.completedAt = new Date();
+      job.message = 'Download completed successfully';
+
+      console.log(`Download completed for ${jobId}: ${job.audioFilePath}`);
 
     } catch (error) {
       job.status = 'failed';
       job.error = error instanceof Error ? error.message : 'Unknown error occurred';
       job.completedAt = new Date();
+      
+      // Enhanced error handling with specific messages
+      if (error instanceof Error) {
+        if (error.message.includes('403')) {
+          job.error = 'YouTube blocked the download request. This video may be restricted or require authentication.';
+        } else if (error.message.includes('No supported JavaScript runtime')) {
+          job.error = 'JavaScript runtime not available. Please ensure Node.js is properly installed.';
+        } else if (error.message.includes('SABR streaming')) {
+          job.error = 'YouTube is using SABR streaming which is not supported. Try a different video.';
+        } else if (error.message.includes('formats have been skipped')) {
+          job.error = 'Some video formats are unavailable. The download may still succeed with available formats.';
+        }
+      }
+      
+      console.error(`Download failed for job ${jobId}:`, error);
       throw error;
     }
   }
