@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Audio Files Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Download Audio Files Test</h1>
+    <p>This page tests the download functionality for multiple audio tracks.</p>
+    
+    <button class="test-button" onclick="testDownload()">📥 Test Download Audio Files</button>
+    <button class="test-button" onclick="clearLog()">Clear Log</button>
+    
+    <div id="log" class="log">Ready to test download functionality...</div>
+
+    <script>
+        // Mock track data for testing
+        const mockTracks = [
+            {
+                id: 'vocals',
+                name: 'vocals',
+                audioUrl: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT'
+            },
+            {
+                id: 'drums',
+                name: 'drums', 
+                audioUrl: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT'
+            }
+        ];
+
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = 'Log cleared...\n';
+        }
+
+        async function testDownload() {
+            log('📥 Starting download test...');
+            
+            if (mockTracks.length === 0) {
+                log('❌ No tracks available to download');
+                return;
+            }
+
+            log(`📋 Found ${mockTracks.length} tracks to download`);
+
+            // Download each track individually
+            for (const track of mockTracks) {
+                try {
+                    log(`📥 Downloading: ${track.name}`);
+                    
+                    // Create a temporary anchor element to trigger download
+                    const link = document.createElement('a');
+                    link.href = track.audioUrl;
+                    
+                    // Create a user-friendly filename
+                    const filename = `${track.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.wav`;
+                    
+                    link.download = filename;
+                    link.style.display = 'none';
+                    
+                    // Add to DOM, click, and remove
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    log(`✅ Downloaded: ${filename}`);
+                    
+                    // Small delay between downloads
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                } catch (error) {
+                    log(`❌ Failed to download track ${track.name}: ${error.message}`);
+                }
+            }
+
+            log(`🎉 Download test complete! Downloaded ${mockTracks.length} files`);
+        }
+    </script>
+</body>
+</html>
