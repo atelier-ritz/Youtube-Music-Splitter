@@ -69,7 +69,10 @@ export class AudioPlayer {
    */
   private initializeAudioContext(): void {
     if (this.audioContext && this.audioContext.state !== 'closed') {
-      // AudioContext exists and is not closed, we can use it
+      // AudioContext exists and is not closed, check if it's suspended
+      if (this.audioContext.state === 'suspended') {
+        console.warn('AudioContext exists but is suspended - user interaction may be required');
+      }
       return;
     }
     
@@ -86,7 +89,7 @@ export class AudioPlayer {
       // Safari-specific: Force a fresh AudioContext state
       if (this.audioContext.state === 'suspended') {
         // Don't resume here - let the user interaction handle it
-        console.log('AudioContext created in suspended state (normal for Safari)');
+        console.log('AudioContext created in suspended state (normal for Safari) - user interaction required');
       }
       
       // Initialize analysis service with the audio context

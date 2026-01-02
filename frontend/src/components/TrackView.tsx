@@ -154,7 +154,7 @@ const TrackView: React.FC<TrackViewProps> = ({
             // Check if it's an AudioContext suspended error
             if ((error as Error).message.includes('AudioContext') || (error as Error).message.includes('suspended')) {
               // This is likely an AudioContext suspended error - show a user interaction prompt
-              setLoadError('Audio requires user interaction. Please try refreshing the page or clicking play.');
+              setLoadError('Audio requires user interaction. Please click "Initialize Audio" to load tracks.');
               setIsLoading(false);
               return;
             }
@@ -181,7 +181,7 @@ const TrackView: React.FC<TrackViewProps> = ({
         
         // Check if it's an AudioContext issue
         if (errorMessage.includes('AudioContext') || errorMessage.includes('suspended') || errorMessage.includes('user interaction')) {
-          setLoadError('Audio requires user interaction. Please try refreshing the page or clicking play.');
+          setLoadError('Audio requires user interaction. Please click "Initialize Audio" to load tracks.');
         } else if (errorMessage.includes('AudioContext became null') || errorMessage.includes('AudioContext was lost')) {
           setLoadError('Audio system was reset during loading. Click "🔄 Fix Audio" button to reinitialize.');
         } else {
@@ -196,7 +196,17 @@ const TrackView: React.FC<TrackViewProps> = ({
     };
 
     if (trackStates.length > 0) {
-      initializePlayer();
+      // Set a timeout to detect if loading is stuck
+      const loadingTimeout = setTimeout(() => {
+        if (isLoading && !loadError) {
+          console.warn('🎵 Audio loading timeout - may need user interaction');
+          // Don't set error, just log - the Initialize Audio button is already available
+        }
+      }, 5000); // 5 second timeout
+      
+      initializePlayer().finally(() => {
+        clearTimeout(loadingTimeout);
+      });
     } else {
       // No tracks to load, skip loading state
       setIsLoading(false);
@@ -768,6 +778,33 @@ const TrackView: React.FC<TrackViewProps> = ({
   }, [isEditingTimestamp, trackStates.length, isLoading, loadError, isPlaying, duration, isMobileView, activeTabTrackId, trackStates]); // Dependencies for the keyboard handler
 
   if (isLoading) {
+    const handleInitializeAudio = async () => {
+      try {
+        console.log('🎵 User clicked Initialize Audio - attempting to resume AudioContext');
+        
+        // Force AudioContext initialization with user interaction
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const tempContext = new AudioContextClass();
+        
+        if (tempContext.state === 'suspended') {
+          await tempContext.resume();
+          console.log('🎵 AudioContext resumed successfully');
+        }
+        
+        // Close temp context
+        await tempContext.close();
+        
+        // Force re-initialization by incrementing forceReload
+        setForceReload(prev => prev + 1);
+        console.log('🎵 Triggering audio player re-initialization');
+        
+      } catch (error) {
+        console.error('🎵 Failed to initialize audio:', error);
+        setLoadError('Failed to initialize audio. Please try again or check your browser settings.');
+        setIsLoading(false);
+      }
+    };
+
     return (
       <div className="track-view">
         <div className="track-view__loading">
@@ -776,6 +813,18 @@ const TrackView: React.FC<TrackViewProps> = ({
             variant="accent"
             message="Loading audio tracks..."
           />
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <div style={{ marginBottom: '15px', fontSize: '14px', color: '#666' }}>
+              If loading takes too long, audio may need user interaction
+            </div>
+            <InteractiveButton 
+              variant="success" 
+              size="medium"
+              onClick={handleInitializeAudio}
+            >
+              Initialize Audio
+            </InteractiveButton>
+          </div>
         </div>
       </div>
     );
@@ -789,20 +838,61 @@ const TrackView: React.FC<TrackViewProps> = ({
       setForceReload(prev => prev + 1);
     };
 
+    const handleInitializeAudio = async () => {
+      try {
+        setLoadError(null);
+        setIsLoading(true);
+        
+        console.log('🎵 User clicked Initialize Audio from error screen');
+        
+        // Force AudioContext initialization with user interaction
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const tempContext = new AudioContextClass();
+        
+        if (tempContext.state === 'suspended') {
+          await tempContext.resume();
+          console.log('🎵 AudioContext resumed successfully');
+        }
+        
+        // Close temp context
+        await tempContext.close();
+        
+        // Force re-initialization by incrementing forceReload
+        setForceReload(prev => prev + 1);
+      } catch (error) {
+        console.error('Failed to initialize audio:', error);
+        setLoadError('Failed to initialize audio. Please try again or check your browser settings.');
+        setIsLoading(false);
+      }
+    };
+
+    const isAudioContextError = loadError.includes('user interaction') || loadError.includes('AudioContext');
+
     return (
       <div className="track-view">
         <div className="track-view__error">
           <h2>Failed to Load Tracks</h2>
           <p>{loadError}</p>
           <div className="track-view__error-actions">
-            <InteractiveButton 
-              variant="success" 
-              size="medium"
-              onClick={handleRetry}
-              className="track-view__retry-button"
-            >
-              Retry Loading
-            </InteractiveButton>
+            {isAudioContextError ? (
+              <InteractiveButton 
+                variant="success" 
+                size="medium"
+                onClick={handleInitializeAudio}
+                className="track-view__retry-button"
+              >
+                Initialize Audio
+              </InteractiveButton>
+            ) : (
+              <InteractiveButton 
+                variant="success" 
+                size="medium"
+                onClick={handleRetry}
+                className="track-view__retry-button"
+              >
+                Retry Loading
+              </InteractiveButton>
+            )}
             {onBack && (
               <InteractiveButton 
                 variant="secondary" 
