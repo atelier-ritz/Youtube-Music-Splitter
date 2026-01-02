@@ -161,8 +161,8 @@ const TrackView: React.FC<TrackViewProps> = ({
             
             // Check if AudioContext was lost during loading
             if ((error as Error).message.includes('AudioContext became null') || (error as Error).message.includes('AudioContext was lost')) {
-              // AudioContext was cleared during loading - suggest using the Re-initialie Audio button
-              setLoadError('Audio system was reset during loading. Click "Re-initialie Audio" button to reinitialize.');
+              // AudioContext was cleared during loading - suggest refreshing
+              setLoadError('Audio system was reset during loading. Please refresh the page to reinitialize.');
               setIsLoading(false);
               return;
             }
@@ -183,7 +183,7 @@ const TrackView: React.FC<TrackViewProps> = ({
         if (errorMessage.includes('AudioContext') || errorMessage.includes('suspended') || errorMessage.includes('user interaction')) {
           setLoadError('Audio requires user interaction. Please click "Initialize Audio" to load tracks.');
         } else if (errorMessage.includes('AudioContext became null') || errorMessage.includes('AudioContext was lost')) {
-          setLoadError('Audio system was reset during loading. Click "🔄 Fix Audio" button to reinitialize.');
+          setLoadError('Audio system was reset during loading. Please refresh the page to reinitialize.');
         } else {
           const fullErrorMessage = `${errorMessage}. Please try refreshing the page or check your browser's audio permissions.`;
           setLoadError(fullErrorMessage);
@@ -278,24 +278,58 @@ const TrackView: React.FC<TrackViewProps> = ({
     }
   };
 
-  // Handle audio cache clear (for Safari issues)
-  const handleClearAudioCache = () => {
+  // Handle download all audio files
+  const handleDownloadAudioFiles = async () => {
     try {
-      console.log('🔄 TrackView: Clearing audio cache and resetting play button');
-      audioPlayer.clearAudioCache();
+      console.log('TracckView: Starting download of all audio files');
       
-      // Reset UI state to ensure clean state
-      setIsPlaying(false); // Reset play button to "Play" state
-      setCurrentPosition(0); // Reset position to beginning
-      setIsLoading(true);
-      setLoadError(null);
+      if (trackStates.length === 0) {
+        onShowToast?.showError('No Tracks', 'No audio tracks available to download');
+        return;
+      }
+
+      // Show loading toast
+      onShowToast?.showInfo('Download Started', 'Preparing audio files for download...');
+
+      // Download each track individually
+      for (const track of trackStates) {
+        try {
+          // Create a temporary anchor element to trigger download
+          const link = document.createElement('a');
+          link.href = track.audioUrl;
+          
+          // Extract filename from URL or create a meaningful name
+          const urlParts = track.audioUrl.split('/');
+          const originalFilename = urlParts[urlParts.length - 1];
+          const extension = originalFilename.includes('.') ? originalFilename.split('.').pop() : 'mp3';
+          
+          // Create a user-friendly filename
+          const filename = `${track.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.${extension}`;
+          
+          link.download = filename;
+          link.style.display = 'none';
+          
+          // Add to DOM, click, and remove
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          console.log(`📥 Downloaded: ${filename}`);
+          
+          // Small delay between downloads to avoid overwhelming the browser
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+        } catch (error) {
+          console.error(`Failed to download track ${track.name}:`, error);
+          onShowToast?.showError('Download Failed', `Could not download ${track.name} track`);
+        }
+      }
+
+      onShowToast?.showSuccess('Download Complete', `Downloaded ${trackStates.length} audio files`);
       
-      // Force re-initialization by incrementing forceReload
-      setForceReload(prev => prev + 1);
-      onShowToast?.showInfo('Audio Cache Cleared', 'Reinitializing audio system...');
     } catch (error) {
-      console.error('Clear audio cache error:', error);
-      onShowToast?.showError('Cache Clear Failed', 'Could not clear audio cache');
+      console.error('Download audio files error:', error);
+      onShowToast?.showError('Download Failed', 'Could not download audio files');
     }
   };
 
@@ -705,13 +739,6 @@ const TrackView: React.FC<TrackViewProps> = ({
           event.preventDefault();
           handleStop();
           break;
-        case 'KeyR':
-          // R key: Clear audio cache (Safari fix)
-          if (event.ctrlKey || event.metaKey) {
-            event.preventDefault();
-            handleClearAudioCache();
-          }
-          break;
         case 'ArrowLeft':
           event.preventDefault(); // Prevent default browser behavior
           if (event.shiftKey) {
@@ -919,14 +946,15 @@ const TrackView: React.FC<TrackViewProps> = ({
                 ← Back
               </button>
             )}
-            {/* Safari Audio Fix Button */}
+            {/* Download Audio Files Button */}
             <button 
               className="daw-back-button" 
-              onClick={handleClearAudioCache}
-              title="Clear audio cache (fixes Safari audio issues)"
+              onClick={handleDownloadAudioFiles}
+              title="Download all split audio tracks as files"
               style={{ marginLeft: '8px', fontSize: '11px' }}
+              disabled={trackStates.length === 0}
             >
-              Re-initialie Audio
+              Download Audio Files
             </button>
         </div>
         
