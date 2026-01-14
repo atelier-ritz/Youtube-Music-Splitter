@@ -6,6 +6,7 @@ import LoadingSpinner from './LoadingSpinner';
 import InteractiveButton from './InteractiveButton';
 import DonationBanner from './DonationBanner';
 import GitHubBanner from './GitHubBanner';
+import VisitorCounter from './VisitorCounter';
 import './MainPage.css';
 
 interface DownloadStatus {
@@ -464,18 +465,23 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
 
         {/* Action Buttons - Show when not processing */}
         {downloadStatus.status === 'idle' && (
-          <div className={`main-page__action-buttons ${isDonationExpanded ? 'main-page__action-buttons--donation-expanded' : ''}`}>
-            <DonationBanner 
-              className="main-page__donation-banner" 
-              onExpandedChange={setIsDonationExpanded}
-            />
-            {!isDonationExpanded && (
-              <GitHubBanner 
-                className="main-page__github-banner"
-                repoUrl="https://github.com/atelier-ritz/Youtube-Music-Splitter"
+          <>
+            <div className={`main-page__action-buttons ${isDonationExpanded ? 'main-page__action-buttons--donation-expanded' : ''}`}>
+              <DonationBanner 
+                className="main-page__donation-banner" 
+                onExpandedChange={setIsDonationExpanded}
               />
-            )}
-          </div>
+              {!isDonationExpanded && (
+                <GitHubBanner 
+                  className="main-page__github-banner"
+                  repoUrl="https://github.com/atelier-ritz/Youtube-Music-Splitter"
+                />
+              )}
+            </div>
+            
+            {/* Visitor Counter - Centered below action buttons */}
+            <VisitorCounter />
+          </>
         )}
       </div>
     </div>

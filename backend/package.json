@@ -6,6 +6,7 @@
     "build": "tsc --project tsconfig.prod.json",
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
+    "test": "jest",
     "clear-audio-files": "curl -X POST http://localhost:3001/api/cache/clear",
     "clear-temp-files": "curl -X POST http://localhost:3001/api/cache/clear-temp",
     "cache-status": "curl -X GET http://localhost:3001/api/cache/status"
@@ -20,6 +21,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-rate-limit": "^7.4.1",
+    "express-session": "^1.18.2",
     "form-data": "^4.0.5",
     "multer": "^1.4.5-lts.1",
     "stripe": "^17.7.0",
@@ -29,10 +31,16 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",
+    "@types/express-session": "^1.18.2",
+    "@types/jest": "^30.0.0",
     "@types/multer": "^1.4.12",
     "@types/node": "^20.14.9",
+    "@types/supertest": "^6.0.3",
     "@types/uuid": "^9.0.8",
+    "jest": "^30.2.0",
     "nodemon": "^3.1.11",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },

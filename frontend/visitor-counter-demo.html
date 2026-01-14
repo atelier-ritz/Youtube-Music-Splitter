@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visitor Counter - Retro 1990s Style Demo</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 40px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .demo-container {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      align-items: center;
+    }
+
+    /* Retro 1990s Visitor Counter Styling */
+    .visitor-counter {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 20px;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      border: 3px ridge #666;
+      border-radius: 8px;
+      box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .visitor-counter__label {
+      font-family: 'Courier New', 'Courier', monospace;
+      font-size: 14px;
+      font-weight: bold;
+      color: #00ff00;
+      text-shadow: 
+        0 0 8px rgba(0, 255, 0, 0.7),
+        0 0 12px rgba(0, 255, 0, 0.4);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .visitor-counter__display {
+      display: flex;
+      gap: 3px;
+      padding: 10px 12px;
+      background: #000;
+      border: 3px inset #333;
+      border-radius: 4px;
+      box-shadow: 
+        inset 0 3px 6px rgba(0, 0, 0, 0.9),
+        inset 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .visitor-counter__digit {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 52px;
+      font-family: 'Courier New', 'Courier', monospace;
+      font-size: 36px;
+      font-weight: bold;
+      color: #ff0000;
+      background: #000;
+      border: 2px solid #333;
+      border-radius: 3px;
+      text-shadow: 
+        0 0 10px rgba(255, 0, 0, 0.9),
+        0 0 15px rgba(255, 0, 0, 0.6),
+        0 0 20px rgba(255, 0, 0, 0.3);
+      box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.7),
+        0 1px 0 rgba(255, 255, 255, 0.1),
+        0 0 5px rgba(255, 0, 0, 0.2);
+      line-height: 1;
+      position: relative;
+    }
+
+    /* LCD-style subtle scanline effect */
+    .visitor-counter__digit::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(255, 0, 0, 0.05) 50%,
+        transparent 100%
+      );
+      pointer-events: none;
+    }
+
+    .description {
+      color: white;
+      text-align: center;
+      max-width: 600px;
+      line-height: 1.6;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .features {
+      color: white;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+    }
+
+    .features h2 {
+      margin-top: 0;
+    }
+
+    .features ul {
+      text-align: left;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 Retro 1990s Visitor Counter Demo 🎮</h1>
+  
+  <div class="demo-container">
+    <!-- Example 1: Small number -->
+    <div class="visitor-counter">
+      <div class="visitor-counter__label">
+        You are visitor number:
+      </div>
+      <div class="visitor-counter__display">
+        <span class="visitor-counter__digit">0</span>
+        <span class="visitor-counter__digit">0</span>
+        <span class="visitor-counter__digit">0</span>
+        <span class="visitor-counter__digit">0</span>
+        <span class="visitor-counter__digit">4</span>
+        <span class="visitor-counter__digit">2</span>
+      </div>
+    </div>
+
+    <!-- Example 2: Medium number -->
+    <div class="visitor-counter">
+      <div class="visitor-counter__label">
+        You are visitor number:
+      </div>
+      <div class="visitor-counter__display">
+        <span class="visitor-counter__digit">0</span>
+        <span class="visitor-counter__digit">1</span>
+        <span class="visitor-counter__digit">2</span>
+        <span class="visitor-counter__digit">3</span>
+        <span class="visitor-counter__digit">4</span>
+        <span class="visitor-counter__digit">5</span>
+      </div>
+    </div>
+
+    <!-- Example 3: Large number -->
+    <div class="visitor-counter">
+      <div class="visitor-counter__label">
+        You are visitor number:
+      </div>
+      <div class="visitor-counter__display">
+        <span class="visitor-counter__digit">9</span>
+        <span class="visitor-counter__digit">9</span>
+        <span class="visitor-counter__digit">9</span>
+        <span class="visitor-counter__digit">9</span>
+        <span class="visitor-counter__digit">9</span>
+        <span class="visitor-counter__digit">9</span>
+      </div>
+    </div>
+
+    <div class="description">
+      <p>This is a faithful recreation of the classic 1990s web visitor counters that were ubiquitous on personal websites and GeoCities pages.</p>
+    </div>
+
+    <div class="features">
+      <h2>✨ Retro Features</h2>
+      <ul>
+        <li>✅ Monospace digital/LCD font (Courier New)</li>
+        <li>✅ Black background with glowing red digits</li>
+        <li>✅ Individual digit boxes with borders</li>
+        <li>✅ Green glowing decorative text</li>
+        <li>✅ 3D ridge border effect</li>
+        <li>✅ Inset display panel</li>
+        <li>✅ LCD scanline effect</li>
+        <li>✅ Nostalgic 1990s aesthetic</li>
+        <li>✅ Responsive design for all screen sizes</li>
+        <li>✅ Fixed positioning (bottom-right corner)</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

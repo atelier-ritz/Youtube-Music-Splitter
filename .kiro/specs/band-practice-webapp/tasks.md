@@ -431,3 +431,108 @@
 
 - [ ] 17. Final checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 22. Implement visitor counter backend service
+  - [x] 22.1 Create visitor tracking middleware and API endpoint
+    - Set up Express session middleware with cookie configuration
+    - Create `GET /api/visitor-count` endpoint
+    - Implement session-based visitor identification logic
+    - Add increment logic for new visitors only
+    - _Requirements: 12.2, 12.3_
+  
+  - [x] 22.2 Implement file-based persistence layer
+    - Create visitor count storage file (`visitor-count.json`)
+    - Implement atomic write operations using temp file + rename pattern
+    - Add read operation with initialization to zero if file doesn't exist
+    - Handle maximum count limit (999,999)
+    - _Requirements: 13.1, 13.2, 13.3, 12.4_
+  
+  - [x] 22.3 Add error handling and logging
+    - Implement try-catch for storage operations with fallback to in-memory counting
+    - Add logging for storage failures and corrupted data
+    - Add warning log when maximum count is reached
+    - Implement data validation and reset for corrupted counts
+    - _Requirements: 13.4, 15.2, 15.3, 15.4_
+  
+  - [ ]* 22.4 Write property test for visitor increment behavior
+    - **Property 18: New visitor increment behavior**
+    - **Validates: Requirements 12.2**
+  
+  - [ ]* 22.5 Write property test for session recognition
+    - **Property 19: Returning visitor session recognition**
+    - **Validates: Requirements 12.3**
+  
+  - [ ]* 22.6 Write property test for persistence round-trip
+    - **Property 20: Visitor count persistence round-trip**
+    - **Validates: Requirements 13.1, 13.2**
+  
+  - [ ]* 22.7 Write property test for storage failure resilience
+    - **Property 21: Storage failure resilience**
+    - **Validates: Requirements 13.4, 15.2**
+  
+  - [ ]* 22.8 Write property test for atomic write integrity
+    - **Property 22: Atomic write data integrity**
+    - **Validates: Requirements 13.5**
+
+- [ ] 23. Create visitor counter frontend component
+  - [x] 23.1 Build VisitorCounter React component
+    - Create component with async fetch on mount using useEffect
+    - Implement non-blocking loading strategy
+    - Add error handling with graceful fallback
+    - Format count as 6-digit string with leading zeros
+    - _Requirements: 12.1, 15.1, 15.5_
+  
+  - [x] 23.2 Implement retro visual styling
+    - Create CSS file with retro 1990s aesthetic
+    - Style individual digit boxes with borders and backgrounds
+    - Use monospace digital/LCD font (Courier New or custom web font)
+    - Apply black background with green or red digit colors
+    - Add decorative text "You are visitor number:"
+    - Position in footer or bottom corner of main page
+    - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5_
+  
+  - [x] 23.3 Integrate counter into MainPage component
+    - Import and render VisitorCounter in MainPage footer
+    - Ensure counter doesn't interfere with main functionality
+    - Test responsive behavior on different screen sizes
+    - _Requirements: 14.5, 15.5_
+  
+  - [ ]* 23.4 Write property test for count formatting
+    - **Property 17: Visitor count formatting consistency**
+    - **Validates: Requirements 12.1**
+  
+  - [ ]* 23.5 Write property test for UI structure
+    - **Property 23: Counter UI structure consistency**
+    - **Validates: Requirements 14.2**
+  
+  - [ ]* 23.6 Write property test for API failure handling
+    - **Property 24: API failure graceful degradation**
+    - **Validates: Requirements 15.1**
+  
+  - [ ]* 23.7 Write property test for non-blocking load
+    - **Property 26: Non-blocking counter load**
+    - **Validates: Requirements 15.5**
+
+- [ ] 24. Test and validate visitor counter functionality
+  - [ ] 24.1 Test visitor tracking and persistence
+    - Verify new visitor increments count
+    - Verify returning visitor doesn't increment
+    - Test count persistence across server restarts
+    - Test maximum count limit behavior
+    - _Requirements: 12.2, 12.3, 12.4, 13.1, 13.2_
+  
+  - [ ] 24.2 Test error handling and edge cases
+    - Test behavior with corrupted storage file
+    - Test behavior with storage write failures
+    - Test graceful degradation when API is unavailable
+    - Verify main page loads without counter blocking
+    - _Requirements: 13.4, 15.1, 15.2, 15.4, 15.5_
+  
+  - [ ]* 24.3 Write unit tests for edge cases
+    - Test initialization with missing storage file
+    - Test maximum count boundary (999,999)
+    - Test decorative text rendering
+    - _Requirements: 13.3, 12.4, 14.4_
+
+- [ ] 25. Final checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.

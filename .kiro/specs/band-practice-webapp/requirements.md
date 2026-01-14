@@ -16,6 +16,9 @@ The Band Practice Partner is a web-based application designed to help musicians 
 - **Solo_Control**: Interface element that allows isolation of specific tracks by muting all other tracks
 - **Six_Stem_Separation**: Advanced audio separation that provides vocals, drums, bass, guitar, piano, and other instrument tracks
 - **Waveform_Visualization**: Real-time visual representation of audio amplitude over time that shows actual audio content, silent sections, and signal patterns for each track
+- **Visitor_Counter**: A UI component that displays the total number of unique visitors to the application using a retro 1990s aesthetic
+- **Backend_API**: The Node.js/Express server that handles visitor tracking, persistence, and serves the visitor count
+- **Persistence_Layer**: The file-based storage mechanism that maintains the visitor count across server restarts
 
 ## Requirements
 
@@ -162,3 +165,51 @@ The Band Practice Partner is a web-based application designed to help musicians 
 3. WHEN audio is silent or nearly silent, THE waveform SHALL show minimal or no amplitude bars to clearly indicate absence of audio content
 4. WHEN users examine the waveform, THE visualization SHALL help identify instrument entry points, breaks, and audio patterns within each track
 5. WHEN the waveform is displayed, THE system SHALL maintain performance by using efficient audio analysis and rendering techniques
+
+### Requirement 12
+
+**User Story:** As a site owner, I want to display a nostalgic visitor counter on the main page, so that I can track site popularity and add retro character to the application.
+
+#### Acceptance Criteria
+
+1. WHEN the main page loads, THE Visitor_Counter SHALL display the current visitor count formatted as a 6-digit number with leading zeros
+2. WHEN a new visitor accesses the application, THE Backend_API SHALL increment the visitor count by one
+3. WHEN a returning visitor accesses the application within 24 hours, THE Backend_API SHALL NOT increment the visitor count
+4. WHEN the visitor count reaches 999,999, THE Backend_API SHALL stop incrementing and maintain that maximum value
+5. THE Visitor_Counter SHALL use a retro 1990s aesthetic with styled digit elements reminiscent of old web counters
+
+### Requirement 13
+
+**User Story:** As a site owner, I want the visitor count to persist across server restarts, so that the count is not lost when the application is redeployed.
+
+#### Acceptance Criteria
+
+1. WHEN the visitor count changes, THE Persistence_Layer SHALL write the new count to a file immediately
+2. WHEN the server starts, THE Persistence_Layer SHALL read the visitor count from storage
+3. IF the storage file does not exist on first startup, THEN THE Persistence_Layer SHALL initialize the count to zero
+4. WHEN writing to storage fails, THE Backend_API SHALL log the error and continue operating with the in-memory count
+5. THE Persistence_Layer SHALL use atomic write operations to prevent data corruption
+
+### Requirement 14
+
+**User Story:** As a visitor, I want the counter to have an authentic 1990s aesthetic, so that it evokes nostalgia and adds character to the application.
+
+#### Acceptance Criteria
+
+1. THE Visitor_Counter SHALL use a retro font style such as LCD-style or digital display font
+2. THE Visitor_Counter SHALL display each digit in a separate styled box or segment
+3. THE Visitor_Counter SHALL use colors reminiscent of old web counters such as black background with green or red digits
+4. THE Visitor_Counter SHALL include decorative text such as "You are visitor number:" or similar nostalgic phrasing
+5. THE Visitor_Counter SHALL be positioned in the footer or bottom corner of the main page without interfering with primary functionality
+
+### Requirement 15
+
+**User Story:** As a site owner, I want the application to handle counter errors gracefully, so that a counter failure does not break the main application functionality.
+
+#### Acceptance Criteria
+
+1. IF the visitor count API fails, THEN THE Visitor_Counter SHALL display a fallback message or hide itself gracefully
+2. IF storage operations fail, THEN THE Backend_API SHALL log the error and continue with in-memory counting
+3. WHEN the counter reaches the maximum value of 999,999, THE Backend_API SHALL log a warning
+4. IF the stored count is corrupted or invalid, THEN THE Backend_API SHALL reset the count to zero and log the issue
+5. THE Visitor_Counter SHALL not block or delay the main page load if the API is slow or unavailable

@@ -1,0 +1,62 @@
+/* Modern Visitor Counter Styling - Matches Page Theme */
+
+.visitor-counter {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 16px;
+}
+
+.visitor-counter__label {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 0.3px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.visitor-counter__display {
+  display: flex;
+  gap: 2px;
+}
+
+.visitor-counter__digit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 24px;
+  font-family: 'Courier New', 'Courier', monospace;
+  font-size: 16px;
+  font-weight: bold;
+  color: #667eea;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .visitor-counter {
+    padding: 6px 12px;
+    gap: 6px;
+  }
+
+  .visitor-counter__label {
+    font-size: 10px;
+  }
+
+  .visitor-counter__digit {
+    width: 16px;
+    height: 22px;
+    font-size: 14px;
+  }
+}

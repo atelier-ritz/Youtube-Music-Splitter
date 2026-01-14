@@ -103,6 +103,15 @@ graph TB
   - `soloTrack(trackIndex: number, soloed: boolean): void`
   - `updateTrackAudioLevels(): void` (private method for managing solo/mute interactions)
 
+#### VisitorCounter Component
+- **Purpose**: Display retro-styled visitor count on main page
+- **Interface**:
+  - Fetches current visitor count from backend API on mount
+  - Displays 6-digit formatted count with leading zeros
+  - Renders individual digit boxes with retro styling
+  - Handles loading and error states gracefully
+  - Does not block main page functionality
+
 ### Backend Components
 
 #### YouTube Downloader Service
@@ -128,6 +137,15 @@ graph TB
   - Manages separated track files from processing service
   - Implements cleanup policies for temporary files
   - Provides secure file access URLs for frontend
+
+#### Visitor Tracking Service
+- **Purpose**: Track and persist unique visitor counts
+- **Interface**:
+  - `GET /api/visitor-count` - Returns current visitor count and increments for new visitors
+  - Identifies visitors using session cookies with 24-hour expiration
+  - Persists count to file storage using atomic writes
+  - Handles maximum count limit (999,999)
+  - Provides error handling and fallback to in-memory counting
 
 ### Local Audio Processing Service (Demucs)
 
@@ -215,6 +233,20 @@ interface AudioSession {
 }
 ```
 
+### Visitor Count Model
+```typescript
+interface VisitorCount {
+  count: number; // Current visitor count (0-999999)
+  lastUpdated: Date; // Timestamp of last increment
+}
+
+interface VisitorSession {
+  sessionId: string; // Unique session identifier
+  firstVisit: Date; // Timestamp of first visit
+  expiresAt: Date; // Session expiration time (24 hours from first visit)
+}
+```
+
 ## Correctness Properties
 
 *A property is a characteristic or behavior that should hold true across all valid executions of a system-essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
@@ -285,6 +317,46 @@ interface AudioSession {
 *For any* loaded audio track, the waveform visualization should accurately represent the actual audio content with amplitude variations corresponding to signal strength and silent sections showing minimal amplitude
 **Validates: Requirements 11.1, 11.2, 11.3**
 
+### Property 17: Visitor count formatting consistency
+*For any* visitor count value from 0 to 999,999, the counter display should format it as a 6-digit string with leading zeros (e.g., "000000", "000042", "999999")
+**Validates: Requirements 12.1**
+
+### Property 18: New visitor increment behavior
+*For any* visitor count below the maximum (999,999), when a new visitor without a valid session accesses the application, the count should increment by exactly one
+**Validates: Requirements 12.2**
+
+### Property 19: Returning visitor session recognition
+*For any* visitor with a valid session cookie (not expired), accessing the application should not increment the visitor count
+**Validates: Requirements 12.3**
+
+### Property 20: Visitor count persistence round-trip
+*For any* visitor count value, writing it to storage and then reading it back should produce the same value
+**Validates: Requirements 13.1, 13.2**
+
+### Property 21: Storage failure resilience
+*For any* storage operation failure, the backend should log the error and continue operating with in-memory counting without crashing
+**Validates: Requirements 13.4, 15.2**
+
+### Property 22: Atomic write data integrity
+*For any* sequence of concurrent write operations, the final stored count should reflect a valid state without corruption
+**Validates: Requirements 13.5**
+
+### Property 23: Counter UI structure consistency
+*For any* rendered visitor counter, the output should contain exactly 6 separate digit elements regardless of the count value
+**Validates: Requirements 14.2**
+
+### Property 24: API failure graceful degradation
+*For any* API failure or timeout, the visitor counter component should either display a fallback message or hide itself without breaking the main page
+**Validates: Requirements 15.1**
+
+### Property 25: Invalid data recovery
+*For any* corrupted or invalid stored count value, the system should reset to zero, log the issue, and continue operating normally
+**Validates: Requirements 15.4**
+
+### Property 26: Non-blocking counter load
+*For any* API response time (including slow or unavailable), the main page should render and be interactive without waiting for the visitor counter
+**Validates: Requirements 15.5**
+
 ## Error Handling
 
 ### Frontend Error Handling
@@ -306,6 +378,36 @@ interface AudioSession {
 - **Quality Issues**: Fallback strategies for poor audio quality or separation failures
 
 ## Deployment and Setup
+
+### Visitor Counter Implementation
+
+#### Backend Implementation
+- **Storage**: File-based persistence using `visitor-count.json` in backend data directory
+- **Session Management**: Express session middleware with cookie-based visitor identification
+- **Cookie Configuration**: 
+  - Name: `visitor_session`
+  - Max Age: 24 hours (86400000 ms)
+  - HttpOnly: true for security
+  - SameSite: 'lax' for CORS compatibility
+- **Atomic Writes**: Use `fs.writeFileSync` with temp file + rename pattern to prevent corruption
+- **API Endpoint**: `GET /api/visitor-count` returns `{ count: number }`
+- **Increment Logic**: Check session cookie → increment if new → set cookie → persist → return count
+
+#### Frontend Implementation
+- **Component**: `VisitorCounter.tsx` in `frontend/src/components/`
+- **Styling**: Separate CSS file with retro aesthetic
+- **Digit Rendering**: Map count string to individual digit components
+- **Loading Strategy**: Async fetch with `useEffect`, non-blocking render
+- **Error Handling**: Try-catch with fallback to hidden state on failure
+- **Positioning**: CSS positioned in footer/corner using absolute or fixed positioning
+
+#### Visual Design Specifications
+- **Font**: Monospace digital/LCD style (e.g., 'Courier New', 'Orbitron', or custom web font)
+- **Digit Boxes**: Individual `<span>` elements with border, padding, and background
+- **Color Scheme**: Black background (#000) with green (#0f0) or red (#f00) digits
+- **Decorative Text**: "You are visitor number:" in retro font above counter
+- **Dimensions**: Each digit box ~30-40px width, ~50-60px height
+- **Spacing**: 2-4px gap between digit boxes
 
 ### Local Development Environment
 

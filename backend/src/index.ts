@@ -3,15 +3,20 @@ import dotenv from 'dotenv';
 // Load environment variables FIRST, before any other imports
 dotenv.config();
 
+// Import session type augmentation
+import './types/session';
+
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import rateLimit from 'express-rate-limit';
+import session from 'express-session';
 import downloadRoutes from './routes/download';
 import processRoutes from './routes/process';
 import cacheRoutes from './routes/cache';
 import tracksRoutes from './routes/tracks';
 import donationRoutes from './routes/donation';
+import visitorCountRoutes from './routes/visitorCount';
 import { 
   errorHandler, 
   notFoundHandler, 
@@ -52,6 +57,20 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Session middleware for visitor tracking
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'band-practice-partner-secret-key-change-in-production',
+  name: 'visitor_session',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production' // Use secure cookies in production
+  }
+}));
+
 // Request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
@@ -64,6 +83,7 @@ app.use('/api/process', processRoutes);
 app.use('/api/cache', cacheRoutes);
 app.use('/api/tracks', trackServingLimiter, tracksRoutes);
 app.use('/api/donate', donationRoutes);
+app.use('/api/visitor-count', visitorCountRoutes);
 
 // Serve static frontend files in production
 if (process.env.NODE_ENV === 'production') {
