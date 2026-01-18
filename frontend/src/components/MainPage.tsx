@@ -480,7 +480,7 @@ const MainPage: React.FC<MainPageProps> = ({ onProcessingComplete, onShowToast }
             </div>
             
             {/* Visitor Counter - Centered below action buttons */}
-            <VisitorCounter />
+            {/* <VisitorCounter /> */}
           </>
         )}
       </div>
